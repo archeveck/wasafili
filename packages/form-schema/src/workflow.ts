@@ -14,6 +14,8 @@ export const workflowStateSchema = z.object({
   initial: z.boolean().optional(),
   /** État terminal : aucune transition n'en part. */
   final: z.boolean().optional(),
+  /** Position dans l'éditeur visuel (sans effet sur le fonctionnement). */
+  position: z.object({ x: z.number(), y: z.number() }).optional(),
 });
 
 /** Transition exposée comme bouton d'enregistrement personnalisé. */

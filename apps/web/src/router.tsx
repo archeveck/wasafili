@@ -20,6 +20,7 @@ import { ListsPage } from '@/features/lists/lists-page';
 import { StructuresPage } from '@/features/structures/structures-page';
 import { NewSubmissionPage, SubmissionPage } from '@/features/submissions/submission-page';
 import { SubmissionsPage } from '@/features/submissions/submissions-page';
+import { AgendaPage } from '@/features/tasks/agenda-page';
 import { client } from '@/lib/api';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({ component: Outlet });
@@ -89,6 +90,11 @@ const submissionRoute = createRoute({
   path: 'submissions/$submissionId',
   component: SubmissionPage,
 });
+const agendaRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'agenda',
+  component: AgendaPage,
+});
 const listsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'lists',
@@ -132,6 +138,7 @@ const routeTree = rootRoute.addChildren([
       submissionsRoute,
       newSubmissionRoute,
       submissionRoute,
+      agendaRoute,
       listsRoute,
       listRoute,
       usersRoute,

@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import {
+  CalendarDays,
   ClipboardList,
   FolderTree,
   LogOut,
@@ -22,13 +23,20 @@ import {
 } from '@/components/ui/overlays';
 import { client } from '@/lib/api';
 import { useApp } from '@/lib/use-app';
+import { NotificationsMenu } from './notifications-menu';
 
-const NAV: { to: string; label: string; icon: LucideIcon; permission: string }[] = [
+const NAV: { to: string; label: string; icon: LucideIcon; permission: string | string[] }[] = [
   {
     to: '/$app/structures',
     label: 'Formulaires',
     icon: ClipboardList,
     permission: 'structure:read',
+  },
+  {
+    to: '/$app/agenda',
+    label: 'Agenda',
+    icon: CalendarDays,
+    permission: ['task:read', 'task:manage'],
   },
   { to: '/$app/lists', label: 'Référentiels', icon: FolderTree, permission: 'list:read' },
   { to: '/$app/users', label: 'Utilisateurs', icon: Users, permission: 'user:read' },
@@ -57,26 +65,31 @@ export function AppLayout() {
   return (
     <div className="flex min-h-full">
       <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-border bg-surface">
-        <div className="border-b border-border px-4 py-4">
-          <Link to="/" className="text-lg font-semibold text-primary">
-            {t('app.name')}
-          </Link>
-          <p className="truncate text-xs text-muted">{settings?.name ?? short}</p>
+        <div className="flex items-start gap-2 border-b border-border px-4 py-4">
+          <div className="min-w-0 flex-1">
+            <Link to="/" className="text-lg font-semibold text-primary">
+              {t('app.name')}
+            </Link>
+            <p className="truncate text-xs text-muted">{settings?.name ?? short}</p>
+          </div>
+          <NotificationsMenu />
         </div>
         <nav className="flex-1 space-y-0.5 p-2" aria-label="Navigation principale">
-          {NAV.filter((item) => can(item.permission)).map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              params={{ app: short }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-subtle hover:text-foreground"
-              activeProps={{
-                className: 'bg-primary/10 font-medium text-primary hover:bg-primary/10',
-              }}
-            >
-              <Icon className="size-4" /> {label}
-            </Link>
-          ))}
+          {NAV.filter((item) => [item.permission].flat().some(can)).map(
+            ({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                params={{ app: short }}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-subtle hover:text-foreground"
+                activeProps={{
+                  className: 'bg-primary/10 font-medium text-primary hover:bg-primary/10',
+                }}
+              >
+                <Icon className="size-4" /> {label}
+              </Link>
+            ),
+          )}
         </nav>
         <div className="border-t border-border p-2">
           <DropdownMenu>

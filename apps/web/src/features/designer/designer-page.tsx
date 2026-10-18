@@ -26,7 +26,9 @@ import {
   AlertTriangle,
   ArrowLeft,
   Eye,
+  GitBranch,
   GitCompare,
+  LayoutList,
   Rocket,
   Save,
   SlidersHorizontal,
@@ -55,6 +57,7 @@ import {
 import { Palette } from './palette';
 import { MobilePreview } from './preview';
 import { PropertiesPanel } from './properties';
+import { WorkflowEditor } from './workflow-editor';
 
 const newId = () => crypto.randomUUID();
 
@@ -158,6 +161,7 @@ export function DesignerPage() {
   const [dragging, setDragging] = useState<string>();
   const [showDiff, setShowDiff] = useState(false);
   const [tab, setTab] = useState('properties');
+  const [view, setView] = useState<'form' | 'workflow'>('form');
 
   // Point de départ : le brouillon, sinon la version publiée (nouveau brouillon à l'enregistrement).
   useEffect(() => {
@@ -185,6 +189,10 @@ export function DesignerPage() {
   );
   const lockedKeys = useMemo(
     () => (current.data ? allKeys(current.data.definition) : new Set<string>()),
+    [current.data],
+  );
+  const lockedStates = useMemo(
+    () => new Set((current.data?.definition.workflow?.states ?? []).map((s) => s.key)),
     [current.data],
   );
 
@@ -309,6 +317,18 @@ export function DesignerPage() {
             )}
           </p>
         </div>
+        <Tabs value={view} onValueChange={(v) => setView(v as 'form' | 'workflow')}>
+          <TabsList>
+            <TabsTrigger value="form">
+              <LayoutList className="mr-1 inline size-4" />
+              Formulaire
+            </TabsTrigger>
+            <TabsTrigger value="workflow">
+              <GitBranch className="mr-1 inline size-4" />
+              Workflow
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         {issues.length > 0 && (
           <Badge color="#C4372D" title={issues.map((i) => i.message).join('\n')}>
             <AlertTriangle className="mr-1 size-3" /> {issues.length} problème(s)
@@ -329,90 +349,107 @@ export function DesignerPage() {
         </Button>
       </header>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collision}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        onDragCancel={() => setDragging(undefined)}
-      >
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_380px]">
-          <aside
-            className="overflow-y-auto border-r border-border bg-surface p-3"
-            aria-label="Types de champs"
-          >
-            <Palette onAdd={(type) => add(type)} />
-          </aside>
-          <section className="overflow-y-auto p-6" aria-label="Formulaire">
-            <div className="mx-auto max-w-2xl">
-              <Canvas
-                fields={definition.fields}
-                selected={selected}
-                onSelect={(id) => {
-                  setSelected(id);
-                  setTab('properties');
-                }}
-                onRemove={(id) => {
-                  change(removeField(definition, id));
-                  if (selected === id) setSelected(undefined);
-                }}
-                onDuplicate={duplicate}
-                invalid={invalid}
-              />
-              {issues.some((i) => !i.field) && (
-                <Card className="mt-4 space-y-1 border-danger/40 p-3">
-                  {issues
-                    .filter((i) => !i.field)
-                    .map((issue, index) => (
-                      <p key={index} className="text-xs text-danger">
-                        {issue.message}
-                      </p>
-                    ))}
-                </Card>
-              )}
+      {view === 'workflow' ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <WorkflowEditor definition={definition} lockedStates={lockedStates} onChange={change} />
+          {issues.some((i) => !i.field) && (
+            <div className="border-t border-danger/40 bg-surface px-4 py-2" role="alert">
+              {issues
+                .filter((i) => !i.field)
+                .map((issue, index) => (
+                  <p key={index} className="text-xs text-danger">
+                    {issue.message}
+                  </p>
+                ))}
             </div>
-          </section>
-          <aside className="overflow-y-auto border-l border-border bg-surface p-4">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="properties">
-                  <SlidersHorizontal className="mr-1 inline size-4" />
-                  Propriétés
-                </TabsTrigger>
-                <TabsTrigger value="preview">
-                  <Eye className="mr-1 inline size-4" />
-                  Aperçu mobile
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="properties">
-                {selected && findField(definition, selected) ? (
-                  <PropertiesPanel
-                    definition={definition}
-                    fieldId={selected}
-                    lockedKeys={lockedKeys}
-                    issues={issues}
-                    onChange={(patch) =>
-                      change(updateField(definition, selected, patch as Partial<Field>))
-                    }
-                  />
-                ) : (
-                  <p className="text-sm text-muted">Sélectionnez un champ pour le configurer.</p>
-                )}
-              </TabsContent>
-              <TabsContent value="preview">
-                <MobilePreview definition={definition} />
-              </TabsContent>
-            </Tabs>
-          </aside>
+          )}
         </div>
-        <DragOverlay>
-          {draggedLabel ? (
-            <div className="rounded-md border border-primary bg-surface px-3 py-2 text-sm shadow-lg">
-              {draggedLabel}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collision}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => setDragging(undefined)}
+        >
+          <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_380px]">
+            <aside
+              className="overflow-y-auto border-r border-border bg-surface p-3"
+              aria-label="Types de champs"
+            >
+              <Palette onAdd={(type) => add(type)} />
+            </aside>
+            <section className="overflow-y-auto p-6" aria-label="Formulaire">
+              <div className="mx-auto max-w-2xl">
+                <Canvas
+                  fields={definition.fields}
+                  selected={selected}
+                  onSelect={(id) => {
+                    setSelected(id);
+                    setTab('properties');
+                  }}
+                  onRemove={(id) => {
+                    change(removeField(definition, id));
+                    if (selected === id) setSelected(undefined);
+                  }}
+                  onDuplicate={duplicate}
+                  invalid={invalid}
+                />
+                {issues.some((i) => !i.field) && (
+                  <Card className="mt-4 space-y-1 border-danger/40 p-3">
+                    {issues
+                      .filter((i) => !i.field)
+                      .map((issue, index) => (
+                        <p key={index} className="text-xs text-danger">
+                          {issue.message}
+                        </p>
+                      ))}
+                  </Card>
+                )}
+              </div>
+            </section>
+            <aside className="overflow-y-auto border-l border-border bg-surface p-4">
+              <Tabs value={tab} onValueChange={setTab}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="properties">
+                    <SlidersHorizontal className="mr-1 inline size-4" />
+                    Propriétés
+                  </TabsTrigger>
+                  <TabsTrigger value="preview">
+                    <Eye className="mr-1 inline size-4" />
+                    Aperçu mobile
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="properties">
+                  {selected && findField(definition, selected) ? (
+                    <PropertiesPanel
+                      definition={definition}
+                      fieldId={selected}
+                      lockedKeys={lockedKeys}
+                      issues={issues}
+                      onChange={(patch) =>
+                        change(updateField(definition, selected, patch as Partial<Field>))
+                      }
+                    />
+                  ) : (
+                    <p className="text-sm text-muted">Sélectionnez un champ pour le configurer.</p>
+                  )}
+                </TabsContent>
+                <TabsContent value="preview">
+                  <MobilePreview definition={definition} />
+                </TabsContent>
+              </Tabs>
+            </aside>
+          </div>
+          <DragOverlay>
+            {draggedLabel ? (
+              <div className="rounded-md border border-primary bg-surface px-3 py-2 text-sm shadow-lg">
+                {draggedLabel}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
       <DiffDialog
         open={showDiff}
         onOpenChange={setShowDiff}

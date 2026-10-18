@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { type StructureDefinition, type SubmissionData, walkFields } from '@tesserax/form-schema';
+import {
+  initialState,
+  type StructureDefinition,
+  type SubmissionData,
+  walkFields,
+  type WorkflowTransition,
+} from '@tesserax/form-schema';
 import { ApiError, type Submission } from '@tesserax/sdk';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -14,6 +20,17 @@ import { fieldServices } from '@/form/services';
 import { useFormRenderer } from '@/form/use-form';
 import { useApp } from '@/lib/use-app';
 import { formatDateTime } from '@/lib/utils';
+import { StateBadge, stateLabel, transitionProblem, TransitionButtons } from './workflow';
+
+/** Message d'erreur de l'API, avec les champs en cause. */
+function apiError(error: unknown): unknown {
+  if (error instanceof ApiError && Array.isArray(error.details)) {
+    return new Error(
+      `${error.message} : ${(error.details as { field: string; code: string }[]).map((d) => `${d.field} (${d.code})`).join(', ')}`,
+    );
+  }
+  return error;
+}
 
 /** Valeurs modifiées par rapport à la fiche d'origine (mise à jour partielle, D9). */
 function changedValues(before: SubmissionData, after: SubmissionData): SubmissionData {
@@ -35,9 +52,15 @@ function SubmissionForm({
   structureId: string;
   onDone: (submission: Submission) => void;
 }) {
-  const { api, me } = useApp();
+  const { api, me, short } = useApp();
   const toast = useToast();
+  const queryClient = useQueryClient();
+  // Liste, compteurs et calendrier des fiches de la structure à rafraîchir après écriture.
+  const refreshList = () =>
+    queryClient.invalidateQueries({ queryKey: [short, 'submissions', structureId] });
   const [clientMutationId] = useState(() => crypto.randomUUID());
+  const [transitionMutationId] = useState(() => crypto.randomUUID());
+  const state = submission ? submission.state : initialState(definition.workflow);
   const form = useFormRenderer(definition, {
     isNew: !submission,
     ...(submission ? { initialValues: submission.data, state: submission.state } : {}),
@@ -57,19 +80,62 @@ function SubmissionForm({
           }),
     onSuccess: (saved) => {
       toast.success(submission ? 'Fiche modifiée' : 'Fiche enregistrée');
+      void refreshList();
       onDone(saved);
     },
-    onError: (error) => {
-      // Erreurs du serveur (référentiel, lecture seule…) : message détaillé.
-      if (error instanceof ApiError && Array.isArray(error.details)) {
-        toast.error(
-          new Error(
-            `${error.message} : ${(error.details as { field: string; code: string }[]).map((d) => `${d.field} (${d.code})`).join(', ')}`,
-          ),
-        );
-      } else toast.error(error);
-    },
+    // Erreurs du serveur (référentiel, lecture seule…) : message détaillé.
+    onError: (error) => toast.error(apiError(error)),
   });
+  // Bouton de workflow : enregistre les données et change l'état (création puis transition
+  // pour une nouvelle fiche, chaque étape rejouable sans doublon).
+  const move = useMutation({
+    mutationFn: async ({
+      transition,
+      values,
+    }: {
+      transition: WorkflowTransition;
+      values: SubmissionData;
+    }) => {
+      if (submission) {
+        return api.submissions.transition(submission.id, {
+          transition: transition.key,
+          data: changedValues(submission.data, values),
+          clientMutationId: transitionMutationId,
+        });
+      }
+      const created = await api.submissions.create(structureId, {
+        id: crypto.randomUUID(),
+        data: values,
+        clientMutationId,
+      });
+      return api.submissions.transition(created.id, {
+        transition: transition.key,
+        clientMutationId: transitionMutationId,
+      });
+    },
+    onSuccess: (saved, { transition }) => {
+      toast.success(
+        `${transition.label} : fiche ${stateLabel(definition.workflow, saved.state).toLowerCase()}`,
+      );
+      void refreshList();
+      onDone(saved);
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+  const runTransition = (transition: WorkflowTransition) => {
+    const result = form.submit();
+    if (!result.valid) {
+      toast.error(new Error(`${result.errors.length} champ(s) à corriger`));
+      return;
+    }
+    const problem = transitionProblem(definition, result.values, transition, {
+      state,
+      userId: me?.id,
+      roles: me?.roles ?? [],
+    });
+    if (problem) toast.error(new Error(problem));
+    else move.mutate({ transition, values: result.values });
+  };
   return (
     <form
       onSubmit={(event) => {
@@ -80,10 +146,21 @@ function SubmissionForm({
       }}
     >
       <FormRenderer definition={definition} form={form} services={fieldServices(api)} />
-      <div className="mt-8 flex justify-end gap-2">
-        <Button type="submit" disabled={save.isPending}>
+      <div className="mt-8 flex flex-wrap justify-end gap-2">
+        <Button
+          type="submit"
+          variant={definition.workflow ? 'outline' : 'default'}
+          disabled={save.isPending}
+        >
           Enregistrer
         </Button>
+        <TransitionButtons
+          workflow={definition.workflow}
+          state={state}
+          roles={me?.roles ?? []}
+          disabled={move.isPending}
+          onRun={runTransition}
+        />
       </div>
     </form>
   );
@@ -115,7 +192,12 @@ function History({
   if (revisions.isPending) return <Loading />;
   if (revisions.error) return <ErrorMessage error={revisions.error} />;
   const author = (id: string | null) => (id ? (users.get(id) ?? 'Utilisateur') : 'Intégration');
-  const ACTIONS = { create: 'Création', update: 'Modification', delete: 'Suppression' };
+  const ACTIONS = {
+    create: 'Création',
+    update: 'Modification',
+    transition: 'Changement d’état',
+    delete: 'Suppression',
+  };
   return (
     <ol className="space-y-4">
       {revisions.data.data.map((revision) => (
@@ -130,6 +212,19 @@ function History({
               <table className="mt-3 w-full text-sm">
                 <tbody>
                   {revision.changes.map((change) => {
+                    if (change.field === '$state') {
+                      return (
+                        <tr key={change.field} className="border-t border-border">
+                          <td className="py-1.5 pr-3 font-medium">État</td>
+                          <td className="py-1.5 pr-3 text-danger line-through">
+                            {stateLabel(definition.workflow, change.before as string | null)}
+                          </td>
+                          <td className="py-1.5 text-success">
+                            {stateLabel(definition.workflow, change.after as string | null)}
+                          </td>
+                        </tr>
+                      );
+                    }
                     const field = fields.get(change.field);
                     return (
                       <tr key={change.field} className="border-t border-border">
@@ -266,11 +361,12 @@ function Conflicts({
 /** Détail d'une fiche (P2.5.2) : lecture, édition (P2.5.3) et historique champ par champ. */
 export function SubmissionPage() {
   const { submissionId } = useParams({ strict: false }) as { submissionId: string };
-  const { short, api, timeZone, can } = useApp();
+  const { short, api, timeZone, can, me } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
+  const [transitionMutationId, setTransitionMutationId] = useState(() => crypto.randomUUID());
   const submission = useQuery({
     queryKey: [short, 'submission', submissionId],
     queryFn: () => api.submissions.get(submissionId),
@@ -297,9 +393,31 @@ export function SubmissionPage() {
     onError: toast.error,
   });
 
+  const saved = async (next: Submission) => {
+    queryClient.setQueryData([short, 'submission', submissionId], next);
+    await queryClient.invalidateQueries({ queryKey: [short, 'revisions', submissionId] });
+    await queryClient.invalidateQueries({ queryKey: [short, 'submissions', next.structureId] });
+  };
+  const move = useMutation({
+    mutationFn: (transition: WorkflowTransition) =>
+      api.submissions.transition(submissionId, {
+        transition: transition.key,
+        clientMutationId: transitionMutationId,
+      }),
+    onSuccess: async (next, transition) => {
+      toast.success(
+        `${transition.label} : fiche ${stateLabel(version.data?.definition.workflow, next.state).toLowerCase()}`,
+      );
+      setTransitionMutationId(crypto.randomUUID());
+      await saved(next);
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+
   if (submission.error) return <ErrorMessage error={submission.error} />;
   if (!submission.data || !version.data) return <Loading />;
   const data = submission.data;
+  const definition = version.data.definition;
   const back = () =>
     navigate({
       to: '/$app/structures/$structureId/submissions',
@@ -317,9 +435,28 @@ export function SubmissionPage() {
         actions={
           <>
             {!editing && can('submission:update') && (
-              <Button variant="outline" onClick={() => setEditing(true)}>
-                <Pencil /> Modifier
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => setEditing(true)}>
+                  <Pencil /> Modifier
+                </Button>
+                <TransitionButtons
+                  workflow={definition.workflow}
+                  state={data.state}
+                  roles={me?.roles ?? []}
+                  disabled={move.isPending}
+                  onRun={(transition) => {
+                    const problem = transitionProblem(definition, data.data, transition, {
+                      state: data.state,
+                      userId: me?.id,
+                      roles: me?.roles ?? [],
+                    });
+                    if (!problem) return move.mutate(transition);
+                    // Champs à compléter : la fiche passe en modification.
+                    toast.error(new Error(problem));
+                    setEditing(true);
+                  }}
+                />
+              </>
             )}
             {can('submission:delete') && (
               <Button
@@ -332,6 +469,11 @@ export function SubmissionPage() {
           </>
         }
       />
+      {definition.workflow && (
+        <p className="-mt-2 mb-4 flex items-center gap-2 text-sm text-muted">
+          État <StateBadge workflow={definition.workflow} state={data.state} />
+        </p>
+      )}
       <Tabs defaultValue="fiche">
         <TabsList className="mb-6">
           <TabsTrigger value="fiche">Fiche</TabsTrigger>
@@ -352,11 +494,8 @@ export function SubmissionPage() {
                 definition={version.data.definition}
                 submission={data}
                 structureId={data.structureId}
-                onDone={async (saved) => {
-                  queryClient.setQueryData([short, 'submission', submissionId], saved);
-                  await queryClient.invalidateQueries({
-                    queryKey: [short, 'revisions', submissionId],
-                  });
+                onDone={async (next) => {
+                  await saved(next);
                   setEditing(false);
                 }}
               />

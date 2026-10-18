@@ -11,6 +11,7 @@ import {
 import { Lock, Plus, Trash2 } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checklist } from '@/components/ui/checklist';
 import { Checkbox, FormRow, Input, Select, Switch, Textarea } from '@/components/ui/form-controls';
 import { useApp } from '@/lib/use-app';
 import { slugify } from '@/lib/utils';
@@ -736,6 +737,76 @@ function conditionTargets(definition: StructureDefinition, field: Field): Condit
     });
 }
 
+/** Visibilité et modification par état de workflow et par rôle (P4.1.3, évaluées par form-engine). */
+function StateAndRoleRules({
+  definition,
+  field,
+  input,
+  onChange,
+}: {
+  definition: StructureDefinition;
+  field: AnyField;
+  input: boolean;
+  onChange: (patch: Record<string, unknown>) => void;
+}) {
+  const { api, short, can } = useApp();
+  const roles = useQuery({
+    queryKey: [short, 'roles'],
+    queryFn: () => api.roles.list({ perPage: 100 }),
+    enabled: can('role:read'),
+  });
+  const states = (definition.workflow?.states ?? []).map((s) => ({ value: s.key, label: s.label }));
+  const roleOptions = (roles.data?.data ?? []).map((r) => ({ value: r.key, label: r.name }));
+  const noWorkflow = 'Ajoutez un workflow à ce formulaire pour régler ces droits par état.';
+  return (
+    <Section title="Par état et par rôle">
+      <p className="text-xs text-muted">Rien de coché : tous les états ou tous les rôles.</p>
+      <div className="space-y-1">
+        <p className="text-sm">Visible dans les états</p>
+        <Checklist
+          label="Visible dans les états"
+          options={states}
+          value={field.visibleInStates as string[] | undefined}
+          onChange={(v) => onChange({ visibleInStates: v })}
+          empty={noWorkflow}
+        />
+      </div>
+      {input && (
+        <div className="space-y-1">
+          <p className="text-sm">Modifiable dans les états</p>
+          <Checklist
+            label="Modifiable dans les états"
+            options={states}
+            value={field.editableInStates as string[] | undefined}
+            onChange={(v) => onChange({ editableInStates: v })}
+            empty={noWorkflow}
+          />
+        </div>
+      )}
+      <div className="space-y-1">
+        <p className="text-sm">Visible pour les rôles</p>
+        <Checklist
+          label="Visible pour les rôles"
+          options={roleOptions}
+          value={field.visibleToRoles as string[] | undefined}
+          onChange={(v) => onChange({ visibleToRoles: v })}
+        />
+      </div>
+      {input && (
+        <div className="space-y-1">
+          <p className="text-sm">Modifiable par les rôles</p>
+          <Checklist
+            label="Modifiable par les rôles"
+            options={roleOptions}
+            value={field.editableByRoles as string[] | undefined}
+            onChange={(v) => onChange({ editableByRoles: v })}
+          />
+        </div>
+      )}
+    </Section>
+  );
+}
+
 export function PropertiesPanel({
   definition,
   fieldId,
@@ -842,6 +913,7 @@ export function PropertiesPanel({
           />
         </Section>
       )}
+      <StateAndRoleRules definition={definition} field={field} input={input} onChange={onChange} />
       {issues
         .filter((i) => i.field === field.key && i.code !== 'formula' && i.code !== 'cycle')
         .map((issue, index) => (

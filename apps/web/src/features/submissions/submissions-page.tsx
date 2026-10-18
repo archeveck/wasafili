@@ -26,6 +26,9 @@ import { Input, Select } from '@/components/ui/form-controls';
 import { useToast } from '@/components/ui/toast';
 import { displayValue, listItemIds, useItemLabels, useUserLabels } from '@/form/display';
 import { useApp } from '@/lib/use-app';
+import { SubmissionsCalendar } from './submissions-calendar';
+import { StateBadge, StateFilter } from './workflow';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/overlays';
 import { download, formatDateTime } from '@/lib/utils';
 
 const OPERATORS: { value: FilterOperator; label: string }[] = [
@@ -147,6 +150,8 @@ export function SubmissionsPage() {
   const [page, setPage] = useState(1);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [state, setState] = useState<string>();
+  const [view, setView] = useState<'table' | 'calendar'>('table');
 
   const structure = useQuery({
     queryKey: [short, 'structure', structureId],
@@ -162,7 +167,19 @@ export function SubmissionsPage() {
     [version.data],
   );
   const sort = sorting[0] ? `${sorting[0].desc ? '-' : ''}${sorting[0].id}` : undefined;
-  const query = { page, perPage: 25, filters, ...(sort ? { sort } : {}) };
+  const workflow = version.data?.definition.workflow;
+  const query = {
+    page,
+    perPage: 25,
+    filters,
+    ...(sort ? { sort } : {}),
+    ...(state ? { state } : {}),
+  };
+  const counts = useQuery({
+    queryKey: [short, 'submissions', structureId, 'states', filters],
+    queryFn: () => api.submissions.states(structureId, { filters }),
+    enabled: !!workflow,
+  });
   const submissions = useQuery({
     queryKey: [short, 'submissions', structureId, query],
     queryFn: () => api.submissions.list(structureId, query),
@@ -187,6 +204,16 @@ export function SubmissionsPage() {
         header: 'Créée le',
         cell: ({ row }) => formatDateTime(row.original.createdAt, timeZone),
       },
+      ...(workflow
+        ? [
+            {
+              id: 'state',
+              header: 'État',
+              enableSorting: false,
+              cell: ({ row }) => <StateBadge workflow={workflow} state={row.original.state} />,
+            } satisfies ColumnDef<Submission>,
+          ]
+        : []),
       ...fields
         .filter((f) => !COLUMN_TYPES.has(f.type))
         .slice(0, 8)
@@ -208,7 +235,7 @@ export function SubmissionsPage() {
         cell: ({ row }) => `v${row.original.version}`,
       },
     ],
-    [fields, labels, users, timeZone],
+    [fields, labels, users, timeZone, workflow],
   );
 
   const table = useReactTable({
@@ -228,7 +255,11 @@ export function SubmissionsPage() {
   const exportAs = async (format: 'csv' | 'xlsx') => {
     try {
       download(
-        await api.submissions.export(structureId, format, { filters, ...(sort ? { sort } : {}) }),
+        await api.submissions.export(structureId, format, {
+          filters,
+          ...(sort ? { sort } : {}),
+          ...(state ? { state } : {}),
+        }),
         `${structure.data?.name ?? 'fiches'}.${format}`,
       );
     } catch (error) {
@@ -265,6 +296,17 @@ export function SubmissionsPage() {
           </>
         }
       />
+      {workflow && (
+        <StateFilter
+          workflow={workflow}
+          counts={counts.data?.data ?? []}
+          value={state}
+          onChange={(next) => {
+            setState(next);
+            setPage(1);
+          }}
+        />
+      )}
       <FilterBar
         fields={fields}
         filters={filters}
@@ -273,91 +315,111 @@ export function SubmissionsPage() {
           setPage(1);
         }}
       />
-      {submissions.error && <ErrorMessage error={submissions.error} />}
-      {submissions.isPending && <Loading />}
-      {submissions.data?.data.length === 0 && (
-        <EmptyState title="Aucune fiche">
-          {structure.data?.currentVersion
-            ? 'Les fiches saisies apparaîtront ici.'
-            : 'Publiez le formulaire pour commencer la collecte.'}
-        </EmptyState>
-      )}
-      {!!submissions.data?.data.length && (
+      <Tabs value={view} onValueChange={(v) => setView(v as 'table' | 'calendar')}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="table">Tableau</TabsTrigger>
+          <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {view === 'calendar' ? (
+        <SubmissionsCalendar
+          structureId={structureId}
+          fields={fields}
+          workflow={workflow}
+          filters={filters}
+          state={state}
+        />
+      ) : (
         <>
-          <Table>
-            <thead>
-              {table.getHeaderGroups().map((group) => (
-                <tr key={group.id}>
-                  {group.headers.map((header) => {
-                    const canSort = sortable(header.column.id) && header.column.getCanSort();
-                    const dir = header.column.getIsSorted();
-                    return (
-                      <Th
-                        key={header.id}
-                        aria-sort={dir ? (dir === 'desc' ? 'descending' : 'ascending') : undefined}
-                      >
-                        {canSort ? (
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1"
-                            onClick={header.column.getToggleSortingHandler()}
+          {submissions.error && <ErrorMessage error={submissions.error} />}
+          {submissions.isPending && <Loading />}
+          {submissions.data?.data.length === 0 && (
+            <EmptyState title="Aucune fiche">
+              {structure.data?.currentVersion
+                ? 'Les fiches saisies apparaîtront ici.'
+                : 'Publiez le formulaire pour commencer la collecte.'}
+            </EmptyState>
+          )}
+          {!!submissions.data?.data.length && (
+            <>
+              <Table>
+                <thead>
+                  {table.getHeaderGroups().map((group) => (
+                    <tr key={group.id}>
+                      {group.headers.map((header) => {
+                        const canSort = sortable(header.column.id) && header.column.getCanSort();
+                        const dir = header.column.getIsSorted();
+                        return (
+                          <Th
+                            key={header.id}
+                            aria-sort={
+                              dir ? (dir === 'desc' ? 'descending' : 'ascending') : undefined
+                            }
                           >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {dir === 'asc' && <ArrowUp className="size-3" />}
-                            {dir === 'desc' && <ArrowDown className="size-3" />}
-                          </button>
-                        ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
-                        )}
-                      </Th>
-                    );
-                  })}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="cursor-pointer hover:bg-subtle/50"
-                  onClick={() =>
-                    navigate({
-                      to: '/$app/submissions/$submissionId',
-                      params: { app: short, submissionId: row.original.id },
-                    })
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <Td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </Td>
+                            {canSort ? (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1"
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                {dir === 'asc' && <ArrowUp className="size-3" />}
+                                {dir === 'desc' && <ArrowDown className="size-3" />}
+                              </button>
+                            ) : (
+                              flexRender(header.column.columnDef.header, header.getContext())
+                            )}
+                          </Th>
+                        );
+                      })}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          {meta && meta.totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-end gap-2 text-sm">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Précédent
-              </Button>
-              <span>
-                Page {meta.page} / {meta.totalPages}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page >= meta.totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Suivant
-              </Button>
-            </div>
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="cursor-pointer hover:bg-subtle/50"
+                      onClick={() =>
+                        navigate({
+                          to: '/$app/submissions/$submissionId',
+                          params: { app: short, submissionId: row.original.id },
+                        })
+                      }
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <Td key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </Td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              {meta && meta.totalPages > 1 && (
+                <div className="mt-4 flex items-center justify-end gap-2 text-sm">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    Précédent
+                  </Button>
+                  <span>
+                    Page {meta.page} / {meta.totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page >= meta.totalPages}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    Suivant
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
