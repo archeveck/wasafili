@@ -210,3 +210,20 @@ export interface FileDto {
   url: string | null;
   thumbnailUrl: string | null;
 }
+
+/** Conflit de modification sur un champ (dernière écriture gagnante, valeur écrasée conservée). */
+export interface SubmissionConflict {
+  id: string;
+  submissionId: string;
+  field: string;
+  baseRevision: number;
+  appliedRevision: number;
+  appliedValue: { value: unknown };
+  overwrittenValue: { value: unknown };
+  clientMutationId: string | null;
+  authorId: string | null;
+  resolution: 'kept' | 'restored' | null;
+  resolvedAt: string | null;
+  resolvedById: string | null;
+  createdAt: string;
+}

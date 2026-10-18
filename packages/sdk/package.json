@@ -20,6 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tesserax/form-schema": "workspace:*"
+    "@tesserax/form-schema": "workspace:*",
+    "@tesserax/sync": "workspace:*"
   }
 }

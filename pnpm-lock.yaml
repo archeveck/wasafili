@@ -141,6 +141,12 @@ importers:
       '@swc/core':
         specifier: ^1.16.18
         version: 1.16.18
+      '@tesserax/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@tesserax/sync':
+        specifier: workspace:*
+        version: link:../../packages/sync
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -345,6 +351,15 @@ importers:
   packages/jobs: {}
 
   packages/sdk:
+    dependencies:
+      '@tesserax/form-schema':
+        specifier: workspace:*
+        version: link:../form-schema
+      '@tesserax/sync':
+        specifier: workspace:*
+        version: link:../sync
+
+  packages/sync:
     dependencies:
       '@tesserax/form-schema':
         specifier: workspace:*

@@ -1,4 +1,5 @@
 import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { type MutationPayload, type MutationResult, type PullResponse } from '@tesserax/sync';
 import {
   type AccessRule,
   type FileDto,
@@ -19,6 +20,7 @@ import {
   type Structure,
   type StructureVersion,
   type Submission,
+  type SubmissionConflict,
   type Tokens,
 } from './types.js';
 
@@ -214,8 +216,16 @@ export function createClient(options: ClientOptions) {
           structureId: string,
           body: { id?: string; data: SubmissionData; clientMutationId?: string },
         ) => post<Submission>(p(`/structures/${structureId}/submissions`), body),
-        update: (id: string, body: { data: SubmissionData; clientMutationId?: string }) =>
-          patch<Submission>(p(`/submissions/${id}`), body),
+        update: (
+          id: string,
+          body: { data: SubmissionData; clientMutationId?: string; baseRevision?: number },
+        ) => patch<Submission>(p(`/submissions/${id}`), body),
+        conflicts: (id: string) =>
+          get<{ data: SubmissionConflict[] }>(p(`/submissions/${id}/conflicts`)),
+        resolveConflict: (id: string, conflictId: string, resolution: 'kept' | 'restored') =>
+          post<SubmissionConflict>(p(`/submissions/${id}/conflicts/${conflictId}/resolve`), {
+            resolution,
+          }),
         remove: (id: string) => del(p(`/submissions/${id}`)),
         revisions: (id: string, params?: ListParams) =>
           get<Page<Revision>>(p(`/submissions/${id}/revisions`), toQuery(params)),
@@ -312,6 +322,11 @@ export function createClient(options: ClientOptions) {
         remove: (id: string) => del(p(`/groups/${id}`)),
         setMembers: (id: string, userIds: string[]) =>
           put<{ data: NonNullable<Group['members']> }>(p(`/groups/${id}/members`), { userIds }),
+      },
+      sync: {
+        pull: (cursor?: string) => get<PullResponse>(p('/sync/pull'), { cursor }),
+        push: (mutations: MutationPayload[]) =>
+          post<{ results: MutationResult[] }>(p('/sync/push'), { mutations }),
       },
       files: {
         get: (id: string) => get<FileDto>(p(`/files/${id}`)),
