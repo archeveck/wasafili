@@ -9,6 +9,17 @@ import {
 } from '@tesserax/sync';
 import {
   type AccessRule,
+  type Automation,
+  type AutomationInput,
+  type AutomationRun,
+  type AutomationRunStatus,
+  type EmailMessage,
+  type RenderedReport,
+  type ReportTags,
+  type ReportTemplate,
+  type Webhook,
+  type WebhookDelivery,
+  type WebhookInput,
   type FileDto,
   type Filter,
   type Group,
@@ -309,6 +320,66 @@ export function createClient(options: ClientOptions) {
           post<TaskDto>(p('/tasks'), body),
         update: (id: string, body: Partial<TaskInput>) => patch<TaskDto>(p(`/tasks/${id}`), body),
         remove: (id: string) => del(p(`/tasks/${id}`)),
+      },
+      reports: {
+        list: (structureId: string) =>
+          get<{ data: ReportTemplate[] }>(p(`/structures/${structureId}/reports`)),
+        tags: (structureId: string) =>
+          get<ReportTags>(p(`/structures/${structureId}/reports/tags`)),
+        create: (
+          structureId: string,
+          body: { name: string; fileId: string; filename?: string | null },
+        ) => post<ReportTemplate>(p(`/structures/${structureId}/reports`), body),
+        update: (id: string, body: { name?: string; fileId?: string; filename?: string | null }) =>
+          patch<ReportTemplate>(p(`/reports/${id}`), body),
+        remove: (id: string) => del(p(`/reports/${id}`)),
+        /** URL signée du modèle DOCX. */
+        template: (id: string) => get<{ url: string }>(p(`/reports/${id}/template`)),
+        /** PDF d'une fiche, ou aperçu sur une fiche d'exemple sans `submissionId`. */
+        render: (id: string, submissionId?: string) =>
+          post<RenderedReport>(p(`/reports/${id}/render`), submissionId ? { submissionId } : {}),
+      },
+      automations: {
+        list: (structureId?: string) =>
+          get<{ data: Automation[] }>(p('/automations'), { structure_id: structureId }),
+        get: (id: string) => get<Automation>(p(`/automations/${id}`)),
+        create: (body: AutomationInput) => post<Automation>(p('/automations'), body),
+        update: (id: string, body: AutomationInput) =>
+          put<Automation>(p(`/automations/${id}`), body),
+        remove: (id: string) => del(p(`/automations/${id}`)),
+        runs: (
+          query: ListParams & {
+            automationId?: string;
+            submissionId?: string;
+            status?: AutomationRunStatus;
+          } = {},
+        ) =>
+          get<Page<AutomationRun>>(p('/automation-runs'), {
+            ...toQuery(query),
+            automation_id: query.automationId,
+            submission_id: query.submissionId,
+            status: query.status,
+          }),
+        retry: (runId: string) => post<AutomationRun>(p(`/automation-runs/${runId}/retry`), {}),
+      },
+      emails: {
+        list: (query: ListParams & { status?: EmailMessage['status'] } = {}) =>
+          get<Page<EmailMessage>>(p('/emails'), { ...toQuery(query), status: query.status }),
+        retry: (id: string) => post<{ id: string; status: string }>(p(`/emails/${id}/retry`), {}),
+      },
+      webhooks: {
+        list: () => get<{ data: Webhook[] }>(p('/webhooks')),
+        create: (body: WebhookInput) => post<Webhook & { secret: string }>(p('/webhooks'), body),
+        update: (id: string, body: Partial<WebhookInput> & { enabled?: boolean }) =>
+          patch<Webhook>(p(`/webhooks/${id}`), body),
+        remove: (id: string) => del(p(`/webhooks/${id}`)),
+        rotateSecret: (id: string) =>
+          post<Webhook & { secret: string }>(p(`/webhooks/${id}/secret`), {}),
+        ping: (id: string) => post<{ deliveryId: string }>(p(`/webhooks/${id}/ping`), {}),
+        deliveries: (id: string, params?: ListParams) =>
+          get<Page<WebhookDelivery>>(p(`/webhooks/${id}/deliveries`), toQuery(params)),
+        redeliver: (id: string, deliveryId: string) =>
+          post<{ deliveryId: string }>(p(`/webhooks/${id}/deliveries/${deliveryId}/retry`), {}),
       },
       notifications: {
         list: (params: ListParams & { unread?: boolean } = {}) =>
