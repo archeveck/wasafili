@@ -85,7 +85,7 @@ export function inspectionEquipement(options: { listId: string }): StructureDefi
             type: 'textarea',
             label: 'Description du défaut',
             maxLength: 2000,
-            visibleIf: { '!=': [{ var: 'etat' }, 'bon'] },
+            visibleIf: { in: [{ var: 'etat' }, ['degrade', 'hors_service']] },
             requiredIf: { '==': [{ var: 'etat' }, 'hors_service'] },
           },
           {
@@ -96,7 +96,7 @@ export function inspectionEquipement(options: { listId: string }): StructureDefi
             maxCount: 5,
             quality: 0.7,
             allowAnnotation: true,
-            requiredIf: { '!=': [{ var: 'etat' }, 'bon'] },
+            requiredIf: { in: [{ var: 'etat' }, ['degrade', 'hors_service']] },
           },
           {
             id: 'f-position',
@@ -112,7 +112,7 @@ export function inspectionEquipement(options: { listId: string }): StructureDefi
         key: 'pieces',
         type: 'table',
         label: 'Pièces à remplacer',
-        visibleIf: { '!=': [{ var: 'etat' }, 'bon'] },
+        visibleIf: { in: [{ var: 'etat' }, ['degrade', 'hors_service']] },
         maxRows: 20,
         fields: [
           { id: 'f-piece-ref', key: 'reference', type: 'text', label: 'Référence', required: true },
@@ -152,7 +152,7 @@ export function inspectionEquipement(options: { listId: string }): StructureDefi
         formula: 'SOMME({pieces.montant})',
         resultType: 'number',
         decimals: 0,
-        visibleIf: { '!=': [{ var: 'etat' }, 'bon'] },
+        visibleIf: { in: [{ var: 'etat' }, ['degrade', 'hors_service']] },
       },
       {
         id: 'f-signature',
