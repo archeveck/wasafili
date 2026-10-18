@@ -1,5 +1,11 @@
-/** File unique ; les jobs se distinguent par leur nom. Files dédiées si besoin (Phase 5). */
+/** File des relais du worker ; les jobs se distinguent par leur nom. */
 export const QUEUE_NAME = 'tesserax';
+
+/**
+ * File des exécutions d'automatisations, consommée par l'API : les actions (mise à jour de
+ * champ, tâche, notification) passent par ses services métier (ADR 0009).
+ */
+export const AUTOMATION_QUEUE_NAME = 'tesserax-automations';
 
 /**
  * Préfixe des clés Redis par défaut. Un environnement (tests, préproduction) qui partage un
@@ -23,10 +29,44 @@ export interface PushJob {
   notificationIds: string[];
 }
 
+/** Envoi SMTP d'un e-mail du journal d'envoi (P5.2). */
+export interface EmailJob {
+  instanceId: string;
+  emailId: string;
+}
+
+/** Livraison signée d'un événement à un webhook (P5.4). */
+export interface WebhookJob {
+  instanceId: string;
+  deliveryId: string;
+}
+
 export interface JobPayloads {
   thumbnail: ThumbnailJob;
   push: PushJob;
+  email: EmailJob;
+  webhook: WebhookJob;
 }
+
+/** Tentatives d'un e-mail (backoff exponentiel depuis 30 s : ≈ 15 min au total). */
+export const EMAIL_ATTEMPTS = 5;
+export const EMAIL_BACKOFF_MS = 30_000;
+/** Tentatives d'une livraison de webhook (backoff exponentiel depuis 10 s : ≈ 40 min). */
+export const WEBHOOK_ATTEMPTS = 8;
+export const WEBHOOK_BACKOFF_MS = 10_000;
+
+/** Exécution d'une automatisation déclenchée par un événement, ou tick d'un déclencheur planifié. */
+export type AutomationJob =
+  | { kind: 'run'; instanceId: string; runId: string }
+  | { kind: 'schedule'; instanceId: string; automationId: string };
+
+/**
+ * Signature d'un webhook : `X-Tesserax-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
+ * `<horodatage>.<corps>` (horodatage en secondes, `X-Tesserax-Timestamp`). Le destinataire
+ * recalcule la signature et refuse un horodatage trop ancien (rejeu).
+ */
+export const WEBHOOK_SIGNATURE_HEADER = 'x-tesserax-signature';
+export const WEBHOOK_TIMESTAMP_HEADER = 'x-tesserax-timestamp';
 
 export type JobName = keyof JobPayloads;
 

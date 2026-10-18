@@ -15,6 +15,13 @@ const envSchema = z.object({
   /** Service Expo Push (remplaçable par un relais) et jeton d'accès facultatif. */
   EXPO_PUSH_URL: z.url().default('https://exp.host/--/api/v2/push/send'),
   EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
+  /** Relais SMTP (D5), ex. `smtp://localhost:1025` (Mailpit). Absent : e-mails en échec expliqué. */
+  SMTP_URL: z.url().optional(),
+  MAIL_FROM: z.string().min(3).default('Tesserax <no-reply@tesserax.local>'),
+  /** Webhooks vers des adresses privées (réseau interne, n8n local) : désactivé = garde SSRF. */
+  WEBHOOK_ALLOW_PRIVATE: z.stringbool().default(false),
+  /** Livraisons échouées d'affilée avant désactivation d'un webhook. */
+  WEBHOOK_DISABLE_AFTER: z.coerce.number().int().min(1).default(5),
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;

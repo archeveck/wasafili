@@ -2,11 +2,14 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { type JobName, type JobPayloads, QUEUE_NAME } from '@tesserax/jobs';
 import { type Job, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
+import nodemailer from 'nodemailer';
 import pg from 'pg';
 import { pino } from 'pino';
 import { loadEnv } from './env.js';
+import { processEmail } from './email.js';
 import { processPush } from './push.js';
 import { processThumbnail } from './thumbnail.js';
+import { httpSender, processWebhook } from './webhook.js';
 
 const env = loadEnv();
 const logger = pino({ level: env.LOG_LEVEL, base: { service: 'worker' } });
@@ -19,7 +22,13 @@ const s3 = new S3Client({
   credentials: { accessKeyId: env.S3_ACCESS_KEY, secretAccessKey: env.S3_SECRET_KEY },
 });
 
-type Handlers = { [N in JobName]: (payload: JobPayloads[N]) => Promise<void> };
+const mailer = env.SMTP_URL ? nodemailer.createTransport(env.SMTP_URL) : undefined;
+const sendWebhook = httpSender(env.WEBHOOK_ALLOW_PRIVATE);
+
+type Handlers = { [N in JobName]: (payload: JobPayloads[N], job: Job) => Promise<void> };
+
+/** Dernière tentative du job : un échec devient définitif. */
+const isFinal = (job: Job) => job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
 
 const handlers: Handlers = {
   thumbnail: (payload) => processThumbnail(payload, { s3, bucket: env.S3_BUCKET, db }),
@@ -32,6 +41,24 @@ const handlers: Handlers = {
     });
     logger.info({ sent }, 'push envoyés');
   },
+  email: async (payload, job) => {
+    await processEmail(payload, {
+      db,
+      s3,
+      bucket: env.S3_BUCKET,
+      mailer,
+      from: env.MAIL_FROM,
+      final: isFinal(job),
+    });
+  },
+  webhook: async (payload, job) => {
+    await processWebhook(payload, {
+      db,
+      send: sendWebhook,
+      disableAfter: env.WEBHOOK_DISABLE_AFTER,
+      final: isFinal(job),
+    });
+  },
 };
 
 const worker = new Worker(
@@ -39,7 +66,7 @@ const worker = new Worker(
   async (job: Job) => {
     const handler = handlers[job.name as JobName];
     if (!handler) throw new Error(`Job inconnu : ${job.name}`);
-    await handler(job.data);
+    await handler(job.data, job);
   },
   { connection, concurrency: 4, prefix: env.QUEUE_PREFIX },
 );
