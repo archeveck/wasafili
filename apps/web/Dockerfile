@@ -6,13 +6,11 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
-COPY packages/i18n/package.json packages/i18n/
-COPY packages/ui/package.json packages/ui/
+COPY packages packages
 RUN pnpm install --frozen-lockfile --filter @tesserax/web...
 COPY tsconfig.base.json ./
-COPY packages/i18n packages/i18n
-COPY packages/ui packages/ui
 COPY apps/web apps/web
+# Paquets partagés (form-schema, form-engine, sdk…) puis le back-office.
 RUN pnpm --filter @tesserax/web... build
 
 FROM nginx:1.29-alpine

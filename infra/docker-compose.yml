@@ -140,6 +140,8 @@ services:
   web:
     profiles: [full]
     build: { context: .., dockerfile: apps/web/Dockerfile }
+    depends_on:
+      api: { condition: service_healthy }
     labels:
       - traefik.enable=true
       - traefik.http.routers.web.rule=Host(`app.localhost`)
