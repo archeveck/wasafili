@@ -1,2 +1,2 @@
-// Implémentation prévue dans une phase ultérieure (voir TASKS.md).
-export {};
+export * from './client.js';
+export * from './types.js';
