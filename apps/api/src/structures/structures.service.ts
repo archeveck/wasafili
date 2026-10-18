@@ -167,6 +167,8 @@ export class StructuresService {
         where: { structureId: id, status: 'PUBLISHED' },
         data: { status: 'ARCHIVED' },
       });
+      // Touche la structure : son sync_txid avance, les mobiles reçoivent la nouvelle définition.
+      await tx.structure.update({ where: { id }, data: { updatedAt: new Date() } });
       return tx.structureVersion.update({
         where: { id: draft.id },
         data: { status: 'PUBLISHED', publishedAt: new Date() },

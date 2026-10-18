@@ -22,10 +22,11 @@ import { type Actor } from '../auth/decorators';
 import { pageArgs, type Pagination, toPage } from '../common/pagination';
 import { type Instance, Prisma, type Submission } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { type TransactionClient } from '../prisma/tenant';
 import { EngineCache } from '../structures/engine-cache';
 import { StructuresService } from '../structures/structures.service';
 import { writeSpreadsheet, type SpreadsheetFormat } from '../lists/spreadsheet';
-import { diffData, jsonEqual } from './diff';
+import { diffData, type FieldChange, jsonEqual } from './diff';
 import { exportColumns, formatCell, referencedIds } from './export';
 import { filterableFields, filterSql, type Filter, orderSql } from './query';
 
@@ -45,6 +46,8 @@ export interface CreateSubmissionInput {
 export interface UpdateSubmissionInput {
   data: SubmissionData;
   clientMutationId?: string;
+  /** Révision sur laquelle le client a fondé sa modification (détection des conflits). */
+  baseRevision?: number;
 }
 
 export interface ListSubmissionsInput extends Pagination {
@@ -179,6 +182,72 @@ export class SubmissionsService {
     return writeSpreadsheet(format, { headers: [...new Set(headers)], rows: table });
   }
 
+  /**
+   * Condition SQL (alias `s`) des fiches d'une structure lisibles par l'appelant, fiches
+   * supprimées comprises (tombstones de synchronisation) ; `null` sans droit de lecture.
+   */
+  async readCondition(structureId: string, actor: Actor): Promise<Prisma.Sql | null> {
+    const rights = await this.access.effective(structureId, actor);
+    const scope = rights.permissions.has('read:all')
+      ? 'all'
+      : rights.permissions.has('read:own') && actor.userId
+        ? 'own'
+        : undefined;
+    if (!scope) return null;
+    const version = await this.structures.currentVersion(structureId);
+    const parts = [
+      Prisma.sql`s.structure_id = ${structureId}::uuid`,
+      this.access.visibilitySql(
+        rights,
+        actor,
+        version?.definition as StructureDefinition | undefined,
+      ),
+    ];
+    if (scope === 'own') parts.push(Prisma.sql`s.author_id = ${actor.userId}::uuid`);
+    return Prisma.sql`(${Prisma.join(parts, ' AND ')})`;
+  }
+
+  /** Conflits d'une fiche (P3.7), non résolus d'abord. */
+  async conflicts(id: string, actor: Actor) {
+    await this.findVisible(id, actor);
+    return this.prisma.db.submissionConflict.findMany({
+      where: { submissionId: id },
+      orderBy: [{ resolvedAt: { sort: 'desc', nulls: 'first' } }, { createdAt: 'desc' }],
+    });
+  }
+
+  /**
+   * Résolution manuelle d'un conflit : conserver la valeur appliquée, ou rétablir la valeur
+   * écrasée (nouvelle révision, tracée dans l'historique).
+   */
+  async resolveConflict(
+    instance: Instance,
+    id: string,
+    conflictId: string,
+    actor: Actor,
+    resolution: 'kept' | 'restored',
+  ) {
+    const conflict = await this.prisma.db.submissionConflict.findFirst({
+      where: { id: conflictId, submissionId: id },
+    });
+    if (!conflict)
+      throw new NotFoundException({ error: 'not_found', message: 'Conflit introuvable' });
+    if (conflict.resolvedAt) {
+      throw new ConflictException({ error: 'conflict', message: 'Conflit déjà résolu' });
+    }
+    if (resolution === 'restored') {
+      const value = (conflict.overwrittenValue as { value: unknown }).value;
+      await this.update(instance, id, actor, { data: { [conflict.field]: value } });
+    } else {
+      const { rights } = await this.findVisible(id, actor);
+      this.require(rights, 'update');
+    }
+    return this.prisma.db.submissionConflict.update({
+      where: { id: conflictId },
+      data: { resolution, resolvedAt: new Date(), resolvedById: actor.userId },
+    });
+  }
+
   /** Conditions SQL communes à la liste et à l'export : périmètre, visibilité, filtres. */
   private async query(
     structureId: string,
@@ -294,91 +363,116 @@ export class SubmissionsService {
   /**
    * Modification partielle : seuls les champs fournis changent, les calculs sont refaits et la
    * fiche complète est revalidée contre sa version d'origine.
+   *
+   * Concurrence (D9) : les écritures sur une fiche sont sérialisées par un verrou de ligne. Si
+   * `baseRevision` est antérieure à la révision courante, chaque champ fourni qui a aussi été
+   * modifié depuis est un conflit : la dernière écriture reçue gagne et la valeur écrasée est
+   * enregistrée (`SubmissionConflict`). Des champs différents fusionnent sans conflit.
    */
   async update(instance: Instance, id: string, actor: Actor, input: UpdateSubmissionInput) {
     const replay = await this.replay(instance.id, input.clientMutationId, actor);
-    if (replay && replay !== 'applied') return { replayed: true, submission: replay };
+    if (replay && replay !== 'applied')
+      return { replayed: true, submission: replay, conflicts: [] };
 
-    const { submission: current, rights } = await this.findVisible(id, actor);
+    const { rights } = await this.findVisible(id, actor);
     this.require(rights, 'update');
-    const version = await this.prisma.db.structureVersion.findUniqueOrThrow({
-      where: { id: current.structureVersionId },
-    });
-    const definition = version.definition as StructureDefinition;
-    const engine = this.engines.get(version);
-    const context = this.context(instance, actor, current.state);
-    const before = current.data as SubmissionData;
-    const incoming = stripServerOwned(definition, input.data);
 
-    const state = engine.evaluate(before, context);
-    const readOnly = Object.keys(incoming).filter(
-      (key) => state.fields[key]?.readOnly && !jsonEqual(incoming[key], before[key]),
-    );
-    if (readOnly.length > 0) {
-      throw new UnprocessableEntityException({
-        error: 'invalid_data',
-        message: 'Données de fiche invalides',
-        details: readOnly.map((key) => ({ path: [key], field: key, code: 'read_only' })),
+    const conflicts = await this.prisma.transaction(async (tx) => {
+      const current = await this.lock(tx, id);
+      const version = await tx.structureVersion.findUniqueOrThrow({
+        where: { id: current.structureVersionId },
       });
-    }
+      const definition = version.definition as StructureDefinition;
+      const engine = this.engines.get(version);
+      const context = this.context(instance, actor, current.state);
+      const before = current.data as SubmissionData;
+      const incoming = stripServerOwned(definition, input.data);
 
-    const data = engine.applyDefaults({ ...before, ...incoming }, context, { isNew: false });
-    const values = this.validated(engine, data, context);
-    const updatedStamps = new Set(
-      [...walkFields(definition.fields)]
-        .filter(
-          ({ field, table }) => !table && field.type === 'timestamp' && field.mode === 'updated',
-        )
-        .map(({ field }) => field.key),
-    );
-    const changes = diffData(before, values);
-    if (changes.every((change) => updatedStamps.has(change.field))) {
-      return { replayed: false, submission: this.toDto(current) };
-    }
-
-    await this.prisma.transaction(async (tx) => {
-      // Verrou optimiste : une modification concurrente impose de relire la fiche.
-      const { count } = await tx.submission.updateMany({
-        where: { id, revision: current.revision },
-        data: { data: values as Prisma.InputJsonValue, revision: current.revision + 1 },
-      });
-      if (count === 0) {
-        throw new ConflictException({
-          error: 'concurrent_update',
-          message: 'La fiche a été modifiée entre-temps : rechargez-la',
+      const state = engine.evaluate(before, context);
+      const readOnly = Object.keys(incoming).filter(
+        (key) => state.fields[key]?.readOnly && !jsonEqual(incoming[key], before[key]),
+      );
+      if (readOnly.length > 0) {
+        throw new UnprocessableEntityException({
+          error: 'invalid_data',
+          message: 'Données de fiche invalides',
+          details: readOnly.map((key) => ({ path: [key], field: key, code: 'read_only' })),
         });
       }
+
+      const data = engine.applyDefaults({ ...before, ...incoming }, context, { isNew: false });
+      const values = this.validated(engine, data, context);
+      const updatedStamps = new Set(
+        [...walkFields(definition.fields)]
+          .filter(
+            ({ field, table }) => !table && field.type === 'timestamp' && field.mode === 'updated',
+          )
+          .map(({ field }) => field.key),
+      );
+      const changes = diffData(before, values);
+      if (changes.every((change) => updatedStamps.has(change.field))) return [];
+
+      let conflicting: string[] = [];
+      if (input.baseRevision !== undefined && input.baseRevision < current.revision) {
+        const later = await tx.submissionRevision.findMany({
+          where: { submissionId: id, revision: { gt: input.baseRevision } },
+          select: { changes: true },
+        });
+        const touched = new Set(
+          later.flatMap((r) => (r.changes as unknown as FieldChange[]).map((c) => c.field)),
+        );
+        conflicting = Object.keys(incoming).filter(
+          (key) => touched.has(key) && !jsonEqual(incoming[key], before[key]),
+        );
+      }
+
+      const revision = current.revision + 1;
+      await tx.submission.update({
+        where: { id },
+        data: { data: values as Prisma.InputJsonValue, revision },
+      });
       await tx.submissionRevision.create({
         data: {
           instanceId: instance.id,
           submissionId: id,
-          revision: current.revision + 1,
+          revision,
           action: 'update',
           authorId: actor.userId,
           clientMutationId: input.clientMutationId ?? null,
           changes: changes as unknown as Prisma.InputJsonValue,
         },
       });
+      if (conflicting.length > 0) {
+        await tx.submissionConflict.createMany({
+          data: conflicting.map((field) => ({
+            instanceId: instance.id,
+            submissionId: id,
+            field,
+            baseRevision: input.baseRevision!,
+            appliedRevision: revision,
+            appliedValue: { value: values[field] ?? null } as Prisma.InputJsonValue,
+            overwrittenValue: { value: before[field] ?? null } as Prisma.InputJsonValue,
+            clientMutationId: input.clientMutationId ?? null,
+            authorId: actor.userId,
+          })),
+        });
+      }
+      return conflicting;
     });
-    return { replayed: false, submission: await this.get(id, actor) };
+    return { replayed: false, submission: await this.get(id, actor), conflicts };
   }
 
   /** Suppression logique, tracée dans l'historique. */
   async remove(instance: Instance, id: string, actor: Actor, clientMutationId?: string) {
     if ((await this.replay(instance.id, clientMutationId, actor)) === 'applied') return;
-    const { submission: current, rights } = await this.findVisible(id, actor);
+    const { rights } = await this.findVisible(id, actor);
     this.require(rights, 'delete');
     await this.prisma.transaction(async (tx) => {
-      const { count } = await tx.submission.updateMany({
-        where: { id, revision: current.revision },
+      const current = await this.lock(tx, id);
+      await tx.submission.update({
+        where: { id },
         data: { deletedAt: new Date(), revision: current.revision + 1 },
       });
-      if (count === 0) {
-        throw new ConflictException({
-          error: 'concurrent_update',
-          message: 'La fiche a été modifiée entre-temps : rechargez-la',
-        });
-      }
       await tx.submissionRevision.create({
         data: {
           instanceId: instance.id,
@@ -391,6 +485,14 @@ export class SubmissionsService {
         },
       });
     });
+  }
+
+  /** Verrouille la fiche pour la transaction (écritures sérialisées) ; 404 si supprimée. */
+  private async lock(tx: TransactionClient, id: string) {
+    await tx.$queryRaw`SELECT id FROM submissions WHERE id = ${id}::uuid FOR UPDATE`;
+    const current = await tx.submission.findUnique({ where: { id } });
+    if (!current || current.deletedAt) throw new NotFoundException(NOT_FOUND);
+    return current;
   }
 
   async revisions(id: string, actor: Actor, pagination: Pagination) {
@@ -503,7 +605,7 @@ export class SubmissionsService {
     return result.state.values;
   }
 
-  private toDto(submission: SubmissionWithVersion) {
+  toDto(submission: SubmissionWithVersion) {
     return {
       id: submission.id,
       structureId: submission.structureId,

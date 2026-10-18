@@ -43,6 +43,7 @@ model Instance {
   listItems    ListItem[]
   accesses     StructureAccess[]
   files        File[]
+  conflicts    SubmissionConflict[]
 
   @@map("instances")
 }
@@ -183,13 +184,15 @@ model RefreshToken {
 
 /// Structure (formulaire). Sa définition vit dans des versions immuables une fois publiées.
 model Structure {
-  id          String    @id @default(uuid()) @db.Uuid
-  instanceId  String    @map("instance_id") @db.Uuid
+  id          String              @id @default(uuid()) @db.Uuid
+  /// Transaction de la dernière écriture (curseur de synchronisation, ADR 0007).
+  syncTxid    Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId  String              @map("instance_id") @db.Uuid
   name        String
   description String?
-  archivedAt  DateTime? @map("archived_at") @db.Timestamptz(3)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  archivedAt  DateTime?           @map("archived_at") @db.Timestamptz(3)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   instance    Instance           @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   versions    StructureVersion[]
@@ -231,30 +234,33 @@ model StructureVersion {
 
 /// Fiche : saisie d'une version de structure. `id` peut être généré par le client (hors ligne).
 model Submission {
-  id                 String    @id @default(uuid()) @db.Uuid
-  instanceId         String    @map("instance_id") @db.Uuid
-  structureId        String    @map("structure_id") @db.Uuid
-  structureVersionId String    @map("structure_version_id") @db.Uuid
+  id                 String              @id @default(uuid()) @db.Uuid
+  /// Transaction de la dernière écriture (curseur de synchronisation, ADR 0007).
+  syncTxid           Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId         String              @map("instance_id") @db.Uuid
+  structureId        String              @map("structure_id") @db.Uuid
+  structureVersionId String              @map("structure_version_id") @db.Uuid
   /// Données validées par la version de structure (JSONB, index GIN).
   data               Json
   /// État de workflow (Phase 4) ; null sans workflow.
   state              String?
   /// Auteur ; null pour une fiche créée par un client d'intégration.
-  authorId           String?   @map("author_id") @db.Uuid
+  authorId           String?             @map("author_id") @db.Uuid
   /// Incrémenté à chaque modification ; sert de base aux mutations hors ligne (D9).
-  revision           Int       @default(1)
+  revision           Int                 @default(1)
   latitude           Float?
   longitude          Float?
   accuracy           Float?
-  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   instance  Instance             @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   structure Structure            @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
   version   StructureVersion     @relation(fields: [structureVersionId, instanceId], references: [id, instanceId], onDelete: NoAction)
   author    User?                @relation(fields: [authorId], references: [id], onDelete: SetNull)
   revisions SubmissionRevision[]
+  conflicts SubmissionConflict[]
 
   @@unique([id, instanceId])
   @@index([instanceId, structureId, createdAt])
@@ -288,14 +294,16 @@ model SubmissionRevision {
 
 /// Référentiel hiérarchique (ex. Site > Bâtiment > Équipement).
 model List {
-  id          String   @id @default(uuid()) @db.Uuid
-  instanceId  String   @map("instance_id") @db.Uuid
+  id          String              @id @default(uuid()) @db.Uuid
+  /// Transaction de la dernière écriture (curseur de synchronisation, ADR 0007).
+  syncTxid    Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId  String              @map("instance_id") @db.Uuid
   name        String
   description String?
   /// Libellés des niveaux, de la racine aux feuilles.
   levels      String[]
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   instance Instance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   items    ListItem[]
@@ -306,21 +314,23 @@ model List {
 }
 
 model ListItem {
-  id         String    @id @default(uuid()) @db.Uuid
-  instanceId String    @map("instance_id") @db.Uuid
-  listId     String    @map("list_id") @db.Uuid
-  parentId   String?   @map("parent_id") @db.Uuid
+  id         String              @id @default(uuid()) @db.Uuid
+  /// Transaction de la dernière écriture (curseur de synchronisation, ADR 0007).
+  syncTxid   Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId String              @map("instance_id") @db.Uuid
+  listId     String              @map("list_id") @db.Uuid
+  parentId   String?             @map("parent_id") @db.Uuid
   /// Profondeur (0 = racine) ; égale à celle du parent + 1.
   level      Int
   /// Code métier unique dans la liste (QR code, import) ; facultatif.
   code       String?
   label      String
-  attributes Json      @default("{}")
-  position   Int       @default(0)
+  attributes Json                @default("{}")
+  position   Int                 @default(0)
   /// Un élément utilisé par des fiches n'est jamais supprimé, seulement archivé.
-  archivedAt DateTime? @map("archived_at") @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  archivedAt DateTime?           @map("archived_at") @db.Timestamptz(3)
+  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   instance Instance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   list     List       @relation(fields: [listId, instanceId], references: [id, instanceId], onDelete: Cascade)
@@ -386,4 +396,38 @@ model File {
 
   @@unique([id, instanceId])
   @@map("files")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 — synchronisation hors ligne
+// ---------------------------------------------------------------------------
+
+/// Conflit de modification sur un champ (D9) : deux écritures concurrentes depuis la même
+/// révision. La dernière reçue par le serveur gagne ; la valeur écrasée est conservée ici.
+model SubmissionConflict {
+  id               String    @id @default(uuid()) @db.Uuid
+  instanceId       String    @map("instance_id") @db.Uuid
+  submissionId     String    @map("submission_id") @db.Uuid
+  field            String
+  /// Révision sur laquelle le client a fondé sa modification.
+  baseRevision     Int       @map("base_revision")
+  /// Révision créée par l'écriture gagnante.
+  appliedRevision  Int       @map("applied_revision")
+  /// `{ "value": … }` : valeur appliquée (gagnante).
+  appliedValue     Json      @map("applied_value")
+  /// `{ "value": … }` : valeur écrasée (écriture concurrente perdue).
+  overwrittenValue Json      @map("overwritten_value")
+  clientMutationId String?   @map("client_mutation_id")
+  authorId         String?   @map("author_id") @db.Uuid
+  /// `kept` (valeur appliquée conservée) ou `restored` (valeur écrasée rétablie).
+  resolution       String?
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz(3)
+  resolvedById     String?   @map("resolved_by_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  instance   Instance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  submission Submission @relation(fields: [submissionId, instanceId], references: [id, instanceId], onDelete: Cascade)
+
+  @@index([instanceId, submissionId])
+  @@map("submission_conflicts")
 }

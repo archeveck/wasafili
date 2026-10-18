@@ -37,6 +37,7 @@ const createSchema = z.object({
 const updateSchema = z.object({
   data: z.record(z.string(), z.unknown()),
   clientMutationId: mutationId.optional(),
+  baseRevision: z.number().int().min(1).optional(),
 });
 const listSchema = paginationSchema.extend({
   sort: z.string().max(100).optional(),
@@ -44,6 +45,7 @@ const listSchema = paginationSchema.extend({
   author_id: z.uuid().optional(),
 });
 const deleteSchema = z.object({ client_mutation_id: mutationId.optional() });
+const resolveSchema = z.object({ resolution: z.enum(['kept', 'restored']) });
 
 const exportSchema = listSchema.omit({ page: true, per_page: true }).extend({
   format: z.enum(['csv', 'xlsx']).default('xlsx'),
@@ -129,6 +131,23 @@ export class SubmissionsController {
     @Query(new ZodValidationPipe(deleteSchema)) query: z.infer<typeof deleteSchema>,
   ) {
     return this.submissions.remove(instance, id, actor, query.client_mutation_id);
+  }
+
+  @Get('submissions/:id/conflicts')
+  async conflicts(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
+    return { data: await this.submissions.conflicts(id, actor) };
+  }
+
+  @Post('submissions/:id/conflicts/:conflictId/resolve')
+  @HttpCode(200)
+  resolveConflict(
+    @CurrentInstance() instance: Instance,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('conflictId', ParseUUIDPipe) conflictId: string,
+    @CurrentActor() actor: Actor,
+    @Body(new ZodValidationPipe(resolveSchema)) body: z.infer<typeof resolveSchema>,
+  ) {
+    return this.submissions.resolveConflict(instance, id, conflictId, actor, body.resolution);
   }
 
   @Get('submissions/:id/revisions')
