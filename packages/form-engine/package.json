@@ -17,6 +17,14 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vitest run"
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@tesserax/form-schema": "workspace:*",
+    "json-logic-js": "^2.0.5"
+  },
+  "devDependencies": {
+    "@types/json-logic-js": "^2.0.8",
+    "@vitest/coverage-v8": "^4.1.12"
   }
 }
