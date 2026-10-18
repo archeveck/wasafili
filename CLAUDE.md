@@ -1,3 +1,53 @@
+# Tesserax — conventions du dépôt
+
+Plateforme no-code de collecte de données terrain (back-office web + mobile hors ligne).
+Spécification : [PROMPT_claude_code_clone_daxium.md](PROMPT_claude_code_clone_daxium.md).
+Découpage et décisions (D1–D14) : [TASKS.md](TASKS.md) — cocher les tâches au fil de l'eau.
+Décisions structurantes : [docs/adr/](docs/adr/).
+
+## Commandes
+
+```bash
+pnpm install                 # dépendances (Node >= 24, pnpm 10)
+cp .env.example .env         # configuration locale
+pnpm infra:up                # postgres, redis, minio (+ bucket), gotenberg, mailpit
+pnpm db:migrate              # migrations Prisma (rôle propriétaire) — dev
+pnpm db:seed                 # instance « demo » + 3 utilisateurs
+pnpm dev                     # api (:3000), web (:5173), worker
+pnpm lint && pnpm typecheck && pnpm test   # vérifications rapides (sans base)
+pnpm test:integration        # tests API contre la base tesserax_test (infra requise)
+docker compose -f infra/docker-compose.yml --profile full up -d --build   # stack complète
+```
+
+## Structure
+
+- `apps/api` — NestJS 12 + Prisma 7 (adaptateur `pg`). Client généré dans `src/generated/`
+  (non versionné, `prisma generate`). Tests : `src/**/*.test.ts` (unitaires),
+  `test/**/*.e2e.test.ts` (intégration, base réelle, fichiers exécutés en série).
+- `apps/web` — Vite + React (back-office, Phase 2). `apps/worker` — BullMQ. `apps/mobile` — Expo (Phase 3).
+- `packages/*` — ESM, compilés vers `dist/` (`turbo` construit les dépendances avant
+  typecheck/test). `form-schema` et `form-engine` : zéro dépendance Node/DOM (Hermes).
+
+## Règles
+
+- **Multi-tenant (ADR 0001)** : toute table métier porte `instance_id`, active et force la RLS
+  avec la policy `tenant_isolation` dans sa migration, et référence les autres tables d'instance
+  par FK composite `(id, instance_id)`. Le test générique de `rls.e2e.test.ts` échoue sinon.
+- Accès base **uniquement** via `PrismaService.db` (contexte RLS automatique) ou
+  `PrismaService.transaction()`. Hors requête HTTP : `runWithContext()`. Ne jamais sortir
+  d'un contexte une requête Prisma non attendue (elles sont paresseuses).
+- Routes d'instance : `@Controller(':app/…')` + `@Can('permission')`. Les guards globaux
+  (JWT → instance → permission) résolvent l'instance, vérifient l'adhésion et posent le contexte.
+  Routes sans jeton : `@Public()`.
+- Validation des entrées : `ZodValidationPipe` (Zod 4). Erreurs : `{ statusCode, error, message,
+  details? }` ; codes `error` en snake_case.
+- API : préfixe `/v1`, attributs JSON en camelCase, pagination `page`/`per_page` →
+  `{ data, meta: { page, perPage, total, totalPages } }`, `fields=` géré globalement.
+- UI et messages en français ; textes partagés dans `packages/i18n` (fr/en, clés identiques).
+  Dates stockées en UTC (`timestamptz`), affichées en `Africa/Abidjan` par défaut (D14).
+- Commits conventionnels (commitlint), petits et atomiques ; tests verts avant de clore une tâche.
+- Nouvelle dépendance lourde ou décision structurante → ADR dans `docs/adr/`.
+
 <!-- rtk-instructions v2 -->
 # RTK (Rust Token Killer) - Token-Optimized Commands
 

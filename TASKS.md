@@ -41,55 +41,55 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 ## Phase 0 — Socle
 
 **P0.1 Monorepo & outillage**
-- [ ] P0.1.1 Init pnpm workspace + Turborepo (`apps/*`, `packages/*`), Node LTS épinglé (`.nvmrc`, `packageManager`)
-- [ ] P0.1.2 TypeScript base (`tsconfig.base.json`, strict), alias de paquets
-- [ ] P0.1.3 ESLint + Prettier (config partagée), lint-staged + husky, commitlint (commits conventionnels)
-- [ ] P0.1.4 Vitest configuré au niveau racine (preset partagé)
-- [ ] P0.1.5 Squelettes vides : `apps/api`, `apps/web`, `apps/mobile`, `apps/worker`, `packages/{form-schema,form-engine,form-renderer,sdk,ui}`
+- [x] P0.1.1 Init pnpm workspace + Turborepo (`apps/*`, `packages/*`), Node LTS épinglé (`.nvmrc`, `packageManager`)
+- [x] P0.1.2 TypeScript base (`tsconfig.base.json`, strict), alias de paquets
+- [x] P0.1.3 ESLint + Prettier (config partagée), lint-staged + husky, commitlint (commits conventionnels)
+- [x] P0.1.4 Vitest configuré au niveau racine (preset partagé)
+- [x] P0.1.5 Squelettes vides : `apps/api`, `apps/web`, `apps/mobile`, `apps/worker`, `packages/{form-schema,form-engine,form-renderer,sdk,ui}`
 - Fini quand : `pnpm lint && pnpm typecheck && pnpm test` passe sur le monorepo vide.
 
 **P0.2 Infra de dev**
-- [ ] P0.2.1 `infra/docker-compose.yml` : postgres 16, redis, minio (+ bucket init), gotenberg, mailpit
-- [ ] P0.2.2 Services applicatifs api/worker/web + traefik (profil `full`)
-- [ ] P0.2.3 `.env.example` documenté, validation des variables d'env au démarrage (Zod)
+- [x] P0.2.1 `infra/docker-compose.yml` : postgres 16, redis, minio (+ bucket init), gotenberg, mailpit
+- [x] P0.2.2 Services applicatifs api/worker/web + traefik (profil `full`)
+- [x] P0.2.3 `.env.example` documenté, validation des variables d'env au démarrage (Zod)
 - Fini quand : `docker compose up` démarre l'infra, healthchecks verts.
 
 **P0.3 CI GitHub Actions**
-- [ ] P0.3.1 Workflow lint + typecheck + tests unitaires (cache pnpm/turbo)
-- [ ] P0.3.2 Job tests d'intégration API avec service Postgres
-- [ ] P0.3.3 Build des images Docker (sans push)
+- [x] P0.3.1 Workflow lint + typecheck + tests unitaires (cache pnpm/turbo)
+- [x] P0.3.2 Job tests d'intégration API avec service Postgres
+- [x] P0.3.3 Build des images Docker (sans push)
 
 **P0.4 API NestJS + Prisma**
-- [ ] P0.4.1 Bootstrap NestJS (config, logger structuré pino, filtre d'erreurs, validation Zod des DTO)
-- [ ] P0.4.2 Prisma : schéma initial (`Instance`, `User`, `Membership`, `Role`, `Group`, `RefreshToken`), migrations
-- [ ] P0.4.3 Endpoint `/health` (DB + Redis)
-- [ ] P0.4.4 Préfixe `/v1`, convention pagination `page`/`per_page`, paramètre `fields=` (intercepteur réutilisable)
+- [x] P0.4.1 Bootstrap NestJS (config, logger structuré pino, filtre d'erreurs, validation Zod des DTO)
+- [x] P0.4.2 Prisma : schéma initial (`Instance`, `User`, `Membership`, `Role`, `Group`, `RefreshToken`), migrations
+- [x] P0.4.3 Endpoint `/health` (DB + Redis)
+- [x] P0.4.4 Préfixe `/v1`, convention pagination `page`/`per_page`, paramètre `fields=` (intercepteur réutilisable)
 
 **P0.5 Auth OAuth2 maison** — *ADR auth*
-- [ ] P0.5.1 Hash argon2, création/connexion utilisateur
-- [ ] P0.5.2 `POST /oauth/token` grant `password` → JWT court (15 min) + refresh token
-- [ ] P0.5.3 Grant `refresh_token` avec rotation + détection de réutilisation (révocation de la famille)
-- [ ] P0.5.4 Grant `client_credentials` (clients OAuth par instance, secret haché)
-- [ ] P0.5.5 Guard JWT + décorateurs `@CurrentUser`, `@CurrentInstance`
-- [ ] P0.5.6 Tests : expiration, rotation, réutilisation de refresh, mauvais mot de passe, rate limit basique du login
+- [x] P0.5.1 Hash argon2, création/connexion utilisateur
+- [x] P0.5.2 `POST /oauth/token` grant `password` → JWT court (15 min) + refresh token
+- [x] P0.5.3 Grant `refresh_token` avec rotation + détection de réutilisation (révocation de la famille)
+- [x] P0.5.4 Grant `client_credentials` (clients OAuth par instance, secret haché)
+- [x] P0.5.5 Guard JWT + décorateurs `@CurrentUser`, `@CurrentInstance`
+- [x] P0.5.6 Tests : expiration, rotation, réutilisation de refresh, mauvais mot de passe, rate limit basique du login
 - Fini quand : parcours login → appel protégé → refresh → logout testé en intégration.
 
 **P0.6 Multi-tenant + RLS** — *ADR multi-tenant*
-- [ ] P0.6.1 Colonne `instance_id` sur toutes les tables métier, résolution de l'instance via `/{app}` (`short`)
-- [ ] P0.6.2 Policies RLS PostgreSQL + rôle applicatif sans `BYPASSRLS`
-- [ ] P0.6.3 Extension Prisma posant `app.instance_id` par transaction, `FORCE ROW LEVEL SECURITY`, rôle de migration séparé (D6)
-- [ ] P0.6.4 **Suite de tests d'isolation** : 2 instances, chaque endpoint vérifie l'absence de fuite (lecture, écriture, listing, comptage)
+- [x] P0.6.1 Colonne `instance_id` sur toutes les tables métier, résolution de l'instance via `/{app}` (`short`)
+- [x] P0.6.2 Policies RLS PostgreSQL + rôle applicatif sans `BYPASSRLS`
+- [x] P0.6.3 Extension Prisma posant `app.instance_id` par transaction, `FORCE ROW LEVEL SECURITY`, rôle de migration séparé (D6)
+- [x] P0.6.4 **Suite de tests d'isolation** : 2 instances, chaque endpoint vérifie l'absence de fuite (lecture, écriture, listing, comptage)
 - Fini quand : une requête sans contexte d'instance ne renvoie aucune ligne ; suite d'isolation verte en CI.
 
 **P0.7 RBAC de base**
-- [ ] P0.7.1 Modèle rôles/permissions par instance (`admin`, `superviseur`, `technicien`)
-- [ ] P0.7.2 Guard de permission (`@Can('structure:create')`)
+- [x] P0.7.1 Modèle rôles/permissions par instance (`admin`, `superviseur`, `technicien`)
+- [x] P0.7.2 Guard de permission (`@Can('structure:create')`)
 
 **P0.8 Seed & docs**
-- [ ] P0.8.1 Seed : 1 instance, 3 utilisateurs, 3 rôles
-- [ ] P0.8.2 `CLAUDE.md` racine (conventions, commandes) — fusionner avec le bloc RTK existant
-- [ ] P0.8.3 README + `docs/adr/0001-multi-tenant.md`, `0002-auth.md`
-- [ ] P0.8.4 i18n : choix de la lib (i18next) et structure des fichiers `fr`/`en` partagée web + mobile
+- [x] P0.8.1 Seed : 1 instance, 3 utilisateurs, 3 rôles
+- [x] P0.8.2 `CLAUDE.md` racine (conventions, commandes) — fusionner avec le bloc RTK existant
+- [x] P0.8.3 README + `docs/adr/0001-multi-tenant.md`, `0002-auth.md`
+- [x] P0.8.4 i18n : choix de la lib (i18next) et structure des fichiers `fr`/`en` partagée web + mobile
 
 ---
 
