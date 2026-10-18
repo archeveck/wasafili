@@ -4,9 +4,11 @@ Plateforme no-code de collecte de données terrain : back-office web pour concev
 formulaires (structures), workflows et rapports ; application mobile **100 % hors ligne** pour
 la saisie sur chantier. Conçue pour les PME BTP / maintenance / QHSE en Côte d'Ivoire.
 
-> État : **Phase 0 — Socle** et **Phase 1 — Moteur de formulaires** livrées (structures
-> versionnées, 28 types de champs, conditions et calculs partagés serveur/web/mobile, fiches
-> avec historique, référentiels avec import/export CSV/XLSX). Feuille de route : [TASKS.md](TASKS.md).
+> État : Phases **0 (socle)**, **1 (moteur de formulaires)** et **2 (back-office web)**
+> livrées : designer de formulaires par glisser-déposer avec aperçu mobile, fiches (tableau,
+> filtres, export, historique), référentiels (arbre, import/export), utilisateurs, rôles,
+> groupes, droits par formulaire, personnalisation, fichiers et miniatures.
+> Feuille de route : [TASKS.md](TASKS.md).
 
 ## Démarrage rapide
 
@@ -38,6 +40,25 @@ curl -H 'Host: api.localhost' http://localhost:8080/health
 | Gotenberg                | http://localhost:3001                                      |
 
 Les ports se changent dans `.env` (voir [.env.example](.env.example)).
+
+## Démo du back-office (Phase 2)
+
+Ouvrir http://localhost:5173 (ou http://app.localhost:8080 avec la stack conteneurisée) et se
+connecter avec `admin@tesserax.local` / `Tesserax2026!` :
+
+1. **Formulaires → Nouveau formulaire** : glisser des champs depuis la palette, régler leurs
+   propriétés (validation, valeur par défaut, référentiel en cascade, formule de calcul,
+   conditions « Visible si » / « Obligatoire si »), contrôler le rendu dans **Aperçu mobile**,
+   **Comparer** avec la version publiée, puis **Publier**.
+2. **Fiches** d'un formulaire : tableau trié et filtré côté serveur, export CSV/Excel, saisie
+   d'une nouvelle fiche, détail, modification et **historique champ par champ**.
+3. **Droits** d'un formulaire : règles par rôle ou groupe et filtres de visibilité, par exemple
+   `site = $user.site` combiné à l'attribut `site` d'un membre (page Utilisateurs).
+4. **Référentiels** : arbre Site › Bâtiment › Équipement, recherche, import avec prévisualisation
+   et rapport d'erreurs, export.
+5. **Paramètres** : logo, couleurs (appliquées au back-office), fuseau, menu de l'application mobile.
+
+Test de bout en bout : `pnpm test:e2e` (Playwright ; API locale et base de démo requises).
 
 ## Démo (Phase 0)
 
@@ -117,5 +138,6 @@ docs/adr/   décisions d'architecture
 - [ADR 0003 — Conditions et calculs (json-logic)](docs/adr/0003-conditions-calculs.md)
 - [ADR 0004 — Filtrage des fiches (JSONB)](docs/adr/0004-filtrage-des-fiches.md)
 - [ADR 0005 — Import / export tableurs](docs/adr/0005-import-export-tableurs.md)
+- [ADR 0006 — Stockage des fichiers](docs/adr/0006-stockage-fichiers.md)
 
 Conventions de code et commandes détaillées : [CLAUDE.md](CLAUDE.md).

@@ -140,41 +140,41 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 ## Phase 2 — Back-office v1
 
 **P2.1 Socle web**
-- [ ] P2.1.1 Vite + React + TanStack Router/Query + shadcn/ui + `packages/ui` (tokens)
-- [ ] P2.1.2 Auth (login, refresh silencieux, sélection d'instance), layout, navigation
-- [ ] P2.1.3 i18n FR (EN prêt), fuseau Africa/Abidjan par défaut (D14)
-- [ ] P2.1.4 `packages/sdk` : client typé généré depuis l'OpenAPI (amorce, finalisé en Phase 7)
+- [x] P2.1.1 Vite + React + TanStack Router/Query + shadcn/ui + `packages/ui` (tokens)
+- [x] P2.1.2 Auth (login, refresh silencieux, sélection d'instance), layout, navigation
+- [x] P2.1.3 i18n FR (EN prêt), fuseau Africa/Abidjan par défaut (D14)
+- [x] P2.1.4 `packages/sdk` : client typé généré depuis l'OpenAPI (amorce, finalisé en Phase 7)
 
 **P2.2 `packages/form-renderer`**
-- [ ] P2.2.1 Contrat de composant de champ partagé (props, valeur, erreurs, état visible/requis issus de `form-engine`)
-- [ ] P2.2.2 Implémentations web de tous les types (les types natifs — photo, signature, scan — en version web simplifiée)
-- [ ] P2.2.3 Hook `useFormEngine` (état du formulaire + réévaluation conditions/calculs)
+- [x] P2.2.1 Contrat de composant de champ partagé (props, valeur, erreurs, état visible/requis issus de `form-engine`)
+- [x] P2.2.2 Implémentations web de tous les types (les types natifs — photo, signature, scan — en version web simplifiée)
+- [x] P2.2.3 Hook `useFormEngine` (état du formulaire + réévaluation conditions/calculs)
 
 **P2.3 Designer de formulaires (dnd-kit)**
-- [ ] P2.3.1 Palette de types, canvas, réordonnancement, sections, tableaux répétables imbriqués
-- [ ] P2.3.2 Panneau de propriétés par type (validation, défaut, aide…)
-- [ ] P2.3.3 Éditeur de conditions visuel (générant du json-logic) + éditeur de formules de calcul
-- [ ] P2.3.4 Aperçu mobile live (form-renderer dans un cadre mobile)
-- [ ] P2.3.5 Versionnage : brouillon, diff avec version publiée, publication
-- [ ] P2.3.6 Test e2e Playwright : créer et publier un formulaire
+- [x] P2.3.1 Palette de types, canvas, réordonnancement, sections, tableaux répétables imbriqués
+- [x] P2.3.2 Panneau de propriétés par type (validation, défaut, aide…)
+- [x] P2.3.3 Éditeur de conditions visuel (générant du json-logic) + éditeur de formules de calcul
+- [x] P2.3.4 Aperçu mobile live (form-renderer dans un cadre mobile)
+- [x] P2.3.5 Versionnage : brouillon, diff avec version publiée, publication
+- [x] P2.3.6 Test e2e Playwright : créer et publier un formulaire
 
-**P2.4 Gestion des listes** : CRUD arborescent, import/export avec UI de mapping.
+**P2.4 Gestion des listes** ✅ : CRUD arborescent, import/export avec UI de mapping.
 
 **P2.5 Consultation des fiches**
-- [ ] P2.5.1 Tableau TanStack Table : colonnes dynamiques par structure, filtres, tri, pagination serveur
-- [ ] P2.5.2 Détail d'une fiche (rendu lecture) + historique (onglet basé sur P1.4.5)
-- [ ] P2.5.3 Édition d'une fiche
-- [ ] P2.5.4 Export CSV/XLSX (asynchrone via worker si volumineux)
+- [x] P2.5.1 Tableau TanStack Table : colonnes dynamiques par structure, filtres, tri, pagination serveur
+- [x] P2.5.2 Détail d'une fiche (rendu lecture) + historique (onglet basé sur P1.4.5)
+- [x] P2.5.3 Édition d'une fiche
+- [x] P2.5.4 Export CSV/XLSX — synchrone, plafonné à 50 000 fiches ; bascule sur le worker si besoin mesuré
 
 **P2.6 Utilisateurs, groupes, rôles, droits**
-- [ ] P2.6.1 CRUD utilisateurs/groupes, invitation
-- [ ] P2.6.2 Droits par structure : créer, lire tout / lire les siennes, modifier, supprimer, exporter
-- [ ] P2.6.3 Filtres de visibilité (ex. ne voir que les fiches de son site) — appliqués côté API
-- [ ] P2.6.4 Tests d'autorisation API couvrant la matrice de droits
+- [x] P2.6.1 CRUD utilisateurs/groupes, invitation (mot de passe provisoire ; e-mail d'invitation en P5.2)
+- [x] P2.6.2 Droits par structure : créer, lire tout / lire les siennes, modifier, supprimer, exporter
+- [x] P2.6.3 Filtres de visibilité (ex. ne voir que les fiches de son site) — appliqués côté API
+- [x] P2.6.4 Tests d'autorisation API couvrant la matrice de droits
 
-**P2.7 Personnalisation de l'instance** (D12) : logo, couleurs, configuration du menu mobile (tuiles, icônes, structures liées).
+**P2.7 Personnalisation de l'instance** (D12) ✅ : logo, couleurs, configuration du menu mobile (tuiles, icônes, structures liées).
 
-**P2.8 Fichiers (prérequis photos)** : upload vers MinIO via URL signée, métadonnées en base, miniatures générées par le worker (amorce `apps/worker` + BullMQ).
+**P2.8 Fichiers (prérequis photos)** ✅ ([ADR 0006](docs/adr/0006-stockage-fichiers.md)) : upload vers MinIO via URL signée, métadonnées en base, miniatures générées par le worker (amorce `apps/worker` + BullMQ).
 
 ---
 

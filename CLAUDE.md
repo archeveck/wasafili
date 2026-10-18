@@ -24,7 +24,13 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
 - `apps/api` — NestJS 12 + Prisma 7 (adaptateur `pg`). Client généré dans `src/generated/`
   (non versionné, `prisma generate`). Tests : `src/**/*.test.ts` (unitaires),
   `test/**/*.e2e.test.ts` (intégration, base réelle, fichiers exécutés en série).
-- `apps/web` — Vite + React (back-office, Phase 2). `apps/worker` — BullMQ. `apps/mobile` — Expo (Phase 3).
+- `apps/web` — back-office : React 19, TanStack Router (routes déclarées dans `src/router.tsx`)
+  / Query / Table v8, Tailwind 4 + composants Radix façon shadcn (`src/components/ui`), dnd-kit
+  (designer). Fonctionnalités dans `src/features/*`, rendu des champs dans `src/form`. API via
+  `@tesserax/sdk` sous la même origine (`/v1` : proxy Vite en dev, nginx en conteneur).
+  e2e : `pnpm test:e2e` (Playwright, `apps/web/e2e`).
+- `apps/worker` — BullMQ ; jobs typés par `@tesserax/jobs` (contrat partagé avec l'API).
+  `apps/mobile` — Expo (Phase 3).
 - `packages/*` — ESM, compilés vers `dist/` (`turbo` construit les dépendances avant
   typecheck/test). `form-schema` et `form-engine` : zéro dépendance Node/DOM (Hermes).
 
@@ -50,6 +56,9 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
   `@tesserax/form-engine`, jamais par du code ad hoc côté API, web ou mobile. Le paquet reste
   sans dépendance Node/DOM et à 100 % de couverture (`pnpm --filter @tesserax/form-engine test`).
   Fixtures partagées : `inspectionEquipement()` dans `@tesserax/form-schema`.
+- **Droits sur les fiches** : évalués par structure dans `StructureAccessService` (règles par
+  rôle/groupe + filtres de visibilité, repli sur les permissions d'instance) — jamais par `@Can`
+  sur les routes de fiches.
 - **Fiches** : le serveur fait foi pour les champs calculés et automatiques (il les retire de
   l'entrée et les recalcule). Une fiche reste liée à sa version de structure, et une version
   publiée est immuable (trigger). Chaque écriture crée une `SubmissionRevision` ; un
