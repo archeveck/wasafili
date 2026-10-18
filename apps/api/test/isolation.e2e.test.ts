@@ -51,6 +51,9 @@ const instanceEndpoints = [
   ['get', '/lists'],
   ['post', '/lists'],
   ['get', '/list-items?code=EQ-0001'],
+  ['get', '/settings'],
+  ['patch', '/settings'],
+  ['post', '/files/upload'],
 ] as const;
 
 describe('un administrateur de A', () => {
