@@ -1,1 +1,1 @@
-export { sharedTestConfig as default } from '../../vitest.shared';
+export { sharedTestConfig as default } from '../../vitest.shared.ts';

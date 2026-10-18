@@ -1,6 +1,7 @@
 {
   "name": "tesserax",
   "private": true,
+  "type": "module",
   "description": "Tesserax — plateforme no-code de collecte de données terrain (back-office web + mobile hors ligne)",
   "packageManager": "pnpm@10.14.0",
   "engines": {
