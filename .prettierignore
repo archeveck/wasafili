@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+dist
+coverage
+.turbo
+repomix-output.md
+**/src/generated
+PROMPT_claude_code_clone_daxium.md
+TASKS.md
+CLAUDE.md

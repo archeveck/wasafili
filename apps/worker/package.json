@@ -1,0 +1,24 @@
+{
+  "name": "@tesserax/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Traitements asynchrones BullMQ : rapports PDF, e-mails, automatisations, webhooks",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bullmq": "^6.3.16",
+    "ioredis": "^6.0.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
