@@ -10,6 +10,8 @@ export function configureApp(app: NestExpressApplication, env: Env): NestExpress
   app.setGlobalPrefix('v1', { exclude: ['health'] });
   app.enableCors({ origin: env.CORS_ORIGINS });
   app.disable('x-powered-by');
+  // Pas d'ETag : une API (et surtout la synchronisation) ne doit pas répondre 304 depuis un cache.
+  app.set('etag', false);
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
   app.enableShutdownHooks();
   return app;
