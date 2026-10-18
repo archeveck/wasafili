@@ -83,6 +83,49 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:integration
 
+  e2e:
+    name: Parcours e2e du back-office (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5440:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Rôles et bases PostgreSQL
+        run: sh infra/postgres/01-roles.sh
+        env:
+          PGHOST: localhost
+          PGPORT: 5440
+          PGPASSWORD: postgres
+          POSTGRES_USER: postgres
+          TESSERAX_OWNER_PASSWORD: tesserax_owner
+          TESSERAX_APP_PASSWORD: tesserax_app
+      - run: cp .env.example .env
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm db:deploy && pnpm db:seed
+      - run: pnpm --filter @tesserax/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @tesserax/web test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results
+
   docker:
     name: Build des images Docker
     runs-on: ubuntu-latest
