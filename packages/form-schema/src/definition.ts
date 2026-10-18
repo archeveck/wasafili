@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { fieldSchema } from './fields.js';
-import { walkFields } from './walk.js';
+import { hasValue, walkFields } from './walk.js';
 import { workflowSchema } from './workflow.js';
 
 export const STRUCTURE_SCHEMA_VERSION = 1;
@@ -18,12 +18,14 @@ export const structureDefinitionSchema = z
   })
   .superRefine((definition, ctx) => {
     const keys = new Map<string, string>();
+    // Champs racines porteurs d'une valeur : seuls exigibles par une transition.
+    const rootValues = new Set<string>();
     const ids = new Set<string>();
     const states = definition.workflow
       ? new Set(definition.workflow.states.map((s) => s.key))
       : undefined;
 
-    for (const { field } of walkFields(definition.fields)) {
+    for (const { field, table } of walkFields(definition.fields)) {
       const issue = (message: string) =>
         ctx.addIssue({ code: 'custom', message: `${field.key} : ${message}`, path: ['fields'] });
 
@@ -31,6 +33,7 @@ export const structureDefinitionSchema = z
       // `{cle}` dans une formule est ainsi toujours non ambiguë.
       if (keys.has(field.key)) issue('clé déjà utilisée');
       keys.set(field.key, field.type);
+      if (!table && hasValue(field)) rootValues.add(field.key);
       if (ids.has(field.id)) issue(`identifiant déjà utilisé (${field.id})`);
       ids.add(field.id);
 
@@ -65,10 +68,12 @@ export const structureDefinitionSchema = z
 
     definition.workflow?.transitions.forEach((transition, index) => {
       for (const key of transition.requiredFields ?? []) {
-        if (!keys.has(key)) {
+        if (!rootValues.has(key)) {
           ctx.addIssue({
             code: 'custom',
-            message: `Transition ${transition.key} : champ inconnu « ${key} »`,
+            message: keys.has(key)
+              ? `Transition ${transition.key} : « ${key} » n'est pas un champ racine à valeur`
+              : `Transition ${transition.key} : champ inconnu « ${key} »`,
             path: ['workflow', 'transitions', index, 'requiredFields'],
           });
         }

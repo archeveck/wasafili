@@ -15,3 +15,5 @@ export { FormulaError } from './formula/errors.js';
 export { evaluate, inspectLogic, isEmpty, OPERATORS, toNumber, truthy } from './logic.js';
 export { createResolver } from './model.js';
 export type { ValidationCode, ValidationError } from './validate.js';
+export { availableTransitions, checkTransition } from './workflow.js';
+export type { TransitionCheck, TransitionRefusal } from './workflow.js';

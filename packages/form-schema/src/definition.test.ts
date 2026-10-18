@@ -104,12 +104,28 @@ describe('contrôles structurels', () => {
     const workflow = {
       ...inspectionWorkflow,
       transitions: [
-        { key: 'go', label: 'Go', from: ['brouillon'], to: 'soumis', requiredFields: ['zz'] },
+        {
+          key: 'go',
+          label: 'Go',
+          from: ['brouillon'],
+          to: 'soumis',
+          requiredFields: ['zz', 'col', 'a'],
+        },
       ],
     };
-    expect(messages(parse([text('a', { editableInStates: ['inconnu'] })], { workflow }))).toEqual([
+    const table = {
+      id: 'id-t',
+      key: 't',
+      label: 't',
+      type: 'table',
+      fields: [text('col')],
+    } as never;
+    expect(
+      messages(parse([text('a', { editableInStates: ['inconnu'] }), table], { workflow })),
+    ).toEqual([
       'a : état inconnu « inconnu »',
       'Transition go : champ inconnu « zz »',
+      "Transition go : « col » n'est pas un champ racine à valeur",
     ]);
   });
 });
