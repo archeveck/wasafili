@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Tesserax",
+    "slug": "tesserax",
+    "scheme": "tesserax",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tesserax.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "La position est enregistrée avec les fiches saisies sur le terrain."
+      }
+    },
+    "android": {
+      "package": "com.tesserax.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F6F5C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La caméra sert à photographier les équipements et à scanner leurs QR codes."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "La position est enregistrée avec les fiches saisies sur le terrain."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choisir des photos existantes à joindre aux fiches."
+        }
+      ],
+      "expo-status-bar",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

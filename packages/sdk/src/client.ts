@@ -37,6 +37,13 @@ export class ApiError extends Error {
   }
 }
 
+/** URL signée de dépôt direct d'un fichier dans le stockage. */
+export interface UploadTicket {
+  url: string;
+  method: 'PUT';
+  headers: Record<string, string>;
+}
+
 /** Persistance des jetons, propre à chaque plateforme (localStorage, SecureStore…). */
 export interface TokenStore {
   get(): Tokens | null;
@@ -330,17 +337,21 @@ export function createClient(options: ClientOptions) {
       },
       files: {
         get: (id: string) => get<FileDto>(p(`/files/${id}`)),
+        /** Demande d'URL signée ; `upload` est null si le fichier est déjà déposé. */
+        requestUpload: (meta: { id?: string; name: string; mimeType: string; size: number }) =>
+          post<{ file: FileDto; upload: UploadTicket | null }>(p('/files/upload'), meta),
+        complete: (id: string) => post<FileDto>(p(`/files/${id}/complete`)),
         /** Dépôt complet : demande d'URL signée, envoi direct au stockage, confirmation. */
         upload: async (file: Blob & { name?: string }, id?: string): Promise<FileDto> => {
-          const { file: meta, upload } = await post<{
-            file: FileDto;
-            upload: { url: string; method: 'PUT'; headers: Record<string, string> } | null;
-          }>(p('/files/upload'), {
-            id,
-            name: file.name ?? 'fichier',
-            mimeType: file.type || 'application/octet-stream',
-            size: file.size,
-          });
+          const { file: meta, upload } = await post<{ file: FileDto; upload: UploadTicket | null }>(
+            p('/files/upload'),
+            {
+              id,
+              name: file.name ?? 'fichier',
+              mimeType: file.type || 'application/octet-stream',
+              size: file.size,
+            },
+          );
           if (!upload) return meta;
           const sent = await doFetch(upload.url, {
             method: upload.method,

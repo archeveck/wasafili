@@ -2,5 +2,51 @@
   "name": "@tesserax/mobile",
   "version": "0.0.0",
   "private": true,
-  "description": "Application mobile Expo hors ligne — initialisée en Phase 3 (P3.1)"
+  "description": "Application mobile Tesserax : saisie terrain 100 % hors ligne",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "bundle:check": "expo export --platform ios --output-dir dist-check --no-minify",
+    "e2e": "maestro test e2e/saisie-fiche.yaml"
+  },
+  "dependencies": {
+    "@react-native-community/datetimepicker": "9.2.1",
+    "@react-native-community/netinfo": "12.0.1",
+    "@shopify/react-native-skia": "2.14.0",
+    "@tesserax/form-engine": "workspace:*",
+    "@tesserax/form-renderer": "workspace:*",
+    "@tesserax/form-schema": "workspace:*",
+    "@tesserax/i18n": "workspace:*",
+    "@tesserax/sdk": "workspace:*",
+    "@tesserax/sync": "workspace:*",
+    "@tesserax/ui": "workspace:*",
+    "expo": "~58.0.14",
+    "expo-camera": "~58.0.10",
+    "expo-constants": "~58.0.12",
+    "expo-crypto": "~58.0.7",
+    "expo-document-picker": "~58.0.4",
+    "expo-file-system": "~58.0.9",
+    "expo-image-manipulator": "~58.0.14",
+    "expo-image-picker": "~58.0.10",
+    "expo-linking": "~58.0.13",
+    "expo-location": "~58.0.17",
+    "expo-router": "~58.0.23",
+    "expo-secure-store": "~58.0.2",
+    "expo-sqlite": "~58.0.13",
+    "expo-status-bar": "~58.0.3",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
+  }
 }
