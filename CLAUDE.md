@@ -70,6 +70,11 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
   (`form-engine`) partout ; l'historique des révisions (`transition`, `$state`) est le journal
   d'événements. Une notification s'écrit dans la transaction de l'événement
   (`NotificationsService.notify`), le push n'est qu'un relais (`dispatch` après validation).
+- **Rapports, automatisations, webhooks (ADR 0009)** : une écriture de fiche passe par
+  `EventsService.record` dans sa transaction (exécutions + livraisons, outbox) puis `dispatch`.
+  Les automatisations s'exécutent dans l'API (file `tesserax-automations`), via les services
+  métier et `SYSTEM_ACTOR` ; le worker ne fait que les relais (SMTP, webhooks, push). Jamais de
+  XML brut issu d'une saisie dans un rapport. Acceptation : `infra/acceptance/rapport-par-email.mjs`.
 - **Migrations Prisma** : `migrate dev --create-only`, retirer les `DROP INDEX "*_sync"` générés
   (index `xid8` écrits à la main), puis `pnpm db:deploy`.
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger

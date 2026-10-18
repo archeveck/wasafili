@@ -246,28 +246,28 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 ---
 
-## Phase 5 — Rapports & automatisations — *ADR PDF*
+## Phase 5 — Rapports & automatisations — *[ADR 0009](docs/adr/0009-rapports-automatisations.md)*
 
 **P5.1 Modèles de rapports**
-- [ ] P5.1.1 Upload DOCX, stockage, détection des balises `{{champ}}` et vérification contre la structure
-- [ ] P5.1.2 Fusion docxtemplater : champs, boucles sur tableaux répétables, images (photos, signature), listes
-- [ ] P5.1.3 Conversion PDF via Gotenberg (job worker), cache par révision de fiche
-- [ ] P5.1.4 Aperçu dans le back-office avec une fiche exemple
-- [ ] P5.1.5 Génération/visualisation PDF depuis le mobile (en ligne)
+- [x] P5.1.1 Upload DOCX, stockage, détection des balises `{{champ}}` et vérification contre la structure (erreurs de syntaxe expliquées, balises inconnues signalées)
+- [x] P5.1.2 Fusion docxtemplater : champs, boucles sur tableaux répétables, images (photos, signature — module maison, le module libre dépendant de `xmldom` 0.1), listes
+- [x] P5.1.3 Conversion PDF via Gotenberg, cache par révision de fiche — appelée par l'API et non par un job du worker (ADR 0009)
+- [x] P5.1.4 Aperçu dans le back-office avec une fiche exemple (générée depuis la structure) ou une fiche réelle
+- [x] P5.1.5 Génération/visualisation PDF depuis le mobile (en ligne, navigateur intégré)
 
-**P5.2 E-mails** (D5) : module d'envoi SMTP, templates, pièce jointe PDF, journal d'envoi.
+**P5.2 E-mails** (D5) ✅ : envoi SMTP par le worker (nodemailer, Mailpit en dev), sujets et corps à balises, pièce jointe PDF, journal d'envoi avec renvoi manuel.
 
 **P5.3 Moteur d'automatisations**
-- [ ] P5.3.1 Modèle `Automation` (déclencheur, conditions json-logic, actions ordonnées)
-- [ ] P5.3.2 Déclencheurs : fiche créée, changement d'état, champ modifié, planifié (cron BullMQ)
-- [ ] P5.3.3 Actions : e-mail + rapport PDF, push, création de tâche, webhook sortant, mise à jour de champ
-- [ ] P5.3.4 Garde-fous : anti-boucle (action « mise à jour de champ » qui redéclenche), retries, idempotence
-- [ ] P5.3.5 Journal d'exécution consultable (statut, durée, erreur, relance manuelle)
-- [ ] P5.3.6 UI de configuration dans le back-office
+- [x] P5.3.1 Modèle `Automation` (déclencheur, conditions json-logic, actions ordonnées)
+- [x] P5.3.2 Déclencheurs : fiche créée, changement d'état, champ modifié, planifié (cron BullMQ, fuseau de l'instance)
+- [x] P5.3.3 Actions : e-mail + rapport PDF, notification (push si activé), création de tâche, webhook sortant, mise à jour de champ
+- [x] P5.3.4 Garde-fous : anti-boucle (jamais sur sa propre écriture, profondeur 3), retries, idempotence par étape, outbox transactionnelle
+- [x] P5.3.5 Journal d'exécution consultable (statut, durée par étape, erreur, relance manuelle)
+- [x] P5.3.6 UI de configuration dans le back-office (quand / si / alors, erreurs rattachées à leur emplacement)
 
-**P5.4 Webhooks sortants** : signature HMAC-SHA256 + horodatage, retries exponentiels, désactivation après échecs répétés, endpoint `/{app}/webhooks`.
+**P5.4 Webhooks sortants** ✅ : signature HMAC-SHA256 + horodatage, retries exponentiels, désactivation après 5 échecs consécutifs, garde SSRF, endpoint `/{app}/webhooks` (événements, test, livraisons, renvoi, rotation du secret).
 
-**P5.5 Test d'acceptation** : la validation d'une fiche envoie automatiquement le rapport PDF par e-mail (vérifié via Mailpit).
+**P5.5 Test d'acceptation** ✅ : la validation d'une fiche envoie automatiquement le rapport PDF par e-mail — `node infra/acceptance/rapport-par-email.mjs` (vérifié dans Mailpit, PDF joint valide).
 
 ---
 
@@ -333,7 +333,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 4. Stockage local mobile & protocole de sync — P3.2 ✅ ([0007](docs/adr/0007-stockage-local-synchronisation.md))
 5. Cartographie (MapLibre + PMTiles auto-hébergé, hors ligne) — P3.4.5 / P6.1
 6. Annotation photo & signature (Skia) — P3.4.3 / P3.4.4
-7. Génération PDF (docxtemplater + Gotenberg) — P5.1
+7. Génération PDF (docxtemplater + Gotenberg) — P5.1 ✅ ([0009](docs/adr/0009-rapports-automatisations.md), avec automatisations et webhooks)
 8. Notifications (sync + Expo Push optionnel) — P4.5
 9. Uploads de fichiers reprenables — P3.5
 10. Builds mobiles sans dépendance EAS — P7.3

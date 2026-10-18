@@ -102,6 +102,30 @@ maestro test apps/mobile/e2e/taches-workflow.yaml   # après apps/mobile/e2e/pla
 maestro test apps/mobile/e2e/notifications.yaml     # après validation de la fiche au back-office
 ```
 
+## Rapports et automatisations (Phase 5)
+
+- **Formulaires → ⋯ → Rapports** : déposer un modèle Word (.docx) à balises `{{champ}}`,
+  `{{#tableau}}…{{/tableau}}`, `{{@photo}}` ; les balises disponibles se copient d'un clic, celles
+  qui ne correspondent pas au formulaire sont signalées. « Aperçu PDF » fonctionne sans fiche.
+  Sur une fiche (web ou mobile en ligne) : bouton « Rapport PDF ».
+- **Automatisations** : quand (fiche créée, changement d'état, champ modifié, planifié) → si
+  (condition) → alors (e-mail avec rapport, notification, tâche, webhook, mise à jour de
+  champ). Onglets « Exécutions » (relance), « Webhooks » (secret, test, livraisons) et
+  « E-mails envoyés ».
+- **Démo** : le seed installe le modèle « Rapport d'inspection » et l'automatisation
+  « Rapport PDF à la validation ». Valider une fiche envoie le PDF à son auteur et au
+  superviseur ; les e-mails arrivent dans Mailpit (http://localhost:8025).
+
+```bash
+pnpm dev                                         # api + worker (envoi SMTP) + web
+node infra/acceptance/rapport-par-email.mjs      # acceptation P5.5 : validation → e-mail + PDF
+maestro test apps/mobile/e2e/rapport-pdf.yaml    # rapport PDF depuis le mobile
+```
+
+Webhooks : chaque requête porte `X-Tesserax-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
+`<X-Tesserax-Timestamp>.<corps>`. En production, `WEBHOOK_ALLOW_PRIVATE=false` interdit les
+adresses du réseau interne (sauf intégration locale assumée, ex. n8n).
+
 ## Démo (Phase 0)
 
 Comptes de démonstration de l'instance `demo` (mot de passe `Tesserax2026!`) :
