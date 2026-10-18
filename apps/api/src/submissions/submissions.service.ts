@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { type EvaluationContext, type FormEngine } from '@tesserax/form-engine';
+import { checkTransition, type EvaluationContext, type FormEngine } from '@tesserax/form-engine';
 import {
   COMPUTED_TYPES,
   initialState,
@@ -47,6 +47,14 @@ export interface UpdateSubmissionInput {
   data: SubmissionData;
   clientMutationId?: string;
   /** Révision sur laquelle le client a fondé sa modification (détection des conflits). */
+  baseRevision?: number;
+}
+
+export interface TransitionInput {
+  transition: string;
+  /** Modifications enregistrées avec la transition (bouton d'enregistrement). */
+  data?: SubmissionData;
+  clientMutationId?: string;
   baseRevision?: number;
 }
 
@@ -93,6 +101,45 @@ function stripServerOwned(definition: StructureDefinition, data: SubmissionData)
   return result;
 }
 
+/** Pseudo-champ de l'historique pour un changement d'état (jamais une clé de champ). */
+export const STATE_CHANGE = '$state';
+
+/** Refus de transition expliqué (P4.1.4) : l'utilisateur hors ligne doit comprendre pourquoi. */
+function transitionRefused(
+  definition: StructureDefinition,
+  state: string | null,
+  key: string,
+  refusal: 'no_workflow' | 'unknown_transition' | 'wrong_state' | 'role',
+) {
+  const workflow = definition.workflow;
+  const label = (stateKey: string | null) =>
+    workflow?.states.find((s) => s.key === stateKey)?.label ?? stateKey ?? '—';
+  const transition = workflow?.transitions.find((t) => t.key === key);
+  switch (refusal) {
+    case 'no_workflow':
+      return new ConflictException({
+        error: 'no_workflow',
+        message: 'Ce formulaire n’a pas de workflow',
+      });
+    case 'unknown_transition':
+      return new UnprocessableEntityException({
+        error: 'unknown_transition',
+        message: `Transition inconnue : ${key}`,
+      });
+    case 'wrong_state':
+      return new ConflictException({
+        error: 'invalid_state',
+        message: `La fiche est à l’état « ${label(state)} » : « ${transition!.label} » n’est plus possible`,
+        details: { state, from: transition!.from },
+      });
+    case 'role':
+      return new ForbiddenException({
+        error: 'forbidden',
+        message: `Votre rôle ne permet pas « ${transition!.label} »`,
+      });
+  }
+}
+
 @Injectable()
 export class SubmissionsService {
   constructor(
@@ -117,6 +164,20 @@ export class SubmissionsService {
       Number(total[0]!.count),
       input,
     );
+  }
+
+  /** Compteurs par état (filtres de la liste, hors filtre d'état). */
+  async stateCounts(
+    structureId: string,
+    actor: Actor,
+    input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
+  ) {
+    const { where } = await this.query(structureId, actor, { ...input, state: undefined });
+    const rows = await this.prisma.transaction(
+      (tx) => tx.$queryRaw<{ state: string | null; count: bigint }[]>`
+        SELECT s.state, count(*) FROM submissions s WHERE ${where} GROUP BY s.state ORDER BY s.state`,
+    );
+    return rows.map((row) => ({ state: row.state, count: Number(row.count) }));
   }
 
   /** Export tableur des fiches visibles, avec les mêmes filtres que la liste (P2.5.4). */
@@ -370,6 +431,29 @@ export class SubmissionsService {
    * enregistrée (`SubmissionConflict`). Des champs différents fusionnent sans conflit.
    */
   async update(instance: Instance, id: string, actor: Actor, input: UpdateSubmissionInput) {
+    return this.write(instance, id, actor, input);
+  }
+
+  /**
+   * Transition de workflow (P4.1.2) : vérifie l'état de départ, le rôle et les données (avec
+   * les modifications fournies), puis change l'état. Une seule révision `transition` porte les
+   * champs modifiés et le changement d'état (`$state`) ; elle sert de journal d'événements.
+   */
+  async transition(instance: Instance, id: string, actor: Actor, input: TransitionInput) {
+    return this.write(instance, id, actor, {
+      data: input.data ?? {},
+      transition: input.transition,
+      ...(input.clientMutationId ? { clientMutationId: input.clientMutationId } : {}),
+      ...(input.baseRevision !== undefined ? { baseRevision: input.baseRevision } : {}),
+    });
+  }
+
+  private async write(
+    instance: Instance,
+    id: string,
+    actor: Actor,
+    input: UpdateSubmissionInput & { transition?: string },
+  ) {
     const replay = await this.replay(instance.id, input.clientMutationId, actor);
     if (replay && replay !== 'applied')
       return { replayed: true, submission: replay, conflicts: [] };
@@ -401,7 +485,24 @@ export class SubmissionsService {
       }
 
       const data = engine.applyDefaults({ ...before, ...incoming }, context, { isNew: false });
-      const values = this.validated(engine, data, context);
+      let values: SubmissionData;
+      let nextState = current.state;
+      if (input.transition === undefined) {
+        values = this.validated(engine, data, context);
+      } else {
+        const check = checkTransition(engine, data, input.transition, context);
+        if (check.refusal)
+          throw transitionRefused(definition, current.state, input.transition, check.refusal);
+        if (!check.ok) {
+          throw new UnprocessableEntityException({
+            error: 'invalid_data',
+            message: 'Données de fiche invalides pour cette transition',
+            details: check.errors,
+          });
+        }
+        values = engine.calculate(data, context);
+        nextState = check.transition!.to;
+      }
       const updatedStamps = new Set(
         [...walkFields(definition.fields)]
           .filter(
@@ -410,7 +511,15 @@ export class SubmissionsService {
           .map(({ field }) => field.key),
       );
       const changes = diffData(before, values);
-      if (changes.every((change) => updatedStamps.has(change.field))) return [];
+      if (
+        input.transition === undefined &&
+        changes.every((change) => updatedStamps.has(change.field))
+      ) {
+        return [];
+      }
+      if (nextState !== current.state) {
+        changes.push({ field: STATE_CHANGE, before: current.state, after: nextState });
+      }
 
       let conflicting: string[] = [];
       if (input.baseRevision !== undefined && input.baseRevision < current.revision) {
@@ -429,14 +538,14 @@ export class SubmissionsService {
       const revision = current.revision + 1;
       await tx.submission.update({
         where: { id },
-        data: { data: values as Prisma.InputJsonValue, revision },
+        data: { data: values as Prisma.InputJsonValue, revision, state: nextState },
       });
       await tx.submissionRevision.create({
         data: {
           instanceId: instance.id,
           submissionId: id,
           revision,
-          action: 'update',
+          action: input.transition === undefined ? 'update' : 'transition',
           authorId: actor.userId,
           clientMutationId: input.clientMutationId ?? null,
           changes: changes as unknown as Prisma.InputJsonValue,

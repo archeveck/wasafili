@@ -39,6 +39,12 @@ const updateSchema = z.object({
   clientMutationId: mutationId.optional(),
   baseRevision: z.number().int().min(1).optional(),
 });
+const transitionSchema = z.object({
+  transition: z.string().trim().min(1).max(63),
+  data: z.record(z.string(), z.unknown()).optional(),
+  clientMutationId: mutationId.optional(),
+  baseRevision: z.number().int().min(1).optional(),
+});
 const listSchema = paginationSchema.extend({
   sort: z.string().max(100).optional(),
   state: z.string().max(100).optional(),
@@ -73,6 +79,24 @@ export class SubmissionsController {
   ) {
     const params = new ZodValidationPipe(listSchema).transform(query);
     return this.submissions.list(structureId, actor, { ...params, filters: parseFilters(query) });
+  }
+
+  /** Nombre de fiches par état de workflow, avec les mêmes filtres que la liste (P4.3). */
+  @Get('structures/:structureId/submissions/states')
+  async states(
+    @Param('structureId', ParseUUIDPipe) structureId: string,
+    @CurrentActor() actor: Actor,
+    @Query() query: Record<string, unknown>,
+  ) {
+    const params = new ZodValidationPipe(listSchema.omit({ page: true, per_page: true })).transform(
+      query,
+    );
+    return {
+      data: await this.submissions.stateCounts(structureId, actor, {
+        ...params,
+        filters: parseFilters(query),
+      }),
+    };
   }
 
   /** Export CSV/XLSX avec les mêmes filtres que la liste. */
@@ -120,6 +144,17 @@ export class SubmissionsController {
     @Body(new ZodValidationPipe(updateSchema)) body: z.infer<typeof updateSchema>,
   ) {
     return (await this.submissions.update(instance, id, actor, body)).submission;
+  }
+
+  @Post('submissions/:id/transition')
+  @HttpCode(200)
+  async transition(
+    @CurrentInstance() instance: Instance,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentActor() actor: Actor,
+    @Body(new ZodValidationPipe(transitionSchema)) body: z.infer<typeof transitionSchema>,
+  ) {
+    return (await this.submissions.transition(instance, id, actor, body)).submission;
   }
 
   @Delete('submissions/:id')

@@ -29,6 +29,14 @@ const mutationSchema = z.discriminatedUnion('type', [
     baseRevision: z.number().int().min(1).optional(),
     data,
   }),
+  z.object({
+    id,
+    type: z.literal('transition'),
+    submissionId: z.uuid(),
+    transition: z.string().trim().min(1).max(63),
+    baseRevision: z.number().int().min(1).optional(),
+    data: data.optional(),
+  }),
   z.object({ id, type: z.literal('delete'), submissionId: z.uuid() }),
 ]);
 const pushSchema = z.object({ mutations: z.array(mutationSchema).min(1).max(MAX_PUSH_MUTATIONS) });

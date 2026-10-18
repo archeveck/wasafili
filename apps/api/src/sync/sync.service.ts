@@ -25,6 +25,14 @@ export type Mutation =
       baseRevision?: number;
       data: Record<string, unknown>;
     }
+  | {
+      id: string;
+      type: 'transition';
+      submissionId: string;
+      transition: string;
+      baseRevision?: number;
+      data?: Record<string, unknown>;
+    }
   | { id: string; type: 'delete'; submissionId: string };
 
 export type MutationResult =
@@ -221,6 +229,19 @@ export class SyncService {
           const result = await this.submissions.update(instance, mutation.submissionId, actor, {
             data: mutation.data,
             clientMutationId: mutation.id,
+            ...(mutation.baseRevision !== undefined ? { baseRevision: mutation.baseRevision } : {}),
+          });
+          results.push({
+            id: mutation.id,
+            status: result.replayed ? 'duplicate' : 'applied',
+            submission: result.submission,
+            conflicts: result.conflicts,
+          });
+        } else if (mutation.type === 'transition') {
+          const result = await this.submissions.transition(instance, mutation.submissionId, actor, {
+            transition: mutation.transition,
+            clientMutationId: mutation.id,
+            ...(mutation.data ? { data: mutation.data } : {}),
             ...(mutation.baseRevision !== undefined ? { baseRevision: mutation.baseRevision } : {}),
           });
           results.push({
