@@ -41,6 +41,12 @@ const envSchema = z.object({
     .default(25 * 1024 * 1024),
   /** Relais des notifications en push Expo (D1) ; les notifications restent dans la sync. */
   PUSH_ENABLED: z.stringbool().default(false),
+  /** Conversion DOCX → PDF des rapports (Gotenberg). Absent : rapports indisponibles (503). */
+  GOTENBERG_URL: z.url().optional(),
+  /** Délai maximal d'une conversion PDF (ms). */
+  GOTENBERG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  /** Adresse publique du back-office (liens dans les e-mails). */
+  APP_URL: z.url().default('http://localhost:5173'),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

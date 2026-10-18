@@ -12,5 +12,6 @@ import { SubmissionsService } from './submissions.service';
   imports: [StructuresModule, TasksModule],
   controllers: [SubmissionsController, StructureAccessController, SyncController],
   providers: [SubmissionsService, StructureAccessService, SyncService],
+  exports: [SubmissionsService],
 })
 export class SubmissionsModule {}

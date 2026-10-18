@@ -47,6 +47,12 @@ model Instance {
   tasks         Task[]
   notifications Notification[]
   pushTokens    PushToken[]
+  reports       ReportTemplate[]
+  emails        EmailMessage[]
+  webhooks      Webhook[]
+  deliveries    WebhookDelivery[]
+  automations   Automation[]
+  runs          AutomationRun[]
 
   @@map("instances")
 }
@@ -206,6 +212,9 @@ model Structure {
   submissions Submission[]
   accesses    StructureAccess[]
   tasks       Task[]
+  reports     ReportTemplate[]
+  automations Automation[]
+  webhooks    Webhook[]
 
   @@unique([id, instanceId])
   @@index([instanceId, name])
@@ -263,13 +272,14 @@ model Submission {
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  instance  Instance             @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  structure Structure            @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
-  version   StructureVersion     @relation(fields: [structureVersionId, instanceId], references: [id, instanceId], onDelete: NoAction)
-  author    User?                @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  revisions SubmissionRevision[]
-  conflicts SubmissionConflict[]
-  tasks     Task[]
+  instance       Instance             @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure      Structure            @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  version        StructureVersion     @relation(fields: [structureVersionId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  author         User?                @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  revisions      SubmissionRevision[]
+  conflicts      SubmissionConflict[]
+  tasks          Task[]
+  automationRuns AutomationRun[]
 
   @@unique([id, instanceId])
   @@index([instanceId, structureId, createdAt])
@@ -290,11 +300,14 @@ model SubmissionRevision {
   clientMutationId String?  @map("client_mutation_id")
   /// `[{ field, before, after }]`
   changes          Json
+  /// Exécution d'automatisation à l'origine de l'écriture (anti-boucle, historique).
+  automationRunId  String?  @map("automation_run_id") @db.Uuid
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  instance   Instance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  submission Submission @relation(fields: [submissionId, instanceId], references: [id, instanceId], onDelete: Cascade)
-  author     User?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  instance      Instance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  submission    Submission     @relation(fields: [submissionId, instanceId], references: [id, instanceId], onDelete: Cascade)
+  author        User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  automationRun AutomationRun? @relation(fields: [automationRunId, instanceId], references: [id, instanceId], onDelete: NoAction)
 
   @@unique([submissionId, revision])
   @@unique([instanceId, clientMutationId])
@@ -401,7 +414,8 @@ model File {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instance Instance         @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  reports  ReportTemplate[]
 
   @@unique([id, instanceId])
   @@map("files")
@@ -525,4 +539,183 @@ model PushToken {
   @@unique([instanceId, token])
   @@index([instanceId, userId])
   @@map("push_tokens")
+}
+
+/// Modèle de rapport (P5.1) : DOCX à balises `{{champ}}`, fusionné avec une fiche puis converti en PDF.
+model ReportTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  instanceId  String   @map("instance_id") @db.Uuid
+  structureId String   @map("structure_id") @db.Uuid
+  name        String
+  /// Document DOCX, téléversé par le flux des fichiers (D10).
+  fileId      String   @map("file_id") @db.Uuid
+  /// Balises détectées à l'enregistrement : `[{ name, kind, parent? }]`.
+  tags        Json     @default("[]")
+  /// Nom du PDF, balises admises (ex. `Inspection {{equipement}}`) ; absent = nom du modèle.
+  filename    String?
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance  Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure Structure @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: Cascade)
+  file      File      @relation(fields: [fileId, instanceId], references: [id, instanceId], onDelete: NoAction)
+
+  @@unique([id, instanceId])
+  @@index([instanceId, structureId])
+  @@map("report_templates")
+}
+
+/// E-mail sortant (P5.2, D5) : journal d'envoi. Le worker l'envoie en SMTP et met à jour son statut.
+model EmailMessage {
+  id              String    @id @default(uuid()) @db.Uuid
+  instanceId      String    @map("instance_id") @db.Uuid
+  to              String[]
+  subject         String
+  text            String
+  html            String
+  /// Pièces jointes déjà présentes dans le stockage : `[{ key, filename, contentType }]`.
+  attachments     Json      @default("[]")
+  /// `queued`, `sent` ou `failed`.
+  status          String    @default("queued")
+  error           String?
+  attempts        Int       @default(0)
+  messageId       String?   @map("message_id")
+  automationRunId String?   @map("automation_run_id") @db.Uuid
+  /// Étape de l'exécution qui l'a produit : rejouer l'étape ne renvoie pas l'e-mail.
+  step            Int?
+  sentAt          DateTime? @map("sent_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance      Instance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  automationRun AutomationRun? @relation(fields: [automationRunId, instanceId], references: [id, instanceId], onDelete: NoAction)
+
+  @@unique([automationRunId, step])
+  @@index([instanceId, createdAt])
+  @@map("email_messages")
+}
+
+/// Webhook sortant (P5.4) : abonnement d'une URL à des événements, requêtes signées (HMAC-SHA256).
+model Webhook {
+  id                  String    @id @default(uuid()) @db.Uuid
+  instanceId          String    @map("instance_id") @db.Uuid
+  name                String
+  url                 String
+  /// Secret de signature, montré une seule fois (création, rotation).
+  secret              String
+  /// Événements abonnés (`submission.created`…) ; vide = uniquement les automatisations.
+  events              String[]
+  /// Restreint aux fiches de cette structure ; absent = toutes.
+  structureId         String?   @map("structure_id") @db.Uuid
+  /// Livraisons échouées consécutives (désactivation au-delà du seuil).
+  consecutiveFailures Int       @default(0) @map("consecutive_failures")
+  disabledAt          DateTime? @map("disabled_at") @db.Timestamptz(3)
+  disabledReason      String?   @map("disabled_reason")
+  createdById         String?   @map("created_by_id") @db.Uuid
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance   Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure  Structure?        @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  deliveries WebhookDelivery[]
+
+  @@unique([id, instanceId])
+  @@index([instanceId])
+  @@map("webhooks")
+}
+
+/// Livraison d'un événement à un webhook, retentée par le worker (backoff exponentiel).
+model WebhookDelivery {
+  id              String    @id @default(uuid()) @db.Uuid
+  instanceId      String    @map("instance_id") @db.Uuid
+  webhookId       String    @map("webhook_id") @db.Uuid
+  event           String
+  payload         Json
+  /// `pending`, `delivered`, `failed` ou `cancelled` (webhook désactivé ou supprimé).
+  status          String    @default("pending")
+  attempts        Int       @default(0)
+  responseStatus  Int?      @map("response_status")
+  error           String?
+  durationMs      Int?      @map("duration_ms")
+  automationRunId String?   @map("automation_run_id") @db.Uuid
+  step            Int?
+  deliveredAt     DateTime? @map("delivered_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance      Instance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  webhook       Webhook        @relation(fields: [webhookId, instanceId], references: [id, instanceId], onDelete: Cascade)
+  automationRun AutomationRun? @relation(fields: [automationRunId, instanceId], references: [id, instanceId], onDelete: NoAction)
+
+  @@unique([automationRunId, step])
+  @@index([instanceId, webhookId, createdAt])
+  @@map("webhook_deliveries")
+}
+
+/// Automatisation (P5.3) : déclencheur → conditions json-logic → actions ordonnées.
+model Automation {
+  id          String    @id @default(uuid()) @db.Uuid
+  instanceId  String    @map("instance_id") @db.Uuid
+  /// Structure surveillée ; absente pour un déclencheur planifié sans fiche.
+  structureId String?   @map("structure_id") @db.Uuid
+  name        String
+  enabled     Boolean   @default(true)
+  /// `{ type: 'submission_created' | 'state_changed' | 'field_changed' | 'schedule', … }`.
+  trigger     Json
+  /// Condition json-logic sur la fiche (mêmes variables que le formulaire) ; absente = toujours.
+  conditions  Json?
+  /// Actions exécutées dans l'ordre.
+  actions     Json
+  createdById String?   @map("created_by_id") @db.Uuid
+  /// Suppression logique : l'historique des exécutions reste consultable.
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance  Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure Structure?      @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  runs      AutomationRun[]
+
+  @@unique([id, instanceId])
+  @@index([instanceId, structureId])
+  @@map("automations")
+}
+
+/// Exécution d'une automatisation (journal P5.3.5) ; créée dans la transaction de l'événement.
+model AutomationRun {
+  id           String    @id @default(uuid()) @db.Uuid
+  instanceId   String    @map("instance_id") @db.Uuid
+  automationId String    @map("automation_id") @db.Uuid
+  submissionId String?   @map("submission_id") @db.Uuid
+  /// Clé d'idempotence de l'événement (`revision:<id>`, `schedule:<horodatage>`).
+  eventKey     String    @map("event_key")
+  /// `{ type, revision?, from?, to?, fields? }`.
+  event        Json
+  /// Profondeur de la chaîne d'automatisations (anti-boucle).
+  depth        Int       @default(0)
+  /// `queued`, `running`, `succeeded`, `failed` ou `skipped`.
+  status       String    @default("queued")
+  /// `[{ type, status, startedAt, durationMs, error?, result? }]`, une entrée par action.
+  steps        Json      @default("[]")
+  error        String?
+  attempts     Int       @default(0)
+  startedAt    DateTime? @map("started_at") @db.Timestamptz(3)
+  finishedAt   DateTime? @map("finished_at") @db.Timestamptz(3)
+  durationMs   Int?      @map("duration_ms")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance   Instance             @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  automation Automation           @relation(fields: [automationId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  submission Submission?          @relation(fields: [submissionId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  revisions  SubmissionRevision[]
+  emails     EmailMessage[]
+  deliveries WebhookDelivery[]
+
+  @@unique([id, instanceId])
+  @@unique([automationId, eventKey])
+  @@index([instanceId, createdAt])
+  @@map("automation_runs")
 }

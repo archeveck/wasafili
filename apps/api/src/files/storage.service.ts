@@ -11,7 +11,10 @@ import { ENV, type Env } from '../config/env';
 /** Durée de validité des URL signées (secondes). */
 export const SIGNED_URL_TTL = 15 * 60;
 
-/** Accès au stockage S3 (MinIO). Les octets ne transitent jamais par l'API. */
+/**
+ * Accès au stockage S3 (MinIO). Les fichiers des clients ne transitent pas par l'API (URL
+ * signées) ; seuls les documents qu'elle produit ou fusionne (rapports) y passent.
+ */
 @Injectable()
 export class StorageService {
   private readonly internal?: S3Client;
@@ -61,6 +64,21 @@ export class StorageService {
           : {}),
       }),
       { expiresIn: SIGNED_URL_TTL },
+    );
+  }
+
+  /** Contenu d'un objet (modèles de rapports, images à intégrer). */
+  async get(key: string): Promise<Buffer> {
+    const object = await this.clients().internal.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    return Buffer.from(await object.Body!.transformToByteArray());
+  }
+
+  /** Dépôt d'un objet produit par l'API (rapports PDF). */
+  async put(key: string, body: Buffer, contentType: string): Promise<void> {
+    await this.clients().internal.send(
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
     );
   }
 
