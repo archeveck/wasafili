@@ -22,6 +22,8 @@ declare global {
       principal?: Principal;
       instance?: Instance;
       permissions?: ReadonlySet<string>;
+      /** Clés des rôles de l'appelant dans l'instance (conditions par rôle des formulaires). */
+      roles?: readonly string[];
     }
   }
 }

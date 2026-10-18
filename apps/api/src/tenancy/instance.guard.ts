@@ -37,6 +37,7 @@ export class InstanceGuard implements CanActivate {
       if (principal.instanceId !== instance.id) throw new NotFoundException(NOT_FOUND);
       store.instanceId = instance.id;
       req.permissions = new Set(principal.permissions);
+      req.roles = [];
     } else {
       store.instanceId = instance.id;
       const membership = await this.prisma.db.membership.findUnique({
@@ -48,6 +49,7 @@ export class InstanceGuard implements CanActivate {
         throw new UnauthorizedException({ error: 'unauthorized', message: 'Compte désactivé' });
       }
       req.permissions = new Set(membership.role.permissions);
+      req.roles = [membership.role.key];
     }
     req.instance = instance;
     return true;

@@ -9,8 +9,11 @@ import { ConfigModule } from './config/config.module';
 import { ENV, type Env } from './config/env';
 import { HealthModule } from './health/health.module';
 import { IamModule } from './iam/iam.module';
+import { ListsModule } from './lists/lists.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { StructuresModule } from './structures/structures.module';
+import { SubmissionsModule } from './submissions/submissions.module';
 import { InstanceGuard } from './tenancy/instance.guard';
 import { PermissionGuard } from './tenancy/permission.guard';
 
@@ -33,6 +36,9 @@ import { PermissionGuard } from './tenancy/permission.guard';
     HealthModule,
     AuthModule,
     IamModule,
+    StructuresModule,
+    SubmissionsModule,
+    ListsModule,
   ],
   providers: [
     // Ordre significatif : authentification → instance (contexte RLS) → permissions.

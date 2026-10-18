@@ -31,6 +31,7 @@ const CODES: Record<number, string> = {
   403: 'forbidden',
   404: 'not_found',
   409: 'conflict',
+  422: 'unprocessable',
   429: 'too_many_requests',
 };
 

@@ -1,5 +1,6 @@
 import { loadDotEnv } from '../src/config/dotenv';
 import { createPrismaClient } from '../src/prisma/tenant';
+import { seedDemoContent } from '../src/seed/seed-demo';
 import { type SeedUser, seedInstance } from '../src/seed/seed-instance';
 
 /** Mot de passe des comptes de démonstration — développement et démo uniquement. */
@@ -33,7 +34,11 @@ async function main(): Promise<void> {
         ] satisfies Omit<SeedUser, 'password'>[]
       ).map((user) => ({ ...user, password: DEMO_PASSWORD })),
     });
-    console.log(`Instance « ${instance.short} » prête avec ${users.length} utilisateurs.`);
+    const { list, structure } = await seedDemoContent(client, instance.id);
+    console.log(
+      `Instance « ${instance.short} » prête : ${users.length} utilisateurs, ` +
+        `référentiel « ${list.name} », structure « ${structure.name} ».`,
+    );
   } finally {
     await client.$disconnect();
   }
