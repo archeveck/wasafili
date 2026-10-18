@@ -56,7 +56,7 @@ describe('création', () => {
     expect(res.body).toMatchObject({
       version: 1,
       revision: 1,
-      state: null,
+      state: 'brouillon',
       authorId: technicienId,
       location: { lat: 5.32, lng: -4.02, accuracy: 6 },
     });

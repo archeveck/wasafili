@@ -114,6 +114,9 @@ export interface SubmissionQuery extends ListParams {
   sort?: string;
   state?: string;
   authorId?: string;
+  /** Période de création (ISO 8601), bornes incluse / exclue. */
+  createdFrom?: string;
+  createdTo?: string;
   filters?: Filter[];
 }
 
@@ -127,6 +130,8 @@ function submissionQuery({ filters = [], authorId, ...rest }: SubmissionQuery = 
     sort: rest.sort,
     state: rest.state,
     author_id: authorId,
+    created_from: rest.createdFrom,
+    created_to: rest.createdTo,
   };
   for (const filter of filters) {
     query[

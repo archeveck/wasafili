@@ -50,6 +50,9 @@ const listSchema = paginationSchema.extend({
   sort: z.string().max(100).optional(),
   state: z.string().max(100).optional(),
   author_id: z.uuid().optional(),
+  /** Période de création (ISO 8601) : calendrier des fiches. */
+  created_from: z.coerce.date().optional(),
+  created_to: z.coerce.date().optional(),
 });
 const deleteSchema = z.object({ client_mutation_id: mutationId.optional() });
 const resolveSchema = z.object({ resolution: z.enum(['kept', 'restored']) });

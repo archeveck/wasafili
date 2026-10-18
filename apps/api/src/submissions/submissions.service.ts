@@ -66,6 +66,8 @@ export interface ListSubmissionsInput extends Pagination {
   sort?: string;
   state?: string;
   author_id?: string;
+  created_from?: Date;
+  created_to?: Date;
   filters: Filter[];
 }
 
@@ -338,6 +340,8 @@ export class SubmissionsService {
     if (scope === 'own') conditions.push(Prisma.sql`s.author_id = ${actor.userId}::uuid`);
     if (input.state) conditions.push(Prisma.sql`s.state = ${input.state}`);
     if (input.author_id) conditions.push(Prisma.sql`s.author_id = ${input.author_id}::uuid`);
+    if (input.created_from) conditions.push(Prisma.sql`s.created_at >= ${input.created_from}`);
+    if (input.created_to) conditions.push(Prisma.sql`s.created_at < ${input.created_to}`);
     return {
       where: Prisma.join(conditions, ' AND '),
       order: orderSql(input.sort, fields),

@@ -145,6 +145,11 @@ describe('transitions', () => {
       { state: 'brouillon', count: 1 },
       { state: 'soumis', count: 1 },
     ]);
+    const list = `/v1/acme/structures/${structureId}/submissions`;
+    const soon = new Date(Date.now() + 60_000).toISOString();
+    expect((await admin.get(list).query({ state: 'soumis' })).body.meta.total).toBe(1);
+    expect((await admin.get(list).query({ created_to: soon })).body.meta.total).toBe(2);
+    expect((await admin.get(list).query({ created_from: soon })).body.meta.total).toBe(0);
   });
 });
 

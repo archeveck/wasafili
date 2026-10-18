@@ -1,4 +1,8 @@
-import { inspectionEquipement } from '@tesserax/form-schema';
+import {
+  inspectionEquipement,
+  inspectionWorkflow,
+  type StructureDefinition,
+} from '@tesserax/form-schema';
 import { type Prisma, type PrismaClient } from '../generated/prisma/client';
 import { tenantTransaction } from '../prisma/tenant';
 
@@ -49,8 +53,10 @@ const SITES: DemoItem[] = [
 ];
 
 /**
- * Contenu de démonstration (P1.6) : référentiel Site > Bâtiment > Équipement et structure
- * « Inspection équipement » publiée. Idempotent : rien n'est recréé s'il existe déjà.
+ * Contenu de démonstration (P1.6, P4.6) : référentiel Site > Bâtiment > Équipement et structure
+ * « Inspection équipement » publiée avec le workflow Brouillon → Soumis → Validé / Rejeté.
+ * Idempotent : rien n'est recréé s'il existe déjà ; une démo antérieure à la Phase 4 reçoit
+ * une nouvelle version publiée avec le workflow.
  */
 export async function seedDemoContent(client: PrismaClient, instanceId: string) {
   return tenantTransaction(client, { instanceId }, async (tx) => {
@@ -83,6 +89,10 @@ export async function seedDemoContent(client: PrismaClient, instanceId: string) 
     }
 
     const structureName = 'Inspection équipement';
+    const definition = {
+      ...inspectionEquipement({ listId: list.id }),
+      workflow: inspectionWorkflow,
+    } satisfies StructureDefinition;
     let structure = await tx.structure.findFirst({ where: { name: structureName } });
     if (!structure) {
       structure = await tx.structure.create({
@@ -92,16 +102,25 @@ export async function seedDemoContent(client: PrismaClient, instanceId: string) 
           description: 'Inspection périodique d un équipement, avec constat, photos et pièces.',
         },
       });
+    }
+    const versions = await tx.structureVersion.findMany({ where: { structureId: structure.id } });
+    const published = versions.find((v) => v.status === 'PUBLISHED');
+    if (!published || !(published.definition as StructureDefinition).workflow) {
+      await tx.structureVersion.updateMany({
+        where: { structureId: structure.id, status: 'PUBLISHED' },
+        data: { status: 'ARCHIVED' },
+      });
       await tx.structureVersion.create({
         data: {
           instanceId,
           structureId: structure.id,
-          version: 1,
+          version: Math.max(0, ...versions.map((v) => v.version)) + 1,
           status: 'PUBLISHED',
           publishedAt: new Date(),
-          definition: inspectionEquipement({ listId: list.id }) as Prisma.InputJsonValue,
+          definition: definition as Prisma.InputJsonValue,
         },
       });
+      await tx.structure.update({ where: { id: structure.id }, data: { updatedAt: new Date() } });
     }
     return { list, structure };
   });
