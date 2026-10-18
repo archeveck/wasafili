@@ -559,10 +559,11 @@ export class LocalStore {
     return { applied, rejected };
   }
 
-  /** Renvoie les mutations refusées (après correction ou changement de droits). */
+  /** Renvoie les mutations et fichiers refusés (après correction ou changement de droits). */
   retryFailed(): void {
     this.db.run(`UPDATE mutations SET status = 'pending', error = NULL WHERE status = 'failed'`);
     this.db.run(`UPDATE submissions SET status = 'pending', error = NULL WHERE status = 'error'`);
+    this.db.run(`UPDATE uploads SET status = 'pending', error = NULL WHERE status = 'failed'`);
   }
 
   /** Abandonne une mutation refusée : la fiche revient à la dernière version du serveur. */
