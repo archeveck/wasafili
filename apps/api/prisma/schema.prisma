@@ -1,0 +1,160 @@
+// Schéma Tesserax — Phase 0 (identité, tenants, RBAC).
+//
+// Multi-tenant (ADR 0001) : toute table métier porte `instance_id` et est protégée par une
+// policy RLS (voir la migration `init`). Les tables `instances`, `users` et `refresh_tokens`
+// forment le registre d'identité : elles ne contiennent aucune donnée propre à une instance.
+// Les relations entre tables d'une même instance passent par des clés étrangères composites
+// (id, instance_id) : une ligne ne peut jamais référencer une ligne d'une autre instance.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Instance {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Identifiant court utilisé dans les URL (`/v1/{short}/...`).
+  short     String   @unique
+  name      String
+  timeZone  String   @default("Africa/Abidjan") @map("time_zone")
+  locale    String   @default("fr")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  roles        Role[]
+  memberships  Membership[]
+  groups       Group[]
+  groupMembers GroupMember[]
+  oauthClients OAuthClient[]
+
+  @@map("instances")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  /// Toujours stocké en minuscules.
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships   Membership[]
+  groupMembers  GroupMember[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  instanceId  String   @map("instance_id") @db.Uuid
+  /// Clé stable (`admin`, `superviseur`, `technicien`, ou personnalisée).
+  key         String
+  name        String
+  permissions String[]
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance    Instance     @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+
+  @@unique([instanceId, key])
+  @@unique([id, instanceId])
+  @@map("roles")
+}
+
+model Membership {
+  id         String   @id @default(uuid()) @db.Uuid
+  instanceId String   @map("instance_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     Role     @relation(fields: [roleId, instanceId], references: [id, instanceId])
+
+  @@unique([instanceId, userId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+model Group {
+  id         String   @id @default(uuid()) @db.Uuid
+  instanceId String   @map("instance_id") @db.Uuid
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  members  GroupMember[]
+
+  @@unique([instanceId, name])
+  @@unique([id, instanceId])
+  @@map("groups")
+}
+
+model GroupMember {
+  instanceId String   @map("instance_id") @db.Uuid
+  groupId    String   @map("group_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [groupId, instanceId], references: [id, instanceId], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("group_members")
+}
+
+/// Client OAuth2 `client_credentials` (intégrations : n8n, ERP…), rattaché à une instance.
+model OAuthClient {
+  id         String    @id @default(uuid()) @db.Uuid
+  instanceId String    @map("instance_id") @db.Uuid
+  /// Identifiant public, unique sur toute la plateforme.
+  clientId   String    @unique @map("client_id")
+  /// SHA-256 du secret (secret aléatoire de 256 bits, jamais stocké en clair).
+  secretHash String    @map("secret_hash")
+  name       String
+  /// Permissions accordées au client (même catalogue que les rôles).
+  scopes     String[]
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_clients")
+}
+
+/// Refresh token rotatif (ADR 0002). Une famille = une session de connexion.
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  familyId  String    @map("family_id") @db.Uuid
+  /// SHA-256 du jeton opaque remis au client.
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  /// Renseigné quand le jeton a été échangé ; le réutiliser révoque toute la famille.
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
