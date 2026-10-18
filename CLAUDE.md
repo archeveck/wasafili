@@ -46,6 +46,14 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
 - UI et messages en français ; textes partagés dans `packages/i18n` (fr/en, clés identiques).
   Dates stockées en UTC (`timestamptz`), affichées en `Africa/Abidjan` par défaut (D14).
 - Commits conventionnels (commitlint), petits et atomiques ; tests verts avant de clore une tâche.
+- **Formulaires** : toute évaluation (conditions, calculs, validation, défauts) passe par
+  `@tesserax/form-engine`, jamais par du code ad hoc côté API, web ou mobile. Le paquet reste
+  sans dépendance Node/DOM et à 100 % de couverture (`pnpm --filter @tesserax/form-engine test`).
+  Fixtures partagées : `inspectionEquipement()` dans `@tesserax/form-schema`.
+- **Fiches** : le serveur fait foi pour les champs calculés et automatiques (il les retire de
+  l'entrée et les recalcule). Une fiche reste liée à sa version de structure, et une version
+  publiée est immuable (trigger). Chaque écriture crée une `SubmissionRevision` ; un
+  `clientMutationId` rejoué ne réapplique rien.
 - Nouvelle dépendance lourde ou décision structurante → ADR dans `docs/adr/`.
 
 <!-- rtk-instructions v2 -->

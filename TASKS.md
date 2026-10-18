@@ -96,44 +96,44 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 ## Phase 1 — Moteur de formulaires
 
 **P1.1 `packages/form-schema`** (TDD)
-- [ ] P1.1.1 Types + Zod de la définition de structure : métadonnées, sections, champs, version
-- [ ] P1.1.2 Schéma commun d'un champ : libellé, aide, requis, défaut, lecture seule, `visibleIf`, `requiredIf`, validation (regex, bornes), visibilité par état/rôle
-- [ ] P1.1.3 Les ≥ 25 types de champs (union discriminée) : texte court/long, nombre, date, heure, date-heure, booléen, choix unique/multiple, liste (cascade), relation, photo, fichier, signature, géoloc, code-barres, calcul, utilisateur, e-mail, téléphone, note, curseur, tableau répétable, section, texte informatif, caché, horodatage auto, auteur auto
-- [ ] P1.1.4 Schéma Zod **dynamique** des données d'une fiche généré depuis une version de structure
-- [ ] P1.1.5 Schéma de workflow (états, transitions, boutons) — défini ici, exploité en Phase 4
-- [ ] P1.1.6 Export JSON Schema (pour OpenAPI et documentation)
+- [x] P1.1.1 Types + Zod de la définition de structure : métadonnées, sections, champs, version
+- [x] P1.1.2 Schéma commun d'un champ : libellé, aide, requis, défaut, lecture seule, `visibleIf`, `requiredIf`, validation (regex, bornes), visibilité par état/rôle
+- [x] P1.1.3 Les ≥ 25 types de champs (union discriminée) : texte court/long, nombre, date, heure, date-heure, booléen, choix unique/multiple, liste (cascade), relation, photo, fichier, signature, géoloc, code-barres, calcul, utilisateur, e-mail, téléphone, note, curseur, tableau répétable, section, texte informatif, caché, horodatage auto, auteur auto
+- [x] P1.1.4 Schéma Zod **dynamique** des données d'une fiche généré depuis une version de structure
+- [x] P1.1.5 Schéma de workflow (états, transitions, boutons) — défini ici, exploité en Phase 4
+- [x] P1.1.6 Export JSON Schema (pour OpenAPI et documentation)
 
 **P1.2 `packages/form-engine`** (TDD, couverture 100 %) — *ADR conditions/calculs*
-- [ ] P1.2.1 Évaluation des conditions json-logic (opérateurs custom : `empty`, `in_list`, dates)
-- [ ] P1.2.2 Contexte d'évaluation : valeurs, utilisateur, rôle, état de workflow, ligne courante d'un tableau répétable
-- [ ] P1.2.3 Calculs : parseur de formules lisibles compilées en json-logic (D7), graphe de dépendances, détection de cycles, recalcul incrémental
-- [ ] P1.2.4 Visibilité & requis conditionnels ; un champ masqué n'est ni requis ni validé
-- [ ] P1.2.5 Validation complète d'une fiche (types, bornes, regex, requis) avec erreurs localisables
-- [ ] P1.2.6 Valeurs par défaut et champs auto (horodatage, auteur)
-- [ ] P1.2.7 Jeu de fixtures partagé (structures exemples) réutilisé par API, web et mobile
+- [x] P1.2.1 Évaluation des conditions json-logic (opérateurs custom : `empty`, `in_list`, dates)
+- [x] P1.2.2 Contexte d'évaluation : valeurs, utilisateur, rôle, état de workflow, ligne courante d'un tableau répétable
+- [x] P1.2.3 Calculs : parseur de formules lisibles compilées en json-logic (D7), graphe de dépendances, détection de cycles, recalcul incrémental
+- [x] P1.2.4 Visibilité & requis conditionnels ; un champ masqué n'est ni requis ni validé
+- [x] P1.2.5 Validation complète d'une fiche (types, bornes, regex, requis) avec erreurs localisables
+- [x] P1.2.6 Valeurs par défaut et champs auto (horodatage, auteur)
+- [x] P1.2.7 Jeu de fixtures partagé (structures exemples) réutilisé par API, web et mobile
 - Fini quand : 100 % de couverture, zéro dépendance runtime Node/DOM (exécutable dans Hermes).
 
 **P1.3 Structures versionnées (API)**
-- [ ] P1.3.1 Modèles `Structure`, `StructureVersion` (brouillon / publiée / archivée)
-- [ ] P1.3.2 CRUD + publication (version immuable une fois publiée)
-- [ ] P1.3.3 Validation de la définition via `form-schema` à l'enregistrement
+- [x] P1.3.1 Modèles `Structure`, `StructureVersion` (brouillon / publiée / archivée)
+- [x] P1.3.2 CRUD + publication (version immuable une fois publiée)
+- [x] P1.3.3 Validation de la définition via `form-schema` à l'enregistrement
 
 **P1.4 Fiches (API)**
-- [ ] P1.4.1 Modèle `Submission` : `id` UUID client, `structure_version_id`, `data` JSONB, auteur, géoloc, état, `client_mutation_id`, `updated_at`
-- [ ] P1.4.2 Validation serveur via `form-engine` contre la version d'origine
-- [ ] P1.4.3 Index GIN + colonnes extraites pour champs marqués « filtrables »
-- [ ] P1.4.4 CRUD + filtres/tri/pagination
-- [ ] P1.4.5 Historique champ par champ (`SubmissionRevision` : qui, quand, avant/après) enregistré dès maintenant (D11)
-- [ ] P1.4.6 Idempotence création/mise à jour par `client_mutation_id`
+- [x] P1.4.1 Modèle `Submission` : `id` UUID client, `structure_version_id`, `data` JSONB, auteur, géoloc, état, `client_mutation_id`, `updated_at`
+- [x] P1.4.2 Validation serveur via `form-engine` contre la version d'origine
+- [x] P1.4.3 Index GIN + colonnes extraites pour champs marqués « filtrables » — alternative retenue : containment GIN + expressions JSONB typées ([ADR 0004](docs/adr/0004-filtrage-des-fiches.md))
+- [x] P1.4.4 CRUD + filtres/tri/pagination
+- [x] P1.4.5 Historique champ par champ (`SubmissionRevision` : qui, quand, avant/après) enregistré dès maintenant (D11)
+- [x] P1.4.6 Idempotence création/mise à jour par `client_mutation_id`
 
 **P1.5 Listes / référentiels**
-- [ ] P1.5.1 Modèles `List`, `ListItem` hiérarchiques (parent_id, niveau, code, libellé, attributs)
-- [ ] P1.5.2 CRUD + recherche + filtrage par parent (cascade)
-- [ ] P1.5.3 Import CSV/XLSX (mapping colonnes → niveaux, prévisualisation, rapport d'erreurs, mode remplacer/fusionner)
-- [ ] P1.5.4 Export CSV/XLSX
-- [ ] P1.5.5 Recherche par code (sert au scan QR en Phase 3)
+- [x] P1.5.1 Modèles `List`, `ListItem` hiérarchiques (parent_id, niveau, code, libellé, attributs)
+- [x] P1.5.2 CRUD + recherche + filtrage par parent (cascade)
+- [x] P1.5.3 Import CSV/XLSX (mapping colonnes → niveaux, prévisualisation, rapport d'erreurs, mode remplacer/fusionner)
+- [x] P1.5.4 Export CSV/XLSX
+- [x] P1.5.5 Recherche par code (sert au scan QR en Phase 3)
 
-**P1.6 Seed & démo** : structure « Inspection équipement » (sans workflow), référentiel Site > Bâtiment > Équipement.
+**P1.6 Seed & démo** ✅ : structure « Inspection équipement » (sans workflow), référentiel Site > Bâtiment > Équipement.
 
 ---
 

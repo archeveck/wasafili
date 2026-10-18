@@ -4,8 +4,9 @@ Plateforme no-code de collecte de données terrain : back-office web pour concev
 formulaires (structures), workflows et rapports ; application mobile **100 % hors ligne** pour
 la saisie sur chantier. Conçue pour les PME BTP / maintenance / QHSE en Côte d'Ivoire.
 
-> État : **Phase 0 — Socle** livrée (monorepo, infra, API NestJS, auth OAuth2, multi-tenant
-> RLS, RBAC, seed). Feuille de route : [TASKS.md](TASKS.md).
+> État : **Phase 0 — Socle** et **Phase 1 — Moteur de formulaires** livrées (structures
+> versionnées, 28 types de champs, conditions et calculs partagés serveur/web/mobile, fiches
+> avec historique, référentiels avec import/export CSV/XLSX). Feuille de route : [TASKS.md](TASKS.md).
 
 ## Démarrage rapide
 
@@ -57,6 +58,34 @@ curl -s 'localhost:3000/v1/demo/users?per_page=2&fields=email,role' -H "Authoriz
 # 4. Renouvellement : grant_type=refresh_token&refresh_token=… ; déconnexion : POST /v1/oauth/revoke
 ```
 
+## Démo (Phase 1)
+
+Le seed crée le référentiel « Sites et équipements » (Site > Bâtiment > Équipement, codes
+`S-PLT`, `B-PLT-A`, `EQ-0001`…) et la structure publiée « Inspection équipement » : cascade de
+référentiels, champs conditionnels selon l'état, photos, tableau de pièces avec montant par
+ligne et total calculé, signature.
+
+```bash
+# Retrouver un équipement par son code (scan QR)
+curl -s 'localhost:3000/v1/demo/list-items?code=EQ-0001' -H "Authorization: Bearer $TOKEN"
+# Créer une fiche (idempotente via clientMutationId ; le serveur recalcule et horodate)
+curl -s localhost:3000/v1/demo/structures/$STRUCTURE/submissions -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"clientMutationId":"m-1","data":{"site":"…","batiment":"…","equipement":"…","etat":"bon","signature":{"fileId":"…"}}}'
+# Filtrer et trier : champs marqués « filterable »
+curl -s "localhost:3000/v1/demo/structures/$STRUCTURE/submissions?filter[etat]=degrade&sort=-date_inspection" \
+  -H "Authorization: Bearer $TOKEN"
+# Historique champ par champ
+curl -s localhost:3000/v1/demo/submissions/$ID/revisions -H "Authorization: Bearer $TOKEN"
+# Import d'un référentiel (prévisualisation puis application)
+curl -s localhost:3000/v1/demo/lists/$LIST/import -H "Authorization: Bearer $TOKEN" \
+  -F file=@equipements.xlsx -F dry_run=true
+```
+
+Formules des champs calculés : `{prix} * {quantite}`, `SOMME({pieces.montant})`,
+`SI({etat} = "bon"; 0; 1)`, `JOURS_ENTRE({date_debut}; AUJOURDHUI())`
+(voir [ADR 0003](docs/adr/0003-conditions-calculs.md)).
+
 ## Vérifications
 
 ```bash
@@ -85,5 +114,8 @@ docs/adr/   décisions d'architecture
 
 - [ADR 0001 — Multi-tenant (RLS)](docs/adr/0001-multi-tenant.md)
 - [ADR 0002 — Authentification OAuth2](docs/adr/0002-auth.md)
+- [ADR 0003 — Conditions et calculs (json-logic)](docs/adr/0003-conditions-calculs.md)
+- [ADR 0004 — Filtrage des fiches (JSONB)](docs/adr/0004-filtrage-des-fiches.md)
+- [ADR 0005 — Import / export tableurs](docs/adr/0005-import-export-tableurs.md)
 
 Conventions de code et commandes détaillées : [CLAUDE.md](CLAUDE.md).
