@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+
+/* Tokens Tesserax (packages/ui) exposés au thème Tailwind ; la couleur primaire suit l'instance. */
+@theme {
+  --color-primary: var(--brand-primary, #1f6f5c);
+  --color-primary-foreground: #ffffff;
+  --color-accent: var(--brand-accent, #e3a72f);
+  --color-danger: #c4372d;
+  --color-warning: #d98a1b;
+  --color-success: #2e8b57;
+  --color-foreground: #1b1f23;
+  --color-muted: #5b6470;
+  --color-surface: #ffffff;
+  --color-background: #f5f6f4;
+  --color-border: #d9ddd8;
+  --color-subtle: #eef0ec;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --radius-md: 8px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground font-sans antialiased;
+  font-size: 14px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

@@ -1,28 +1,30 @@
-import { resources } from '@tesserax/i18n';
-import { tokens } from '@tesserax/ui';
+import './index.css';
+import './lib/i18n';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from '@tanstack/react-router';
+import { ApiError } from '@tesserax/sdk';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ToastProvider } from '@/components/ui/toast';
+import { createAppRouter } from './router';
 
-// Page d'attente : le back-office (TanStack Router/Query, shadcn/ui) arrive en Phase 2 (P2.1).
-function App() {
-  return (
-    <main
-      style={{
-        fontFamily: tokens.font.family,
-        color: tokens.color.text,
-        background: tokens.color.background,
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-      }}
-    >
-      <h1 style={{ color: tokens.color.primary }}>{resources.fr.translation.app.name}</h1>
-    </main>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // Pas de nouvel essai sur une erreur métier (droits, introuvable, validation).
+      retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 2,
+    },
+  },
+});
+const router = createAppRouter(queryClient);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );

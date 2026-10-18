@@ -20,7 +20,9 @@
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @tesserax/api db:migrate",
     "db:seed": "pnpm --filter @tesserax/api db:seed",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:deploy": "pnpm --filter @tesserax/api db:deploy",
+    "test:e2e": "pnpm --filter @tesserax/web test:e2e"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
