@@ -1,6 +1,12 @@
 /** File unique ; les jobs se distinguent par leur nom. Files dédiées si besoin (Phase 5). */
 export const QUEUE_NAME = 'tesserax';
 
+/**
+ * Préfixe des clés Redis par défaut. Un environnement (tests, préproduction) qui partage un
+ * Redis doit utiliser son propre préfixe (`QUEUE_PREFIX`) pour ne pas consommer les jobs des autres.
+ */
+export const DEFAULT_QUEUE_PREFIX = 'tesserax';
+
 /** Miniature d'une image téléversée (P2.8). */
 export interface ThumbnailJob {
   instanceId: string;

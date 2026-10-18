@@ -46,6 +46,15 @@ describe('matrice de droits (rôles système)', () => {
   });
 });
 
+describe('permissions de l appelant', () => {
+  it('expose rôle et permissions dans l instance', async () => {
+    const res = await api(app, tokens.technicien).get('/v1/acme/me').expect(200);
+    expect(res.body).toMatchObject({ kind: 'user', roles: ['technicien'] });
+    expect(res.body.permissions).toContain('submission:create');
+    expect(res.body.permissions).not.toContain('user:read');
+  });
+});
+
 describe('conventions de l API', () => {
   it('pagine avec page/per_page et restreint les champs avec fields=', async () => {
     const res = await api(app, tokens.admin)

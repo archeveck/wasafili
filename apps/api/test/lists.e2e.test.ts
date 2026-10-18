@@ -87,6 +87,16 @@ describe('éléments', () => {
     const lookup = await technicien.get('/v1/acme/list-items?code=EQ-1').expect(200);
     expect(lookup.body.data).toHaveLength(1);
     expect(lookup.body.data[0]).toMatchObject({ label: 'Groupe', list: { name: 'Équipements' } });
+
+    const byIds = await technicien
+      .get(`/v1/acme/list-items?ids=${site.body.id},${equipement.body.id}`)
+      .expect(200);
+    expect(byIds.body.data.map((i: { label: string }) => i.label).sort()).toEqual([
+      'Groupe',
+      'Plateau',
+    ]);
+    await technicien.get('/v1/acme/list-items').expect(400);
+    await technicien.get('/v1/acme/list-items?ids=pas-un-uuid').expect(400);
   });
 
   it('archive un élément et sa descendance, puis le restaure', async () => {

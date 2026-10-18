@@ -18,6 +18,7 @@ loadDotEnv();
 export const TEST_DATABASE_URL = process.env['TEST_DATABASE_URL']!;
 export const TEST_DATABASE_OWNER_URL = process.env['TEST_DATABASE_OWNER_URL']!;
 export const PASSWORD = 'Motdepasse#Test1';
+export const TEST_QUEUE_PREFIX = 'tesserax-test';
 
 /** Application complète branchée sur la base de test, avec le rôle applicatif (RLS active). */
 export async function createTestApp(env: Record<string, string> = {}): Promise<INestApplication> {
@@ -26,6 +27,8 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<I
     LOG_LEVEL: 'silent',
     DATABASE_URL: TEST_DATABASE_URL,
     LOGIN_RATE_LIMIT_PER_MINUTE: '1000',
+    // Files isolées : un worker de développement ne doit pas consommer les jobs des tests.
+    QUEUE_PREFIX: TEST_QUEUE_PREFIX,
     ...env,
   });
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();

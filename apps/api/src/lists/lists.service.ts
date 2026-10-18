@@ -141,12 +141,12 @@ export class ListsService {
     return toPage(items, total, query);
   }
 
-  /** Recherche par code dans tous les référentiels (scan QR, P1.5.5). */
-  lookup(code: string) {
+  /** Recherche par code (scan QR, P1.5.5) ou par identifiants, dans tous les référentiels. */
+  lookup(query: { code?: string | undefined; ids?: string[] | undefined }) {
     return this.prisma.db.listItem.findMany({
-      where: { code, archivedAt: null },
+      where: query.ids ? { id: { in: query.ids } } : { code: query.code!, archivedAt: null },
       select: { ...itemSelect, list: { select: { id: true, name: true, levels: true } } },
-      take: 20,
+      take: query.ids ? 200 : 20,
     });
   }
 

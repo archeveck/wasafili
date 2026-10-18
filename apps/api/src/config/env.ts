@@ -6,6 +6,8 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
+  /** Préfixe Redis des files de jobs (isole les environnements qui partagent un Redis). */
+  QUEUE_PREFIX: z.string().min(1).default('tesserax'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET doit contenir au moins 32 caractères'),
   ACCESS_TOKEN_TTL: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL: z.coerce

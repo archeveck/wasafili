@@ -29,7 +29,9 @@ export class JobQueue {
       provide: JobQueue,
       inject: [ENV],
       useFactory: (env: Env) =>
-        new JobQueue(new Queue(QUEUE_NAME, { connection: { url: env.REDIS_URL } })),
+        new JobQueue(
+          new Queue(QUEUE_NAME, { connection: { url: env.REDIS_URL }, prefix: env.QUEUE_PREFIX }),
+        ),
     },
   ],
   exports: [JobQueue],

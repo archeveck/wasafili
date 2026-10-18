@@ -3,7 +3,14 @@ import { QUEUE_NAME } from '@tesserax/jobs';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { api, createDemoTenant, createTestApp, login, resetDatabase } from './helpers';
+import {
+  api,
+  createDemoTenant,
+  createTestApp,
+  login,
+  resetDatabase,
+  TEST_QUEUE_PREFIX,
+} from './helpers';
 
 let app: INestApplication;
 let tenant: Awaited<ReturnType<typeof createDemoTenant>>;
@@ -19,7 +26,10 @@ const PNG = Buffer.from(
 
 beforeAll(async () => {
   app = await createTestApp();
-  queue = new Queue(QUEUE_NAME, { connection: { url: process.env['REDIS_URL']! } });
+  queue = new Queue(QUEUE_NAME, {
+    connection: { url: process.env['REDIS_URL']! },
+    prefix: TEST_QUEUE_PREFIX,
+  });
 });
 
 afterAll(async () => {

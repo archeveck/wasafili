@@ -91,6 +91,16 @@ const importSchema = z.object({
     }),
 });
 const exportSchema = z.object({ format: z.enum(['csv', 'xlsx']).default('xlsx') });
+const lookupSchema = z
+  .object({
+    code: code.optional(),
+    ids: z
+      .string()
+      .transform((raw) => raw.split(',').filter(Boolean))
+      .pipe(z.array(z.uuid()).max(200))
+      .optional(),
+  })
+  .refine((query) => Boolean(query.code) !== Boolean(query.ids), 'Indiquer code ou ids');
 
 const MIME = {
   csv: 'text/csv; charset=utf-8',
@@ -118,11 +128,14 @@ export class ListsController {
     return this.lists.create(instance.id, body);
   }
 
-  /** Recherche d'un élément par code dans tous les référentiels (scan QR). */
+  /**
+   * Éléments de tous les référentiels, par code (scan QR) ou par identifiants (libellés des
+   * valeurs affichées dans les listes de fiches).
+   */
   @Get('list-items')
   @Can('list:read')
-  lookup(@Query(new ZodValidationPipe(z.object({ code }))) query: { code: string }) {
-    return this.lists.lookup(query.code).then((data) => ({ data }));
+  lookup(@Query(new ZodValidationPipe(lookupSchema)) query: z.infer<typeof lookupSchema>) {
+    return this.lists.lookup(query).then((data) => ({ data }));
   }
 
   @Get('lists/:id')

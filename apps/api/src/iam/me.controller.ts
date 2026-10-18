@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { type Actor, CurrentActor } from '../auth/decorators';
 import { CurrentPrincipal } from '../auth/decorators';
 import { type Principal } from '../auth/principal';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,6 +21,13 @@ export class MeController {
       select: { id: true, email: true, firstName: true, lastName: true, lastLoginAt: true },
     });
     return { kind: 'user', ...user };
+  }
+
+  /** Rôle et permissions de l'appelant dans l'instance (affichage des actions possibles). */
+  @Get(':app/me')
+  async member(@CurrentPrincipal() principal: Principal, @CurrentActor() actor: Actor) {
+    const profile = await this.me(principal);
+    return { ...profile, roles: actor.roles, permissions: [...actor.permissions].sort() };
   }
 
   /** Instances (« apps ») accessibles à l'appelant : sert à la sélection d'instance. */

@@ -31,7 +31,7 @@ const worker = new Worker(
     if (!handler) throw new Error(`Job inconnu : ${job.name}`);
     await handler(job.data);
   },
-  { connection, concurrency: 4 },
+  { connection, concurrency: 4, prefix: env.QUEUE_PREFIX },
 );
 
 worker.on('ready', () => logger.info({ queue: QUEUE_NAME }, 'worker prêt'));
