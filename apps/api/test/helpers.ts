@@ -10,6 +10,7 @@ import { loadDotEnv } from '../src/config/dotenv';
 import { ENV, type Env } from '../src/config/env';
 import { type PrismaClient } from '../src/generated/prisma/client';
 import { createPrismaClient, tenantTransaction } from '../src/prisma/tenant';
+import { seedDemoContent } from '../src/seed/seed-demo';
 import { seedInstance, type SeedUser } from '../src/seed/seed-instance';
 import { type SystemRoleKey } from '../src/tenancy/permissions';
 
@@ -89,6 +90,9 @@ export function api(app: INestApplication, token?: string) {
   return {
     get: (url: string) => auth(request(server).get(url)),
     post: (url: string) => auth(request(server).post(url)),
+    put: (url: string) => auth(request(server).put(url)),
+    patch: (url: string) => auth(request(server).patch(url)),
+    delete: (url: string) => auth(request(server).delete(url)),
   };
 }
 
@@ -113,4 +117,17 @@ export async function createOAuthClient(
     }),
   );
   return { clientId, secret };
+}
+
+/** Instance de test avec le référentiel et la structure de démonstration publiée. */
+export async function createDemoTenant(short: string) {
+  const tenant = await createTenant(short);
+  const demo = await seedDemoContent(owner(), tenant.instance.id);
+  return { ...tenant, ...demo };
+}
+
+/** Éléments du référentiel de démonstration, par code. */
+export async function demoItems(instanceId: string): Promise<Record<string, string>> {
+  const items = await tenantTransaction(owner(), { instanceId }, (tx) => tx.listItem.findMany());
+  return Object.fromEntries(items.map((item) => [item.code!, item.id]));
 }

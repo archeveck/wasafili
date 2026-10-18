@@ -2,6 +2,7 @@ import { type INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { tenantTransaction } from '../src/prisma/tenant';
+import { seedDemoContent } from '../src/seed/seed-demo';
 import {
   api,
   createOAuthClient,
@@ -45,6 +46,11 @@ const instanceEndpoints = [
   ['get', '/roles'],
   ['get', '/groups'],
   ['post', '/groups'],
+  ['get', '/structures'],
+  ['post', '/structures'],
+  ['get', '/lists'],
+  ['post', '/lists'],
+  ['get', '/list-items?code=EQ-0001'],
 ] as const;
 
 describe('un administrateur de A', () => {
@@ -87,6 +93,31 @@ describe('un administrateur de A', () => {
   it('ne liste que ses instances dans /v1/apps', async () => {
     const res = await api(app, tokenA).get('/v1/apps').expect(200);
     expect(res.body.data.map((instance: { short: string }) => instance.short)).toEqual(['alpha']);
+  });
+});
+
+describe('ressources de la Phase 1', () => {
+  it('ne donne accès à aucune structure, fiche ou liste de B par identifiant', async () => {
+    const demoB = await seedDemoContent(owner(), b.instance.id);
+    const tokenB = (await login(app, 'technicien@beta.test')).access_token;
+    const submission = await api(app, tokenB)
+      .post(`/v1/beta/structures/${demoB.structure.id}/submissions`)
+      .send({ data: {} });
+    const submissionId = submission.body.id ?? '00000000-0000-4000-8000-000000000000';
+
+    const client = api(app, tokenA);
+    await client.get(`/v1/alpha/structures/${demoB.structure.id}`).expect(404);
+    await client.get(`/v1/alpha/structures/${demoB.structure.id}/submissions`).expect(404);
+    await client
+      .post(`/v1/alpha/structures/${demoB.structure.id}/submissions`)
+      .send({ data: {} })
+      .expect(404);
+    await client.get(`/v1/alpha/submissions/${submissionId}`).expect(404);
+    await client.get(`/v1/alpha/lists/${demoB.list.id}`).expect(404);
+    await client.get(`/v1/alpha/lists/${demoB.list.id}/items`).expect(404);
+    expect((await client.get('/v1/alpha/list-items?code=EQ-0001').expect(200)).body.data).toEqual(
+      [],
+    );
   });
 });
 
