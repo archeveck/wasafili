@@ -1,6 +1,7 @@
 import { loadDotEnv } from '../src/config/dotenv';
 import { createPrismaClient } from '../src/prisma/tenant';
 import { seedDemoContent } from '../src/seed/seed-demo';
+import { seedDemoReports } from '../src/seed/seed-reports';
 import { type SeedUser, seedInstance } from '../src/seed/seed-instance';
 
 /** Mot de passe des comptes de démonstration — développement et démo uniquement. */
@@ -39,6 +40,24 @@ async function main(): Promise<void> {
       `Instance « ${instance.short} » prête : ${users.length} utilisateurs, ` +
         `référentiel « ${list.name} », structure « ${structure.name} ».`,
     );
+    const env = process.env;
+    if (env['S3_ENDPOINT'] && env['S3_ACCESS_KEY'] && env['S3_SECRET_KEY']) {
+      const { report, automation } = await seedDemoReports(client, {
+        instanceId: instance.id,
+        structureId: structure.id,
+        supervisorId: users.find((u) => u.email === 'superviseur@tesserax.local')!.id,
+        s3: {
+          endpoint: env['S3_ENDPOINT'],
+          region: env['S3_REGION'] ?? 'us-east-1',
+          bucket: env['S3_BUCKET'] ?? 'tesserax',
+          accessKeyId: env['S3_ACCESS_KEY'],
+          secretAccessKey: env['S3_SECRET_KEY'],
+        },
+      });
+      console.log(`Rapport « ${report.name} » et automatisation « ${automation.name} » prêts.`);
+    } else {
+      console.log('Stockage non configuré (S3_*) : rapport de démonstration non créé.');
+    }
   } finally {
     await client.$disconnect();
   }

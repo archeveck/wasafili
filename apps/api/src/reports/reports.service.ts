@@ -52,7 +52,8 @@ export interface RenderedReport {
 
 function safeFilename(name: string): string {
   const cleaned = name
-    .replace(/[\\/:*?"<>|]+/g, ' ')
+    .replace(/[\\/:]+/g, '-')
+    .replace(/[*?"<>|]+/g, ' ')
     .replace(/\p{Cc}+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
