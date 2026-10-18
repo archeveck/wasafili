@@ -1,11 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
@@ -14,8 +18,10 @@ import { pageArgs, type Pagination, paginationSchema, toPage } from '../common/p
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { IamService } from './iam.service';
 
 const createGroupSchema = z.object({ name: z.string().trim().min(1).max(100) });
+const membersSchema = z.object({ userIds: z.array(z.uuid()).max(1000) });
 
 const groupSelect = {
   id: true,
@@ -27,7 +33,10 @@ const groupSelect = {
 
 @Controller(':app/groups')
 export class GroupsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly iam: IamService,
+  ) {}
 
   @Get()
   @Can('group:read')
@@ -45,7 +54,33 @@ export class GroupsController {
   async get(@Param('id', ParseUUIDPipe) id: string) {
     const group = await this.prisma.db.group.findUnique({ where: { id }, select: groupSelect });
     if (!group) throw new NotFoundException({ error: 'not_found', message: 'Groupe introuvable' });
-    return group;
+    return { ...group, members: await this.iam.groupMembers(id) };
+  }
+
+  @Patch(':id')
+  @Can('group:manage')
+  rename(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(createGroupSchema)) body: z.infer<typeof createGroupSchema>,
+  ) {
+    return this.iam.renameGroup(id, body.name);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @Can('group:manage')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.iam.deleteGroup(id);
+  }
+
+  @Put(':id/members')
+  @Can('group:manage')
+  async setMembers(
+    @CurrentInstance() instance: Instance,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(membersSchema)) body: z.infer<typeof membersSchema>,
+  ) {
+    return { data: await this.iam.setGroupMembers(instance.id, id, body.userIds) };
   }
 
   @Post()

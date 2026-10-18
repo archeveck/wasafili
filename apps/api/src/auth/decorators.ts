@@ -21,6 +21,10 @@ export interface Actor {
   userId: string | null;
   roles: readonly string[];
   permissions: ReadonlySet<string>;
+  /** Rôle dans l'instance (null pour un client d'intégration). */
+  roleId: string | null;
+  /** Attributs du membre, utilisés par les filtres de visibilité (`$user.<attribut>`). */
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 export const CurrentActor = createParamDecorator((_data: unknown, ctx: ExecutionContext): Actor => {
@@ -29,6 +33,8 @@ export const CurrentActor = createParamDecorator((_data: unknown, ctx: Execution
     userId: req.principal?.kind === 'user' ? req.principal.userId : null,
     roles: req.roles ?? [],
     permissions: req.permissions ?? new Set(),
+    roleId: req.membership?.roleId ?? null,
+    attributes: req.membership?.attributes ?? {},
   };
 });
 

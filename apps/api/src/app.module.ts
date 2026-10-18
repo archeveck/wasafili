@@ -7,11 +7,14 @@ import { AllExceptionsFilter } from './common/errors';
 import { FieldsInterceptor } from './common/fields';
 import { ConfigModule } from './config/config.module';
 import { ENV, type Env } from './config/env';
+import { FilesModule } from './files/files.module';
 import { HealthModule } from './health/health.module';
 import { IamModule } from './iam/iam.module';
 import { ListsModule } from './lists/lists.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
+import { SettingsModule } from './settings/settings.module';
 import { StructuresModule } from './structures/structures.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { InstanceGuard } from './tenancy/instance.guard';
@@ -39,6 +42,9 @@ import { PermissionGuard } from './tenancy/permission.guard';
     StructuresModule,
     SubmissionsModule,
     ListsModule,
+    QueueModule,
+    FilesModule,
+    SettingsModule,
   ],
   providers: [
     // Ordre significatif : authentification → instance (contexte RLS) → permissions.

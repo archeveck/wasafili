@@ -17,14 +17,18 @@ datasource db {
 }
 
 model Instance {
-  id        String   @id @default(uuid()) @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
   /// Identifiant court utilisé dans les URL (`/v1/{short}/...`).
-  short     String   @unique
-  name      String
-  timeZone  String   @default("Africa/Abidjan") @map("time_zone")
-  locale    String   @default("fr")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  short      String   @unique
+  name       String
+  timeZone   String   @default("Africa/Abidjan") @map("time_zone")
+  locale     String   @default("fr")
+  /// Personnalisation (P2.7) : `{ logoFileId?, primaryColor?, accentColor? }`.
+  branding   Json     @default("{}")
+  /// Menu de l'application mobile : tuiles `{ id, label, icon, structureId? }`.
+  mobileMenu Json     @default("[]") @map("mobile_menu")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   roles        Role[]
   memberships  Membership[]
@@ -37,6 +41,8 @@ model Instance {
   revisions    SubmissionRevision[]
   lists        List[]
   listItems    ListItem[]
+  accesses     StructureAccess[]
+  files        File[]
 
   @@map("instances")
 }
@@ -73,8 +79,9 @@ model Role {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  instance    Instance     @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instance    Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   memberships Membership[]
+  accesses    StructureAccess[]
 
   @@unique([instanceId, key])
   @@unique([id, instanceId])
@@ -86,6 +93,8 @@ model Membership {
   instanceId String   @map("instance_id") @db.Uuid
   userId     String   @map("user_id") @db.Uuid
   roleId     String   @map("role_id") @db.Uuid
+  /// Attributs du membre (ex. `{ "site": "<id d'élément>" }`) pour les filtres de visibilité.
+  attributes Json     @default("{}")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -105,8 +114,9 @@ model Group {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  instance Instance      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instance Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   members  GroupMember[]
+  accesses StructureAccess[]
 
   @@unique([instanceId, name])
   @@unique([id, instanceId])
@@ -184,6 +194,7 @@ model Structure {
   instance    Instance           @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   versions    StructureVersion[]
   submissions Submission[]
+  accesses    StructureAccess[]
 
   @@unique([id, instanceId])
   @@index([instanceId, name])
@@ -321,4 +332,58 @@ model ListItem {
   @@index([listId, parentId, position])
   @@index([instanceId, code])
   @@map("list_items")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — droits par structure, fichiers
+// ---------------------------------------------------------------------------
+
+/// Droits d'un rôle ou d'un groupe sur une structure (P2.6.2). Sans aucune règle, ce sont les
+/// permissions d'instance du rôle qui s'appliquent.
+model StructureAccess {
+  id          String   @id @default(uuid()) @db.Uuid
+  instanceId  String   @map("instance_id") @db.Uuid
+  structureId String   @map("structure_id") @db.Uuid
+  /// Exactement un des deux (contrainte CHECK).
+  roleId      String?  @map("role_id") @db.Uuid
+  groupId     String?  @map("group_id") @db.Uuid
+  /// Sous-ensemble de `create`, `read:all`, `read:own`, `update`, `delete`, `export`.
+  permissions String[]
+  /// Filtres de visibilité `[{ key, operator, value }]` ; `value` peut valoir `$user.id` ou
+  /// `$user.<attribut>`. Absent : toutes les fiches permises par `permissions`.
+  visibility  Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance  Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure Structure @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: Cascade)
+  role      Role?     @relation(fields: [roleId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  group     Group?    @relation(fields: [groupId, instanceId], references: [id, instanceId], onDelete: NoAction)
+
+  @@unique([structureId, roleId])
+  @@unique([structureId, groupId])
+  @@map("structure_accesses")
+}
+
+/// Fichier téléversé directement dans le stockage S3 par URL signée (D10). L'identifiant peut
+/// être généré par le client : la fiche le référence quel que soit l'ordre d'arrivée.
+model File {
+  id           String   @id @default(uuid()) @db.Uuid
+  instanceId   String   @map("instance_id") @db.Uuid
+  /// Clé de l'objet dans le bucket.
+  key          String
+  name         String
+  mimeType     String   @map("mime_type")
+  size         Int
+  /// `pending` (URL émise) puis `uploaded` (objet vérifié).
+  status       String   @default("pending")
+  thumbnailKey String?  @map("thumbnail_key")
+  createdById  String?  @map("created_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, instanceId])
+  @@map("files")
 }

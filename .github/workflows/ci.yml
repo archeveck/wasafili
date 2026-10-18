@@ -54,6 +54,9 @@ jobs:
       TEST_DATABASE_OWNER_URL: postgresql://tesserax_owner:tesserax_owner@localhost:5432/tesserax_test
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-only-secret-ci-only-secret-ci-only
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: tesserax
+      S3_SECRET_KEY: tesserax-minio-secret
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -69,6 +72,14 @@ jobs:
           POSTGRES_USER: postgres
           TESSERAX_OWNER_PASSWORD: tesserax_owner
           TESSERAX_APP_PASSWORD: tesserax_app
+      - name: MinIO (même image que docker compose) et bucket
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=tesserax -e MINIO_ROOT_PASSWORD=tesserax-minio-secret \
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
+          until curl -fsS http://localhost:9000/minio/health/live; do sleep 1; done
+          docker run --rm --network host --entrypoint sh pgsty/mc:RELEASE.2026-09-16T00-00-00Z -c \
+            'mc alias set local http://localhost:9000 tesserax tesserax-minio-secret && mc mb local/tesserax'
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:integration
 

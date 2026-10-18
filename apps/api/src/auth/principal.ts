@@ -24,6 +24,8 @@ declare global {
       permissions?: ReadonlySet<string>;
       /** Clés des rôles de l'appelant dans l'instance (conditions par rôle des formulaires). */
       roles?: readonly string[];
+      /** Adhésion de l'utilisateur (absente pour un client d'intégration). */
+      membership?: { roleId: string; attributes: Record<string, unknown> };
     }
   }
 }

@@ -50,6 +50,10 @@ export class InstanceGuard implements CanActivate {
       }
       req.permissions = new Set(membership.role.permissions);
       req.roles = [membership.role.key];
+      req.membership = {
+        roleId: membership.roleId,
+        attributes: (membership.attributes ?? {}) as Record<string, unknown>,
+      };
     }
     req.instance = instance;
     return true;

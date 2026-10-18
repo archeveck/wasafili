@@ -23,6 +23,20 @@ const envSchema = z.object({
         .filter(Boolean),
     ),
   LOGIN_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
+  /** Stockage S3 (MinIO) des fichiers. Absent : endpoints fichiers indisponibles (503). */
+  S3_ENDPOINT: z.url().optional(),
+  /** Adresse du stockage vue des clients (URL signées) ; par défaut S3_ENDPOINT. */
+  S3_PUBLIC_ENDPOINT: z.url().optional(),
+  S3_REGION: z.string().default('us-east-1'),
+  S3_BUCKET: z.string().default('tesserax'),
+  S3_ACCESS_KEY: z.string().optional(),
+  S3_SECRET_KEY: z.string().optional(),
+  /** Taille maximale d'un fichier téléversé (octets). */
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(25 * 1024 * 1024),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

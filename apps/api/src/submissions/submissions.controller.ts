@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { type Response } from 'express';
 import { z } from 'zod';
-import { type Actor, Can, CanAny, CurrentActor, CurrentInstance } from '../auth/decorators';
+import { type Actor, CurrentActor, CurrentInstance } from '../auth/decorators';
 import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
@@ -45,15 +45,25 @@ const listSchema = paginationSchema.extend({
 });
 const deleteSchema = z.object({ client_mutation_id: mutationId.optional() });
 
-const READ = ['submission:read:all', 'submission:read:own'] as const;
+const exportSchema = listSchema.omit({ page: true, per_page: true }).extend({
+  format: z.enum(['csv', 'xlsx']).default('xlsx'),
+});
 
+const MIME = {
+  csv: 'text/csv; charset=utf-8',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+} as const;
+
+/**
+ * Fiches. Les droits sont évalués par structure dans le service (règles de la structure,
+ * sinon permissions d'instance du rôle) : pas de `@Can` d'instance ici.
+ */
 @Controller(':app')
 export class SubmissionsController {
   constructor(private readonly submissions: SubmissionsService) {}
 
   /** `?filter[cle]=v`, `?filter[cle][gte]=v`, `?sort=-cle`, pagination. */
   @Get('structures/:structureId/submissions')
-  @CanAny(...READ)
   list(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
@@ -63,8 +73,25 @@ export class SubmissionsController {
     return this.submissions.list(structureId, actor, { ...params, filters: parseFilters(query) });
   }
 
+  /** Export CSV/XLSX avec les mêmes filtres que la liste. */
+  @Get('structures/:structureId/submissions/export')
+  async export(
+    @Param('structureId', ParseUUIDPipe) structureId: string,
+    @CurrentActor() actor: Actor,
+    @Query() query: Record<string, unknown>,
+    @Res() res: Response,
+  ) {
+    const params = new ZodValidationPipe(exportSchema).transform(query);
+    const content = await this.submissions.export(
+      structureId,
+      actor,
+      { ...params, filters: parseFilters(query) },
+      params.format,
+    );
+    res.status(200).type(MIME[params.format]).attachment(`fiches.${params.format}`).send(content);
+  }
+
   @Post('structures/:structureId/submissions')
-  @Can('submission:create')
   async create(
     @CurrentInstance() instance: Instance,
     @Param('structureId', ParseUUIDPipe) structureId: string,
@@ -79,14 +106,11 @@ export class SubmissionsController {
   }
 
   @Get('submissions/:id')
-  @CanAny(...READ)
   get(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return this.submissions.get(id, actor);
   }
 
   @Patch('submissions/:id')
-  @Can('submission:update')
-  @CanAny(...READ)
   async update(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -98,8 +122,6 @@ export class SubmissionsController {
 
   @Delete('submissions/:id')
   @HttpCode(204)
-  @Can('submission:delete')
-  @CanAny(...READ)
   remove(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -110,7 +132,6 @@ export class SubmissionsController {
   }
 
   @Get('submissions/:id/revisions')
-  @CanAny(...READ)
   revisions(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentActor() actor: Actor,

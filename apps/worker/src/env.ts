@@ -4,6 +4,13 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   REDIS_URL: z.url(),
+  /** Rôle applicatif (RLS) : le worker pose le contexte d'instance de chaque job. */
+  DATABASE_URL: z.url(),
+  S3_ENDPOINT: z.url(),
+  S3_REGION: z.string().default('us-east-1'),
+  S3_BUCKET: z.string().default('tesserax'),
+  S3_ACCESS_KEY: z.string().min(1),
+  S3_SECRET_KEY: z.string().min(1),
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;
