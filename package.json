@@ -15,7 +15,7 @@
     "test:integration": "turbo run test:integration",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait postgres redis minio gotenberg mailpit && docker compose -f infra/docker-compose.yml run --rm minio-init",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @tesserax/api db:migrate",
     "db:seed": "pnpm --filter @tesserax/api db:seed",
