@@ -12,6 +12,9 @@ const envSchema = z.object({
   S3_BUCKET: z.string().default('tesserax'),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
+  /** Service Expo Push (remplaçable par un relais) et jeton d'accès facultatif. */
+  EXPO_PUSH_URL: z.url().default('https://exp.host/--/api/v2/push/send'),
+  EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;

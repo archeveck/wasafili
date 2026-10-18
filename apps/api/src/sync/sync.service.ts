@@ -4,6 +4,7 @@ import { type Actor } from '../auth/decorators';
 import { type Instance, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubmissionsService } from '../submissions/submissions.service';
+import { TasksService, toTaskDto } from '../tasks/tasks.service';
 import { decodeCursor, encodeCursor, nextCursor, type ResourceCursor } from './cursor';
 
 export const PULL_PAGE_SIZE = 500;
@@ -17,6 +18,7 @@ export type Mutation =
       structureId: string;
       data: Record<string, unknown>;
       location?: { lat: number; lng: number; accuracy?: number };
+      taskId?: string;
     }
   | {
       id: string;
@@ -43,7 +45,7 @@ export type MutationResult =
       error: { status: number; code: string; message: string; details?: unknown };
     };
 
-type PagedTable = 'list_items' | 'submissions';
+type PagedTable = 'list_items' | 'submissions' | 'tasks' | 'notifications';
 
 /**
  * Synchronisation hors ligne (P3.2, ADR 0007). Pull : changements depuis le curseur, par
@@ -56,6 +58,7 @@ export class SyncService {
     private readonly prisma: PrismaService,
     private readonly submissions: SubmissionsService,
     private readonly access: StructureAccessService,
+    private readonly tasks: TasksService,
   ) {}
 
   async pull(
@@ -121,7 +124,38 @@ export class SyncService {
       readable.length ? Prisma.sql`(${Prisma.join(readable, ' OR ')})` : Prisma.sql`FALSE`,
     );
 
-    const [lists, listItems, submissions] = await Promise.all([
+    // Tâches : toute tâche modifiée est renvoyée ; celles qui ne sont pas (ou plus) assignées à
+    // l'appelant le sont comme tombstones, pour retirer une tâche réassignée de son appareil.
+    const empty = { ids: [] as string[], cursor: { floor: xmin }, hasMore: false };
+    const taskPage = actor.userId
+      ? await this.page('tasks', cursor.tasks, xmin, limit, Prisma.sql`TRUE`)
+      : empty;
+    const notificationPage = actor.userId
+      ? await this.page(
+          'notifications',
+          cursor.notifications,
+          xmin,
+          limit,
+          Prisma.sql`s.user_id = ${actor.userId}::uuid`,
+        )
+      : empty;
+    const assigned = actor.userId
+      ? new Set(
+          (
+            await this.prisma.db.task.findMany({
+              where: {
+                AND: [
+                  { id: { in: taskPage.ids }, deletedAt: null },
+                  await this.tasks.assignedTo(actor.userId),
+                ],
+              },
+              select: { id: true },
+            })
+          ).map((t) => t.id),
+        )
+      : new Set<string>();
+
+    const [lists, listItems, submissions, tasks, notifications] = await Promise.all([
       canReadLists
         ? this.prisma.db.list.findMany({
             select: { id: true, name: true, levels: true },
@@ -133,6 +167,8 @@ export class SyncService {
         where: { id: { in: submissionPage.ids } },
         include: { version: { select: { version: true } } },
       }),
+      this.prisma.db.task.findMany({ where: { id: { in: [...assigned] } } }),
+      this.prisma.db.notification.findMany({ where: { id: { in: notificationPage.ids } } }),
     ]);
     // Versions des fiches renvoyées : la saisie hors ligne d'une ancienne fiche en a besoin.
     for (const submission of submissions) versionIds.add(submission.structureVersionId);
@@ -147,8 +183,11 @@ export class SyncService {
         structures: xmin,
         items: items.cursor,
         submissions: submissionPage.cursor,
+        tasks: taskPage.cursor,
+        notifications: notificationPage.cursor,
       }),
-      hasMore: items.hasMore || submissionPage.hasMore,
+      hasMore:
+        items.hasMore || submissionPage.hasMore || taskPage.hasMore || notificationPage.hasMore,
       settings: {
         name: instance.name,
         timeZone: instance.timeZone,
@@ -174,6 +213,19 @@ export class SyncService {
           ? { id: submission.id, structureId: submission.structureId, deleted: true }
           : { ...this.submissions.toDto(submission), deleted: false },
       ),
+      tasks: [
+        ...tasks.map((task) => ({ ...toTaskDto(task), deleted: false })),
+        ...taskPage.ids.filter((id) => !assigned.has(id)).map((id) => ({ id, deleted: true })),
+      ],
+      notifications: notifications.map((n) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        body: n.body,
+        data: n.data,
+        readAt: n.readAt,
+        createdAt: n.createdAt,
+      })),
     };
   }
 
@@ -219,6 +271,7 @@ export class SyncService {
             data: mutation.data,
             clientMutationId: mutation.id,
             ...(mutation.location ? { location: mutation.location } : {}),
+            ...(mutation.taskId ? { taskId: mutation.taskId } : {}),
           });
           results.push({
             id: mutation.id,

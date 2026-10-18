@@ -39,6 +39,8 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(25 * 1024 * 1024),
+  /** Relais des notifications en push Expo (D1) ; les notifications restent dans la sync. */
+  PUSH_ENABLED: z.stringbool().default(false),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

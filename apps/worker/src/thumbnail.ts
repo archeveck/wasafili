@@ -2,6 +2,7 @@ import { GetObjectCommand, PutObjectCommand, type S3Client } from '@aws-sdk/clie
 import { THUMBNAIL_SIZE, type ThumbnailJob } from '@tesserax/jobs';
 import { type Pool } from 'pg';
 import sharp from 'sharp';
+import { inInstance } from './db.js';
 
 /** Miniature JPEG tenant dans un carré de THUMBNAIL_SIZE px, orientation EXIF appliquée. */
 export function makeThumbnail(source: Buffer): Promise<Buffer> {
@@ -30,20 +31,10 @@ export async function processThumbnail(job: ThumbnailJob, deps: ThumbnailDeps): 
       ContentType: 'image/jpeg',
     }),
   );
-  // Même isolation que l'API : le contexte d'instance est posé pour la transaction.
-  const client = await deps.db.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query("SELECT set_config('app.instance_id', $1, true)", [job.instanceId]);
-    await client.query('UPDATE files SET thumbnail_key = $1, updated_at = now() WHERE id = $2', [
+  await inInstance(deps.db, job.instanceId, (client) =>
+    client.query('UPDATE files SET thumbnail_key = $1, updated_at = now() WHERE id = $2', [
       job.thumbnailKey,
       job.fileId,
-    ]);
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+    ]),
+  );
 }

@@ -145,6 +145,12 @@ export class IamService {
     if (member.role.key === 'admin') await this.assertAnotherAdmin(userId);
     await this.prisma.transaction(async (tx) => {
       await tx.groupMember.deleteMany({ where: { userId } });
+      // Ses tâches restent planifiées, à réassigner ; ses appareils ne reçoivent plus de push.
+      await tx.task.updateMany({
+        where: { assigneeUserId: userId },
+        data: { assigneeUserId: null },
+      });
+      await tx.pushToken.deleteMany({ where: { userId } });
       await tx.membership.delete({ where: { id: member.id } });
     });
   }
@@ -210,6 +216,7 @@ export class IamService {
     await this.findGroup(id);
     await this.prisma.transaction(async (tx) => {
       await tx.structureAccess.deleteMany({ where: { groupId: id } });
+      await tx.task.updateMany({ where: { assigneeGroupId: id }, data: { assigneeGroupId: null } });
       await tx.group.delete({ where: { id } });
     });
   }

@@ -30,20 +30,23 @@ model Instance {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  roles        Role[]
-  memberships  Membership[]
-  groups       Group[]
-  groupMembers GroupMember[]
-  oauthClients OAuthClient[]
-  structures   Structure[]
-  versions     StructureVersion[]
-  submissions  Submission[]
-  revisions    SubmissionRevision[]
-  lists        List[]
-  listItems    ListItem[]
-  accesses     StructureAccess[]
-  files        File[]
-  conflicts    SubmissionConflict[]
+  roles         Role[]
+  memberships   Membership[]
+  groups        Group[]
+  groupMembers  GroupMember[]
+  oauthClients  OAuthClient[]
+  structures    Structure[]
+  versions      StructureVersion[]
+  submissions   Submission[]
+  revisions     SubmissionRevision[]
+  lists         List[]
+  listItems     ListItem[]
+  accesses      StructureAccess[]
+  files         File[]
+  conflicts     SubmissionConflict[]
+  tasks         Task[]
+  notifications Notification[]
+  pushTokens    PushToken[]
 
   @@map("instances")
 }
@@ -65,6 +68,9 @@ model User {
   refreshTokens RefreshToken[]
   submissions   Submission[]
   revisions     SubmissionRevision[]
+  assignedTasks Task[]               @relation("TaskAssignee")
+  notifications Notification[]
+  pushTokens    PushToken[]
 
   @@map("users")
 }
@@ -118,6 +124,7 @@ model Group {
   instance Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   members  GroupMember[]
   accesses StructureAccess[]
+  tasks    Task[]
 
   @@unique([instanceId, name])
   @@unique([id, instanceId])
@@ -198,6 +205,7 @@ model Structure {
   versions    StructureVersion[]
   submissions Submission[]
   accesses    StructureAccess[]
+  tasks       Task[]
 
   @@unique([id, instanceId])
   @@index([instanceId, name])
@@ -261,6 +269,7 @@ model Submission {
   author    User?                @relation(fields: [authorId], references: [id], onDelete: SetNull)
   revisions SubmissionRevision[]
   conflicts SubmissionConflict[]
+  tasks     Task[]
 
   @@unique([id, instanceId])
   @@index([instanceId, structureId, createdAt])
@@ -430,4 +439,90 @@ model SubmissionConflict {
 
   @@index([instanceId, submissionId])
   @@map("submission_conflicts")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 — tâches et notifications
+// ---------------------------------------------------------------------------
+
+/// Fiche planifiée (P4.4) : formulaire à remplir, assigné à un utilisateur ou à un groupe.
+/// L'identifiant peut venir du client. Une fiche créée depuis la tâche la clôt.
+model Task {
+  id              String              @id @default(uuid()) @db.Uuid
+  /// Transaction de la dernière écriture (curseur de synchronisation, ADR 0007).
+  syncTxid        Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId      String              @map("instance_id") @db.Uuid
+  structureId     String              @map("structure_id") @db.Uuid
+  title           String
+  description     String?
+  assigneeUserId  String?             @map("assignee_user_id") @db.Uuid
+  assigneeGroupId String?             @map("assignee_group_id") @db.Uuid
+  startAt         DateTime            @map("start_at") @db.Timestamptz(3)
+  endAt           DateTime            @map("end_at") @db.Timestamptz(3)
+  /// Échéance (facultative), distincte du créneau planifié.
+  dueAt           DateTime?           @map("due_at") @db.Timestamptz(3)
+  locationLabel   String?             @map("location_label")
+  latitude        Float?
+  longitude       Float?
+  /// Valeurs de pré-remplissage de la fiche (ex. `{ "equipement": "<id>" }`).
+  prefill         Json                @default("{}")
+  /// `todo`, `in_progress`, `done` ou `cancelled`.
+  status          String              @default("todo")
+  submissionId    String?             @map("submission_id") @db.Uuid
+  createdById     String?             @map("created_by_id") @db.Uuid
+  deletedAt       DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance      Instance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure     Structure   @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  assigneeUser  User?       @relation("TaskAssignee", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  assigneeGroup Group?      @relation(fields: [assigneeGroupId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  submission    Submission? @relation(fields: [submissionId, instanceId], references: [id, instanceId], onDelete: NoAction)
+
+  @@unique([id, instanceId])
+  @@index([instanceId, startAt])
+  @@index([instanceId, assigneeUserId])
+  @@map("tasks")
+}
+
+/// Notification d'un utilisateur (P4.5, D1). Synchronisée vers le mobile (source de vérité) ;
+/// le push n'en est qu'un relais facultatif.
+model Notification {
+  id         String              @id @default(uuid()) @db.Uuid
+  syncTxid   Unsupported("xid8") @default(dbgenerated("pg_current_xact_id()")) @map("sync_txid")
+  instanceId String              @map("instance_id") @db.Uuid
+  userId     String              @map("user_id") @db.Uuid
+  /// `task_assigned` ou `submission_state`.
+  type       String
+  title      String
+  body       String?
+  /// Cible : `{ taskId? , submissionId?, structureId? }`.
+  data       Json                @default("{}")
+  readAt     DateTime?           @map("read_at") @db.Timestamptz(3)
+  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId, userId, createdAt])
+  @@map("notifications")
+}
+
+/// Jeton Expo Push d'un appareil. Le supprimer désactive le push pour cet appareil.
+model PushToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  instanceId String   @map("instance_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  token      String
+  platform   String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, token])
+  @@index([instanceId, userId])
+  @@map("push_tokens")
 }

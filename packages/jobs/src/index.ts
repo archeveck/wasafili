@@ -17,8 +17,15 @@ export interface ThumbnailJob {
   thumbnailKey: string;
 }
 
+/** Relais push (Expo) de notifications déjà enregistrées (P4.5, D1). */
+export interface PushJob {
+  instanceId: string;
+  notificationIds: string[];
+}
+
 export interface JobPayloads {
   thumbnail: ThumbnailJob;
+  push: PushJob;
 }
 
 export type JobName = keyof JobPayloads;

@@ -11,12 +11,14 @@ import { FilesModule } from './files/files.module';
 import { HealthModule } from './health/health.module';
 import { IamModule } from './iam/iam.module';
 import { ListsModule } from './lists/lists.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
 import { SettingsModule } from './settings/settings.module';
 import { StructuresModule } from './structures/structures.module';
 import { SubmissionsModule } from './submissions/submissions.module';
+import { TasksModule } from './tasks/tasks.module';
 import { InstanceGuard } from './tenancy/instance.guard';
 import { PermissionGuard } from './tenancy/permission.guard';
 
@@ -45,6 +47,8 @@ import { PermissionGuard } from './tenancy/permission.guard';
     QueueModule,
     FilesModule,
     SettingsModule,
+    NotificationsModule,
+    TasksModule,
   ],
   providers: [
     // Ordre significatif : authentification → instance (contexte RLS) → permissions.

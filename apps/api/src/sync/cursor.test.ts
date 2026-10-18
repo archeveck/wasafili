@@ -8,6 +8,13 @@ describe('curseur de synchronisation', () => {
     expect(decodeCursor(encodeCursor(cursor))).toEqual(cursor);
   });
 
+  it('accepte un curseur antérieur aux tâches et notifications', () => {
+    const { tasks: _t, notifications: _n, ...old } = INITIAL_CURSOR;
+    expect(decodeCursor(Buffer.from(JSON.stringify(old)).toString('base64url'))).toEqual(
+      INITIAL_CURSOR,
+    );
+  });
+
   it('refuse un curseur corrompu', () => {
     expect(() => decodeCursor('pas-un-curseur')).toThrow(/resynchronisation/);
     expect(() => decodeCursor(Buffer.from('{"v":2}').toString('base64url'))).toThrow();

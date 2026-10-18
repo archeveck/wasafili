@@ -26,6 +26,7 @@ const createSchema = z.object({
   id: z.uuid().optional(),
   data: z.record(z.string(), z.unknown()),
   clientMutationId: mutationId.optional(),
+  taskId: z.uuid().optional(),
   location: z
     .object({
       lat: z.number().min(-90).max(90),

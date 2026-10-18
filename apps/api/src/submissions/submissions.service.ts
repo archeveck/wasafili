@@ -26,6 +26,8 @@ import { type TransactionClient } from '../prisma/tenant';
 import { EngineCache } from '../structures/engine-cache';
 import { StructuresService } from '../structures/structures.service';
 import { writeSpreadsheet, type SpreadsheetFormat } from '../lists/spreadsheet';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TasksService } from '../tasks/tasks.service';
 import { diffData, type FieldChange, jsonEqual } from './diff';
 import { exportColumns, formatCell, referencedIds } from './export';
 import { filterableFields, filterSql, type Filter, orderSql } from './query';
@@ -41,6 +43,8 @@ export interface CreateSubmissionInput {
   data: SubmissionData;
   clientMutationId?: string;
   location?: Location;
+  /** Tâche dont la fiche est issue : elle est close par la création (P4.4.5). */
+  taskId?: string;
 }
 
 export interface UpdateSubmissionInput {
@@ -147,6 +151,8 @@ export class SubmissionsService {
     private readonly structures: StructuresService,
     private readonly engines: EngineCache,
     private readonly access: StructureAccessService,
+    private readonly tasks: TasksService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(structureId: string, actor: Actor, input: ListSubmissionsInput) {
@@ -407,6 +413,9 @@ export class SubmissionsService {
             changes: diffData({}, values) as unknown as Prisma.InputJsonValue,
           },
         });
+        if (input.taskId) {
+          await this.tasks.completeWithSubmission(tx, actor, input.taskId, submission);
+        }
         return submission.id;
       });
       return { replayed: false, submission: await this.get(id, actor) };
@@ -461,6 +470,7 @@ export class SubmissionsService {
     const { rights } = await this.findVisible(id, actor);
     this.require(rights, 'update');
 
+    let notified: string[] = [];
     const conflicts = await this.prisma.transaction(async (tx) => {
       const current = await this.lock(tx, id);
       const version = await tx.structureVersion.findUniqueOrThrow({
@@ -519,6 +529,14 @@ export class SubmissionsService {
       }
       if (nextState !== current.state) {
         changes.push({ field: STATE_CHANGE, before: current.state, after: nextState });
+        notified = await this.notifyStateChange(
+          tx,
+          instance,
+          actor,
+          current,
+          definition,
+          nextState,
+        );
       }
 
       let conflicting: string[] = [];
@@ -568,7 +586,31 @@ export class SubmissionsService {
       }
       return conflicting;
     });
+    await this.notifications.dispatch(instance.id, notified);
     return { replayed: false, submission: await this.get(id, actor), conflicts };
+  }
+
+  /** Prévient l'auteur d'une fiche de son changement d'état (s'il n'en est pas l'auteur). */
+  private async notifyStateChange(
+    tx: TransactionClient,
+    instance: Instance,
+    actor: Actor,
+    submission: Submission,
+    definition: StructureDefinition,
+    state: string | null,
+  ) {
+    const structure = await tx.structure.findUniqueOrThrow({
+      where: { id: submission.structureId },
+      select: { name: true },
+    });
+    const label = (key: string | null) =>
+      definition.workflow?.states.find((s) => s.key === key)?.label ?? key ?? '—';
+    return this.notifications.notify(tx, instance.id, [submission.authorId], actor.userId, {
+      type: 'submission_state',
+      title: `${structure.name} : ${label(state)}`,
+      body: `Votre fiche est passée de « ${label(submission.state)} » à « ${label(state)} »`,
+      data: { submissionId: submission.id, structureId: submission.structureId },
+    });
   }
 
   /** Suppression logique, tracée dans l'historique. */

@@ -5,6 +5,7 @@ import { Redis } from 'ioredis';
 import pg from 'pg';
 import { pino } from 'pino';
 import { loadEnv } from './env.js';
+import { processPush } from './push.js';
 import { processThumbnail } from './thumbnail.js';
 
 const env = loadEnv();
@@ -22,6 +23,15 @@ type Handlers = { [N in JobName]: (payload: JobPayloads[N]) => Promise<void> };
 
 const handlers: Handlers = {
   thumbnail: (payload) => processThumbnail(payload, { s3, bucket: env.S3_BUCKET, db }),
+  push: async (payload) => {
+    const { sent } = await processPush(payload, {
+      db,
+      fetch,
+      url: env.EXPO_PUSH_URL,
+      ...(env.EXPO_ACCESS_TOKEN ? { accessToken: env.EXPO_ACCESS_TOKEN } : {}),
+    });
+    logger.info({ sent }, 'push envoyés');
+  },
 };
 
 const worker = new Worker(

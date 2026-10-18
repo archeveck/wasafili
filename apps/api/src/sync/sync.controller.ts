@@ -21,6 +21,7 @@ const mutationSchema = z.discriminatedUnion('type', [
         accuracy: z.number().min(0).optional(),
       })
       .optional(),
+    taskId: z.uuid().optional(),
   }),
   z.object({
     id,

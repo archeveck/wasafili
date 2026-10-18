@@ -19,6 +19,9 @@ const cursorSchema = z.object({
   structures: z.string().regex(/^\d+$/),
   items: resourceCursor,
   submissions: resourceCursor,
+  // Ressources ajoutées en Phase 4 : un curseur plus ancien les reprend depuis le début.
+  tasks: resourceCursor.default({ floor: '0' }),
+  notifications: resourceCursor.default({ floor: '0' }),
 });
 
 export type ResourceCursor = z.infer<typeof resourceCursor>;
@@ -29,6 +32,8 @@ export const INITIAL_CURSOR: SyncCursor = {
   structures: '0',
   items: { floor: '0' },
   submissions: { floor: '0' },
+  tasks: { floor: '0' },
+  notifications: { floor: '0' },
 };
 
 export function encodeCursor(cursor: SyncCursor): string {
