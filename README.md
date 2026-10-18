@@ -4,10 +4,10 @@ Plateforme no-code de collecte de données terrain : back-office web pour concev
 formulaires (structures), workflows et rapports ; application mobile **100 % hors ligne** pour
 la saisie sur chantier. Conçue pour les PME BTP / maintenance / QHSE en Côte d'Ivoire.
 
-> État : Phases **0 (socle)**, **1 (moteur de formulaires)** et **2 (back-office web)**
-> livrées : designer de formulaires par glisser-déposer avec aperçu mobile, fiches (tableau,
-> filtres, export, historique), référentiels (arbre, import/export), utilisateurs, rôles,
-> groupes, droits par formulaire, personnalisation, fichiers et miniatures.
+> État : Phases **0 (socle)**, **1 (moteur de formulaires)**, **2 (back-office web)** et
+> **3 (mobile hors ligne)** livrées : designer de formulaires, fiches, référentiels, droits ;
+> application Expo 100 % hors ligne (SQLite, file d'envoi, photos annotées, signature, GPS,
+> scan QR), synchronisation sans doublon ni perte, conflits par champ.
 > Feuille de route : [TASKS.md](TASKS.md).
 
 ## Démarrage rapide
@@ -59,6 +59,27 @@ connecter avec `admin@tesserax.local` / `Tesserax2026!` :
 5. **Paramètres** : logo, couleurs (appliquées au back-office), fuseau, menu de l'application mobile.
 
 Test de bout en bout : `pnpm test:e2e` (Playwright ; API locale et base de démo requises).
+
+## Application mobile (Phase 3)
+
+```bash
+pnpm --filter "@tesserax/mobile^..." build   # paquets partagés
+cd apps/mobile && npx expo start --lan        # puis ouvrir exp://127.0.0.1:8081 dans Expo Go
+```
+
+Se connecter avec `technicien@tesserax.local` / `Tesserax2026!` (serveur par défaut :
+`http://localhost:3000`, modifiable via « Serveur… » sur l'écran de connexion, ou
+`EXPO_PUBLIC_API_URL`). Une fois les formulaires téléchargés, tout fonctionne sans réseau :
+saisie, cascade des référentiels, photos compressées et annotées, signature, GPS, scan d'un QR
+code d'équipement (fiche pré-remplie), brouillons enregistrés automatiquement, recherche locale.
+La barre d'état indique la file d'envoi ; l'écran « Synchronisation » détaille les erreurs.
+
+Tests sur simulateur iOS avec [Maestro](https://maestro.mobile.dev) :
+
+```bash
+maestro test apps/mobile/e2e/reinitialiser.yaml apps/mobile/e2e/saisie-fiche.yaml
+API_STOP="…" API_START="…" apps/mobile/e2e/hors-ligne.sh   # scénario hors ligne complet
+```
 
 ## Démo (Phase 0)
 
@@ -139,5 +160,6 @@ docs/adr/   décisions d'architecture
 - [ADR 0004 — Filtrage des fiches (JSONB)](docs/adr/0004-filtrage-des-fiches.md)
 - [ADR 0005 — Import / export tableurs](docs/adr/0005-import-export-tableurs.md)
 - [ADR 0006 — Stockage des fichiers](docs/adr/0006-stockage-fichiers.md)
+- [ADR 0007 — Stockage local et synchronisation hors ligne](docs/adr/0007-stockage-local-synchronisation.md)
 
 Conventions de code et commandes détaillées : [CLAUDE.md](CLAUDE.md).

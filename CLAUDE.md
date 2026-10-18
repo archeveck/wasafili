@@ -30,7 +30,14 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
   `@tesserax/sdk` sous la même origine (`/v1` : proxy Vite en dev, nginx en conteneur).
   e2e : `pnpm test:e2e` (Playwright, `apps/web/e2e`).
 - `apps/worker` — BullMQ ; jobs typés par `@tesserax/jobs` (contrat partagé avec l'API).
-  `apps/mobile` — Expo (Phase 3).
+- `apps/mobile` — Expo SDK 58 (Expo Router, `src/app`). **Ne pas se fier à la mémoire pour les
+  API Expo** : consulter https://docs.expo.dev/versions/v58.0.0/ ; ajouter un module avec
+  `npx expo install`. React est épinglé à la même version exacte dans tout le monorepo (un seul
+  exemplaire, sinon « invalid hook call »). Données : `@tesserax/sync` (base SQLite locale, file
+  d'envoi, moteur) ; jamais d'appel API direct pour lire ou écrire des fiches.
+  e2e : Maestro (`apps/mobile/e2e`, simulateur iOS + Expo Go).
+- `packages/sync` — stockage local et moteur de synchronisation, indépendants de la plateforme
+  (testés avec `node:sqlite`).
 - `packages/*` — ESM, compilés vers `dist/` (`turbo` construit les dépendances avant
   typecheck/test). `form-schema` et `form-engine` : zéro dépendance Node/DOM (Hermes).
 
@@ -59,6 +66,9 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
 - **Droits sur les fiches** : évalués par structure dans `StructureAccessService` (règles par
   rôle/groupe + filtres de visibilité, repli sur les permissions d'instance) — jamais par `@Can`
   sur les routes de fiches.
+- **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger
+  `touch_sync_txid`) ; une nouvelle ressource mobile s'ajoute au pull avec curseur `(sync_txid, id)`.
+  Les mutations hors ligne passent par les mêmes services que l'API (droits, validation).
 - **Fiches** : le serveur fait foi pour les champs calculés et automatiques (il les retire de
   l'entrée et les recalcule). Une fiche reste liée à sa version de structure, et une version
   publiée est immuable (trigger). Chaque écriture crée une `SubmissionRevision` ; un

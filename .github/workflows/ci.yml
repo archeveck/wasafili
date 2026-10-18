@@ -126,6 +126,21 @@ jobs:
           name: playwright-traces
           path: apps/web/test-results
 
+  mobile:
+    name: Bundle de l'application mobile (Metro / Hermes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@tesserax/mobile^..." build
+      - run: pnpm --filter @tesserax/mobile exec expo export --platform ios --output-dir dist-check
+      - run: pnpm --filter @tesserax/mobile exec expo export --platform android --output-dir dist-check
+
   docker:
     name: Build des images Docker
     runs-on: ubuntu-latest

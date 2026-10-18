@@ -181,43 +181,43 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 ## Phase 3 — Mobile hors ligne — *ADR sync*
 
 **P3.1 Socle Expo**
-- [ ] P3.1.1 App Expo + dev client (requis pour caméra/SQLite/Skia), navigation, thème depuis `packages/ui`
-- [ ] P3.1.2 Login, sélection d'instance, stockage sécurisé des tokens (expo-secure-store)
-- [ ] P3.1.3 i18n partagée
+- [x] P3.1.1 App Expo + dev client (requis pour caméra/SQLite/Skia), navigation, thème depuis `packages/ui`
+- [x] P3.1.2 Login, sélection d'instance, stockage sécurisé des tokens (expo-secure-store)
+- [x] P3.1.3 i18n partagée
 
 **P3.2 Base locale & protocole de sync** (TDD)
-- [ ] P3.2.1 Schéma SQLite local (structures, listes, fiches, tâches, file de mutations, file d'uploads)
-- [ ] P3.2.2 API `GET /sync/pull?cursor=` : changements par `updated_at` + tombstones, par ressource
-- [ ] P3.2.3 API `POST /sync/push` : lot de mutations idempotentes (`client_mutation_id`), réponse par mutation
-- [ ] P3.2.4 Conflits : mutation = champs modifiés + `base_revision` ; last-write-wins par champ à la réception serveur, enregistrement du conflit (`SubmissionConflict`) (D9)
-- [ ] P3.2.5 Moteur de sync client : déclenchement réseau retrouvé / app au premier plan / manuel, backoff, reprise
-- [ ] P3.2.6 Tests de sync côté serveur et client : doublons, réordonnancement, rejeu, conflit concurrent
+- [x] P3.2.1 Schéma SQLite local (structures, listes, fiches, tâches, file de mutations, file d'uploads)
+- [x] P3.2.2 API `GET /sync/pull?cursor=` : changements par `updated_at` + tombstones, par ressource
+- [x] P3.2.3 API `POST /sync/push` : lot de mutations idempotentes (`client_mutation_id`), réponse par mutation
+- [x] P3.2.4 Conflits : mutation = champs modifiés + `base_revision` ; last-write-wins par champ à la réception serveur, enregistrement du conflit (`SubmissionConflict`) (D9)
+- [x] P3.2.5 Moteur de sync client : déclenchement réseau retrouvé / app au premier plan / manuel, backoff, reprise
+- [x] P3.2.6 Tests de sync côté serveur et client : doublons, réordonnancement, rejeu, conflit concurrent
 
-**P3.3 Menu & navigation** : menu personnalisé (tuiles de P2.7), liste des fiches locales, recherche locale (FTS SQLite).
+**P3.3 Menu & navigation** ✅ : menu personnalisé (tuiles de P2.7), liste des fiches locales, recherche locale (FTS SQLite).
 
 **P3.4 Saisie de fiches**
-- [ ] P3.4.1 Implémentations natives de form-renderer pour les types simples
-- [ ] P3.4.2 Liste en cascade (référentiel local), relation vers fiche locale
-- [ ] P3.4.3 Photo multi + compression configurable + annotation/dessin Skia, original conservé (D13)
-- [ ] P3.4.4 Signature (Skia, D13)
-- [ ] P3.4.5 Géolocalisation (GPS, carte, saisie manuelle) ; fonctionne sans tuiles (D4) ; préchargement de la zone CI (D3)
-- [ ] P3.4.6 Scan code-barres/QR (expo-camera) : pré-remplir un champ / retrouver un équipement du référentiel
-- [ ] P3.4.7 Tableau répétable
-- [ ] P3.4.8 Conditions et calculs exécutés localement via `form-engine`
-- [ ] P3.4.9 Brouillons (sauvegarde auto), validation avant envoi
+- [x] P3.4.1 Implémentations natives de form-renderer pour les types simples
+- [x] P3.4.2 Liste en cascade (référentiel local), relation vers fiche locale
+- [x] P3.4.3 Photo multi + compression configurable + annotation/dessin Skia, original conservé (D13)
+- [x] P3.4.4 Signature (Skia, D13)
+- [ ] P3.4.5 Géolocalisation : GPS et saisie manuelle faits, sans carte ni tuiles (D4) ✅ ; **reste** la carte et le préchargement PMTiles de la zone CI (D3), reportés avec la carte mobile (P6.1.3)
+- [x] P3.4.6 Scan code-barres/QR (expo-camera) : pré-remplir un champ / retrouver un équipement du référentiel
+- [x] P3.4.7 Tableau répétable
+- [x] P3.4.8 Conditions et calculs exécutés localement via `form-engine`
+- [x] P3.4.9 Brouillons (sauvegarde auto), validation avant envoi
 
 **P3.5 Uploads de fichiers découplés**
-- [ ] P3.5.1 File d'upload persistée, upload en arrière-plan, reprise après coupure : PUT signé par UUID, multipart seulement > 5 Mo (D10)
-- [ ] P3.5.2 Liaison fichier ↔ fiche indépendante de l'ordre d'arrivée
+- [x] P3.5.1 File d'upload persistée, upload en arrière-plan, reprise après coupure : PUT signé par UUID, multipart seulement > 5 Mo (D10)
+- [x] P3.5.2 Liaison fichier ↔ fiche indépendante de l'ordre d'arrivée
 
-**P3.6 UX de sync** : indicateur d'état, file d'envoi visible, erreurs actionnables.
+**P3.6 UX de sync** ✅ : indicateur d'état, file d'envoi visible, erreurs actionnables.
 
-**P3.7 Conflits dans le back-office** : liste des conflits par fiche, résolution manuelle.
+**P3.7 Conflits dans le back-office** ✅ : liste des conflits par fiche, résolution manuelle.
 
 **P3.8 Tests de bout en bout**
-- [ ] P3.8.1 Maestro : mode avion → 10 fiches avec photos → retour réseau → aucune perte/doublon (critère d'acceptation)
-- [ ] P3.8.2 Coupure en plein upload, kill de l'app pendant la sync
-- [ ] P3.8.3 Conflit web/mobile sur la même fiche
+- [x] P3.8.1 Mode avion → 10 fiches avec photos → retour réseau → aucune perte/doublon : moteur réel contre l'API (`offline-sync.e2e.test.ts`) ; dans l'app sur simulateur iOS avec Maestro (`e2e/hors-ligne.sh`, coupure simulée par l'arrêt du serveur, sans photo faute de caméra)
+- [x] P3.8.2 Coupure en plein upload, arrêt de l'app pendant la sync (tests du moteur et de bout en bout, côté protocole)
+- [x] P3.8.3 Conflit web/mobile sur la même fiche
 
 ---
 
@@ -330,7 +330,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 1. Multi-tenant (RLS + Prisma) — P0.6
 2. Auth OAuth2 maison — P0.5
 3. Conditions & calculs (json-logic unique, formules compilées) — P1.2
-4. Stockage local mobile & protocole de sync — P3.2
+4. Stockage local mobile & protocole de sync — P3.2 ✅ ([0007](docs/adr/0007-stockage-local-synchronisation.md))
 5. Cartographie (MapLibre + PMTiles auto-hébergé, hors ligne) — P3.4.5 / P6.1
 6. Annotation photo & signature (Skia) — P3.4.3 / P3.4.4
 7. Génération PDF (docxtemplater + Gotenberg) — P5.1
