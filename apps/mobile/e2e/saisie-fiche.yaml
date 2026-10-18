@@ -1,0 +1,66 @@
+# Parcours de saisie d'une inspection (P3.8) : connexion, téléchargement, saisie, envoi.
+# Lancer : maestro test e2e/saisie-fiche.yaml (API locale démarrée, seed de démonstration).
+appId: host.exp.Exponent
+env:
+  EMAIL: technicien@tesserax.local
+  PASSWORD: Tesserax2026!
+  APP_URL: exp://127.0.0.1:8081
+---
+# Expo Go : (ré)ouverture du projet servi par Metro. Avec un build de l'application, utiliser
+# plutôt `launchApp` et l'appId com.tesserax.app.
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible:
+      # Texte des boutons fusionné dans leur libellé d'accessibilité : correspondance partielle.
+      text: .*(Se connecter|Tout est synchronisé|en attente).*
+    timeout: 60000
+- runFlow:
+    when:
+      visible: Se connecter
+    commands:
+      - tapOn:
+          id: login-email
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: login-password
+      - inputText: ${PASSWORD}
+      - tapOn: Se connecter
+# Proposition d'iOS d'enregistrer le mot de passe.
+- tapOn:
+    text: Plus tard
+    optional: true
+- extendedWaitUntil:
+    visible: Inspection équipement
+    timeout: 20000
+- tapOn: Inspection équipement
+- tapOn: Nouvelle fiche
+- tapOn:
+    text: Choisir…
+    index: 0
+- tapOn: Plateau — Tour Alpha.*
+- tapOn:
+    text: Choisir…
+    index: 0
+- tapOn: Bâtiment A.*
+- tapOn:
+    text: Choisir…
+    index: 0
+- tapOn: Groupe électrogène 250 kVA.*
+# Tutoriel clavier d'iOS (première saisie sur un simulateur neuf).
+- tapOn:
+    text: Continue
+    optional: true
+- tapOn: Bon
+- scrollUntilVisible:
+    element: Signer
+- tapOn: Signer
+- swipe:
+    start: 30%, 50%
+    end: 70%, 55%
+- tapOn: Valider
+- tapOn: Envoyer
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 30000
+- assertVisible: .*Envoyée.*

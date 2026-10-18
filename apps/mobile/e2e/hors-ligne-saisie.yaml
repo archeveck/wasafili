@@ -1,0 +1,29 @@
+# P3.8.1 — partie 1 : serveur injoignable (comme en mode avion), saisie de 3 fiches.
+# Orchestration complète : e2e/hors-ligne.sh
+appId: host.exp.Exponent
+env:
+  APP_URL: exp://127.0.0.1:8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: Inspection équipement
+    timeout: 60000
+- tapOn: Inspection équipement
+- runFlow:
+    file: _nouvelle-fiche.yaml
+    env:
+      EQUIPEMENT: Groupe électrogène 250 kVA
+- runFlow:
+    file: _nouvelle-fiche.yaml
+    env:
+      EQUIPEMENT: Climatiseur de toiture
+- runFlow:
+    file: _nouvelle-fiche.yaml
+    env:
+      EQUIPEMENT: Ascenseur n°1
+# Rien n'est perdu : les fiches attendent, marquées « À envoyer ».
+- assertVisible: .*en attente.*
+- assertVisible:
+    text: .*À envoyer.*
+    index: 2

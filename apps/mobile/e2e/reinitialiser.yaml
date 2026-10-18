@@ -1,0 +1,23 @@
+# Remet l'appareil à zéro (déconnexion = données locales effacées), avant un parcours complet.
+appId: host.exp.Exponent
+env:
+  APP_URL: exp://127.0.0.1:8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible:
+      text: .*(Se connecter|synchronis|attente|erreur).*
+    timeout: 60000
+- runFlow:
+    when:
+      notVisible: Se connecter
+    commands:
+      - tapOn: .*État de la synchronisation.*
+      - scrollUntilVisible:
+          element: Se déconnecter
+      - tapOn: Se déconnecter
+      - tapOn:
+          text: Se déconnecter
+          index: 1
+- assertVisible: Se connecter

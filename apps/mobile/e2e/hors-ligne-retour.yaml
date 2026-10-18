@@ -1,0 +1,15 @@
+# P3.8.1 — partie 2 : retour du serveur ; tout part, sans doublon.
+appId: host.exp.Exponent
+---
+- tapOn: .*État de la synchronisation.*
+- tapOn: Synchroniser maintenant
+- extendedWaitUntil:
+    visible: 'Fiches et modifications à envoyer : 0'
+    timeout: 60000
+- assertVisible: 'Photos et fichiers à envoyer : 0'
+- assertVisible: 'Envois refusés : 0'
+- tapOn: Retour
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 60000
+- assertNotVisible: .*À envoyer.*
