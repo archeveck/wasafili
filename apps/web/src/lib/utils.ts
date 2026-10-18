@@ -45,3 +45,16 @@ export function slugify(label: string) {
       .slice(0, 50) || 'champ'
   );
 }
+
+/**
+ * Onglet ouvert au clic (geste de l'utilisateur, donc non bloqué), dirigé ensuite vers une
+ * adresse obtenue de façon asynchrone (PDF généré par l'API). Fermé en cas d'échec.
+ */
+export function pendingTab() {
+  const tab = window.open('', '_blank');
+  if (tab) tab.opener = null;
+  return {
+    go: (url: string) => (tab ? tab.location.replace(url) : window.open(url, '_blank', 'noopener')),
+    close: () => tab?.close(),
+  };
+}

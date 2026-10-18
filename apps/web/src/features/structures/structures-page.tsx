@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import {
   Archive,
   ClipboardList,
+  FileText,
   MoreHorizontal,
   PencilRuler,
   Plus,
@@ -161,6 +162,14 @@ export function StructuresPage() {
                           </Link>
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/$app/structures/$structureId/reports"
+                          params={{ app: short, structureId: structure.id }}
+                        >
+                          <FileText /> Rapports
+                        </Link>
+                      </DropdownMenuItem>
                       {can('role:read') && (
                         <DropdownMenuItem asChild>
                           <Link

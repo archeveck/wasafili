@@ -8,19 +8,80 @@ import {
   type WorkflowTransition,
 } from '@tesserax/form-schema';
 import { ApiError, type Submission } from '@tesserax/sdk';
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Pencil, Trash2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge, Card, ErrorMessage, Loading, PageHeader } from '@/components/ui/display';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/overlays';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
 import { displayValue, listItemIds, useItemLabels, useUserLabels } from '@/form/display';
 import { FormRenderer } from '@/form/form-renderer';
 import { fieldServices } from '@/form/services';
 import { useFormRenderer } from '@/form/use-form';
 import { useApp } from '@/lib/use-app';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, pendingTab } from '@/lib/utils';
 import { StateBadge, stateLabel, transitionProblem, TransitionButtons } from './workflow';
+
+/** Rapports PDF de la fiche (P5.1) : générés à la demande, mis en cache par révision. */
+function ReportButton({ submission }: { submission: Submission }) {
+  const { api, short } = useApp();
+  const toast = useToast();
+  const reports = useQuery({
+    queryKey: [short, 'reports', submission.structureId],
+    queryFn: () => api.reports.list(submission.structureId),
+  });
+  const render = useMutation({
+    mutationFn: ({ reportId }: { reportId: string; tab: ReturnType<typeof pendingTab> }) =>
+      api.reports.render(reportId, submission.id),
+    onSuccess: ({ url }, { tab }) => tab.go(url),
+    onError: (error, { tab }) => {
+      tab.close();
+      toast.error(error);
+    },
+  });
+  const templates = reports.data?.data ?? [];
+  if (templates.length === 0) return null;
+  const label = render.isPending ? 'Génération…' : 'Rapport PDF';
+  if (templates.length === 1) {
+    return (
+      <Button
+        variant="outline"
+        disabled={render.isPending}
+        onClick={() => render.mutate({ reportId: templates[0]!.id, tab: pendingTab() })}
+      >
+        <FileText /> {label}
+      </Button>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" disabled={render.isPending}>
+          <FileText /> {label}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {templates.map((t) => (
+          <DropdownMenuItem
+            key={t.id}
+            onSelect={() => render.mutate({ reportId: t.id, tab: pendingTab() })}
+          >
+            {t.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 /** Message d'erreur de l'API, avec les champs en cause. */
 function apiError(error: unknown): unknown {
@@ -205,8 +266,15 @@ function History({
           <Card className="p-4">
             <p className="text-sm">
               <span className="font-medium">{ACTIONS[revision.action]}</span> · révision{' '}
-              {revision.revision} · {author(revision.authorId)} ·{' '}
-              <span className="text-muted">{formatDateTime(revision.createdAt, timeZone)}</span>
+              {revision.revision} ·{' '}
+              {revision.automation ? (
+                <span className="inline-flex items-center gap-1">
+                  <Workflow className="size-3" /> Automatisation « {revision.automation.name} »
+                </span>
+              ) : (
+                author(revision.authorId)
+              )}{' '}
+              · <span className="text-muted">{formatDateTime(revision.createdAt, timeZone)}</span>
             </p>
             {revision.action !== 'create' && revision.changes.length > 0 && (
               <table className="mt-3 w-full text-sm">
@@ -434,6 +502,7 @@ export function SubmissionPage() {
         description={`Créée le ${formatDateTime(data.createdAt, timeZone)} · modifiée le ${formatDateTime(data.updatedAt, timeZone)} · version v${data.version} · révision ${data.revision}`}
         actions={
           <>
+            {!editing && <ReportButton submission={data} />}
             {!editing && can('submission:update') && (
               <>
                 <Button variant="outline" onClick={() => setEditing(true)}>

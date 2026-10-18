@@ -21,6 +21,9 @@ import { StructuresPage } from '@/features/structures/structures-page';
 import { NewSubmissionPage, SubmissionPage } from '@/features/submissions/submission-page';
 import { SubmissionsPage } from '@/features/submissions/submissions-page';
 import { AgendaPage } from '@/features/tasks/agenda-page';
+import { AutomationEditorPage } from '@/features/automations/automation-editor';
+import { type AutomationsTab, AutomationsPage } from '@/features/automations/automations-page';
+import { ReportsPage } from '@/features/reports/reports-page';
 import { client } from '@/lib/api';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({ component: Outlet });
@@ -95,6 +98,26 @@ const agendaRoute = createRoute({
   path: 'agenda',
   component: AgendaPage,
 });
+const reportsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'structures/$structureId/reports',
+  component: ReportsPage,
+});
+const AUTOMATION_TABS: AutomationsTab[] = ['automations', 'runs', 'webhooks', 'emails'];
+const automationsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'automations',
+  validateSearch: (search: Record<string, unknown>): { tab?: AutomationsTab } =>
+    AUTOMATION_TABS.includes(search['tab'] as AutomationsTab)
+      ? { tab: search['tab'] as AutomationsTab }
+      : {},
+  component: AutomationsPage,
+});
+const automationRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'automations/$automationId',
+  component: AutomationEditorPage,
+});
 const listsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'lists',
@@ -139,6 +162,9 @@ const routeTree = rootRoute.addChildren([
       newSubmissionRoute,
       submissionRoute,
       agendaRoute,
+      reportsRoute,
+      automationsRoute,
+      automationRoute,
       listsRoute,
       listRoute,
       usersRoute,

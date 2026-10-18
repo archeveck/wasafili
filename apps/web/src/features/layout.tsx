@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import {
   CalendarDays,
+  Workflow,
   ClipboardList,
   FolderTree,
   LogOut,
@@ -39,6 +40,12 @@ const NAV: { to: string; label: string; icon: LucideIcon; permission: string | s
     permission: ['task:read', 'task:manage'],
   },
   { to: '/$app/lists', label: 'Référentiels', icon: FolderTree, permission: 'list:read' },
+  {
+    to: '/$app/automations',
+    label: 'Automatisations',
+    icon: Workflow,
+    permission: 'automation:manage',
+  },
   { to: '/$app/users', label: 'Utilisateurs', icon: Users, permission: 'user:read' },
   { to: '/$app/groups', label: 'Groupes', icon: UsersRound, permission: 'group:read' },
   { to: '/$app/roles', label: 'Rôles', icon: ShieldCheck, permission: 'role:read' },
