@@ -2,14 +2,21 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { startSyncTriggers } from '@/lib/offline';
+import { listenToNotificationTaps, registerPush } from '@/lib/push';
 import { onSessionExpired } from '@/lib/session';
 import { colors } from '@/lib/theme';
 
 export default function RootLayout() {
   useEffect(() => {
     startSyncTriggers();
+    void registerPush();
+    const stopTaps = listenToNotificationTaps();
     // Session expirée : reconnexion ; les données locales et la file d'envoi sont conservées.
-    return onSessionExpired(() => router.replace('/login?expired=1'));
+    const stopExpired = onSessionExpired(() => router.replace('/login?expired=1'));
+    return () => {
+      stopTaps();
+      stopExpired();
+    };
   }, []);
   return (
     <>
@@ -31,6 +38,8 @@ export default function RootLayout() {
         <Stack.Screen name="submissions" options={{ title: 'Mes fiches' }} />
         <Stack.Screen name="sync" options={{ title: 'Synchronisation' }} />
         <Stack.Screen name="scan" options={{ title: 'Scanner un équipement' }} />
+        <Stack.Screen name="tasks" options={{ title: 'Mes tâches' }} />
+        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       </Stack>
     </>
   );

@@ -17,6 +17,10 @@ appId: host.exp.Exponent
 - tapOn:
     text: Continue
     optional: true
+# Le pied de page (boutons) recouvre le bas de l'écran : amener le choix au centre.
+- scrollUntilVisible:
+    element: Bon
+    centerElement: true
 - tapOn: Bon
 - scrollUntilVisible:
     element: Signer

@@ -46,7 +46,14 @@
         }
       ],
       "expo-status-bar",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": true,
+          "color": "#1F6F5C"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

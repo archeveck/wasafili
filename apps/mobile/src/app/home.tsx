@@ -26,6 +26,7 @@ export default function Home() {
           kind: 'structure' as const,
           structureId: s.id,
         })),
+        { id: 'tasks', label: 'Mes tâches', icon: 'calendar', kind: 'tasks' as const },
         { id: 'mine', label: 'Mes fiches', icon: 'list', kind: 'submissions' as const },
         { id: 'scan', label: 'Scanner', icon: 'scan', kind: 'scan' as const },
       ];
@@ -33,16 +34,45 @@ export default function Home() {
     if (tile.kind === 'structure' && tile.structureId)
       router.push(`/structure/${tile.structureId}`);
     else if (tile.kind === 'scan') router.push('/scan');
+    else if (tile.kind === 'tasks') router.push('/tasks');
     else router.push('/submissions');
   };
   const me = profile();
+  const unread = store.unreadNotifications();
+  const openTasks = store.tasks({ open: true }).length;
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={{ padding: space.lg, backgroundColor: color }}>
-        <Text style={{ color: '#fff', fontSize: font.xl, fontWeight: '700' }}>
-          {String(settings?.['name'] ?? 'Tesserax')}
-        </Text>
-        {me?.firstName ? <Text style={{ color: '#ffffffcc' }}>Bonjour {me.firstName}</Text> : null}
+      <View
+        style={{
+          padding: space.lg,
+          backgroundColor: color,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: space.md,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#fff', fontSize: font.xl, fontWeight: '700' }}>
+            {String(settings?.['name'] ?? 'Tesserax')}
+          </Text>
+          {me?.firstName ? (
+            <Text style={{ color: '#ffffffcc' }}>Bonjour {me.firstName}</Text>
+          ) : null}
+        </View>
+        <Pressable
+          onPress={() => router.push('/notifications')}
+          accessibilityRole="button"
+          accessibilityLabel={unread ? `Notifications, ${unread} non lues` : 'Notifications'}
+          style={{
+            borderWidth: 1,
+            borderColor: '#ffffff88',
+            borderRadius: radius.md,
+            paddingHorizontal: space.md,
+            paddingVertical: space.xs,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>🔔 {unread}</Text>
+        </Pressable>
       </View>
       <SyncBar />
       <ScrollView contentContainerStyle={styles.content}>
@@ -78,6 +108,11 @@ export default function Home() {
               >
                 {tile.label}
               </Text>
+              {tile.kind === 'tasks' && openTasks > 0 ? (
+                <Text style={{ color: tile.color ? '#fff' : colors.textMuted }}>
+                  {openTasks} à faire
+                </Text>
+              ) : null}
             </Pressable>
           ))}
         </View>

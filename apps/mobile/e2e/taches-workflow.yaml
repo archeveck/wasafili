@@ -1,0 +1,59 @@
+# Parcours de la Phase 4 (P4.3, P4.4.5) : une tâche planifiée au back-office arrive sur
+# l'appareil, ouvre une fiche pré-remplie, et le bouton de workflow « Soumettre » l'envoie.
+# Prérequis : tâche « Contrôle ascenseur » assignée au technicien (voir taches-workflow.sh).
+appId: host.exp.Exponent
+env:
+  EMAIL: technicien@tesserax.local
+  PASSWORD: Tesserax2026!
+  APP_URL: exp://127.0.0.1:8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible:
+      text: .*(Se connecter|Tout est synchronisé|en attente).*
+    timeout: 60000
+- runFlow:
+    when:
+      visible: Se connecter
+    commands:
+      - tapOn:
+          id: login-email
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: login-password
+      - inputText: ${PASSWORD}
+      - tapOn: Se connecter
+- tapOn:
+    text: Plus tard
+    optional: true
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 30000
+- tapOn: Mes tâches.*
+- tapOn: .*Contrôle ascenseur.*À faire.*
+# Fiche pré-remplie depuis la tâche.
+- assertVisible: .*Ascenseur n°1.*
+- assertVisible: .*Brouillon.*
+# L'écran glisse encore : un tap pendant l'animation tomberait à côté.
+- waitForAnimationToEnd
+- tapOn:
+    text: Continue
+    optional: true
+- scrollUntilVisible:
+    element: Bon
+    centerElement: true
+- tapOn: Bon
+- scrollUntilVisible:
+    element: Signer
+- tapOn: Signer
+- swipe:
+    start: 30%, 50%
+    end: 70%, 55%
+- tapOn: Valider
+- tapOn: Soumettre
+# Retour à l'agenda : la tâche est close dès la saisie, avant même l'envoi.
+- assertVisible: .*Contrôle ascenseur.*Faite.*
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 30000

@@ -3,10 +3,11 @@ import { FormScreen } from '@/form/form-screen';
 import { store } from '@/lib/offline';
 
 export default function FormRoute() {
-  const { structureId, id, prefill } = useLocalSearchParams<{
+  const { structureId, id, prefill, taskId } = useLocalSearchParams<{
     structureId: string;
     id?: string;
     prefill?: string;
+    taskId?: string;
   }>();
   return (
     <>
@@ -15,6 +16,7 @@ export default function FormRoute() {
         structureId={structureId}
         {...(id ? { submissionId: id } : {})}
         {...(prefill ? { prefill: JSON.parse(prefill) as Record<string, unknown> } : {})}
+        {...(taskId ? { taskId } : {})}
       />
     </>
   );
