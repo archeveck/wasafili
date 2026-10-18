@@ -26,6 +26,7 @@ import { type TransactionClient } from '../prisma/tenant';
 import { EngineCache } from '../structures/engine-cache';
 import { StructuresService } from '../structures/structures.service';
 import { writeSpreadsheet, type SpreadsheetFormat } from '../lists/spreadsheet';
+import { EMPTY_OUTBOX, EventsService, type Outbox } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TasksService } from '../tasks/tasks.service';
 import { diffData, type FieldChange, jsonEqual } from './diff';
@@ -52,6 +53,8 @@ export interface UpdateSubmissionInput {
   clientMutationId?: string;
   /** Révision sur laquelle le client a fondé sa modification (détection des conflits). */
   baseRevision?: number;
+  /** Écriture d'une automatisation (usage interne, jamais exposé aux clients). */
+  automationRunId?: string;
 }
 
 export interface TransitionInput {
@@ -155,6 +158,7 @@ export class SubmissionsService {
     private readonly access: StructureAccessService,
     private readonly tasks: TasksService,
     private readonly notifications: NotificationsService,
+    private readonly events: EventsService,
   ) {}
 
   async list(structureId: string, actor: Actor, input: ListSubmissionsInput) {
@@ -391,6 +395,7 @@ export class SubmissionsService {
     const values = this.validated(engine, data, context);
 
     try {
+      let outbox = EMPTY_OUTBOX;
       const id = await this.prisma.transaction(async (tx) => {
         const submission = await tx.submission.create({
           data: {
@@ -406,7 +411,8 @@ export class SubmissionsService {
             accuracy: input.location?.accuracy ?? null,
           },
         });
-        await tx.submissionRevision.create({
+        const changes = diffData({}, values);
+        const revision = await tx.submissionRevision.create({
           data: {
             instanceId: instance.id,
             submissionId: submission.id,
@@ -414,14 +420,24 @@ export class SubmissionsService {
             action: 'create',
             authorId: actor.userId,
             clientMutationId: input.clientMutationId ?? null,
-            changes: diffData({}, values) as unknown as Prisma.InputJsonValue,
+            changes: changes as unknown as Prisma.InputJsonValue,
           },
         });
         if (input.taskId) {
           await this.tasks.completeWithSubmission(tx, actor, input.taskId, submission);
         }
+        outbox = await this.events.record(tx, instance, {
+          type: 'created',
+          submission,
+          revisionId: revision.id,
+          revision: 1,
+          changes,
+          engine,
+          context,
+        });
         return submission.id;
       });
+      await this.events.dispatch(instance.id, outbox);
       return { replayed: false, submission: await this.get(id, actor) };
     } catch (error) {
       // Deux envois simultanés de la même mutation : le second rejoue le premier.
@@ -475,6 +491,7 @@ export class SubmissionsService {
     this.require(rights, 'update');
 
     let notified: string[] = [];
+    let outbox: Outbox = EMPTY_OUTBOX;
     const conflicts = await this.prisma.transaction(async (tx) => {
       const current = await this.lock(tx, id);
       const version = await tx.structureVersion.findUniqueOrThrow({
@@ -558,11 +575,11 @@ export class SubmissionsService {
       }
 
       const revision = current.revision + 1;
-      await tx.submission.update({
+      const updated = await tx.submission.update({
         where: { id },
         data: { data: values as Prisma.InputJsonValue, revision, state: nextState },
       });
-      await tx.submissionRevision.create({
+      const created = await tx.submissionRevision.create({
         data: {
           instanceId: instance.id,
           submissionId: id,
@@ -571,7 +588,18 @@ export class SubmissionsService {
           authorId: actor.userId,
           clientMutationId: input.clientMutationId ?? null,
           changes: changes as unknown as Prisma.InputJsonValue,
+          automationRunId: input.automationRunId ?? null,
         },
+      });
+      outbox = await this.events.record(tx, instance, {
+        type: input.transition === undefined ? 'updated' : 'transition',
+        submission: updated,
+        revisionId: created.id,
+        revision,
+        changes,
+        automationRunId: input.automationRunId ?? null,
+        engine,
+        context,
       });
       if (conflicting.length > 0) {
         await tx.submissionConflict.createMany({
@@ -591,6 +619,7 @@ export class SubmissionsService {
       return conflicting;
     });
     await this.notifications.dispatch(instance.id, notified);
+    await this.events.dispatch(instance.id, outbox);
     return { replayed: false, submission: await this.get(id, actor), conflicts };
   }
 
@@ -622,13 +651,13 @@ export class SubmissionsService {
     if ((await this.replay(instance.id, clientMutationId, actor)) === 'applied') return;
     const { rights } = await this.findVisible(id, actor);
     this.require(rights, 'delete');
-    await this.prisma.transaction(async (tx) => {
+    const outbox = await this.prisma.transaction(async (tx) => {
       const current = await this.lock(tx, id);
-      await tx.submission.update({
+      const deleted = await tx.submission.update({
         where: { id },
         data: { deletedAt: new Date(), revision: current.revision + 1 },
       });
-      await tx.submissionRevision.create({
+      const revision = await tx.submissionRevision.create({
         data: {
           instanceId: instance.id,
           submissionId: id,
@@ -639,7 +668,15 @@ export class SubmissionsService {
           changes: [],
         },
       });
+      return this.events.record(tx, instance, {
+        type: 'deleted',
+        submission: deleted,
+        revisionId: revision.id,
+        revision: revision.revision,
+        changes: [],
+      });
     });
+    await this.events.dispatch(instance.id, outbox);
   }
 
   /** Verrouille la fiche pour la transaction (écritures sérialisées) ; 404 si supprimée. */
@@ -666,11 +703,19 @@ export class SubmissionsService {
           clientMutationId: true,
           changes: true,
           createdAt: true,
+          automationRun: { select: { automation: { select: { id: true, name: true } } } },
         },
       }),
       this.prisma.db.submissionRevision.count({ where }),
     ]);
-    return toPage(revisions, total, pagination);
+    return toPage(
+      revisions.map(({ automationRun, ...revision }) => ({
+        ...revision,
+        automation: automationRun?.automation ?? null,
+      })),
+      total,
+      pagination,
+    );
   }
 
   private readScope(rights: StructureRights, actor: Actor): 'all' | 'own' {

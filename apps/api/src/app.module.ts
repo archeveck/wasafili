@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
+import { AutomationsModule } from './automations/automations.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/errors';
 import { FieldsInterceptor } from './common/fields';
@@ -16,6 +17,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
 import { ReportsModule } from './reports/reports.module';
+import { EmailsModule } from './emails/emails.module';
+import { EventsModule } from './events/events.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { SettingsModule } from './settings/settings.module';
 import { StructuresModule } from './structures/structures.module';
 import { SubmissionsModule } from './submissions/submissions.module';
@@ -50,7 +54,11 @@ import { PermissionGuard } from './tenancy/permission.guard';
     SettingsModule,
     NotificationsModule,
     TasksModule,
+    WebhooksModule,
+    EmailsModule,
+    EventsModule,
     ReportsModule,
+    AutomationsModule,
   ],
   providers: [
     // Ordre significatif : authentification → instance (contexte RLS) → permissions.

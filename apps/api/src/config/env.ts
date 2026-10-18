@@ -47,6 +47,8 @@ const envSchema = z.object({
   GOTENBERG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   /** Adresse publique du back-office (liens dans les e-mails). */
   APP_URL: z.url().default('http://localhost:5173'),
+  /** Exécute les automatisations dans ce processus (file BullMQ dédiée, ADR 0009). */
+  AUTOMATIONS_WORKER: z.stringbool().default(true),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

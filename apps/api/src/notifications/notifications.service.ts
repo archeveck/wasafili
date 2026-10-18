@@ -8,7 +8,7 @@ import { type TransactionClient } from '../prisma/tenant';
 import { JobQueue } from '../queue/queue.module';
 
 export interface NotificationInput {
-  type: 'task_assigned' | 'submission_state';
+  type: 'task_assigned' | 'submission_state' | 'automation';
   title: string;
   body?: string;
   data: Record<string, string>;

@@ -208,6 +208,31 @@ export class ReportsService {
     return this.produce(instance, template, definition, info, key);
   }
 
+  /** Données de fusion d'une fiche (balises des sujets et corps d'e-mails, titres de tâches). */
+  async mergeData(instance: Instance, submissionId: string) {
+    const submission = await this.prisma.db.submission.findFirst({
+      where: { id: submissionId },
+      include: { version: true, structure: { select: { name: true } } },
+    });
+    if (!submission)
+      throw new NotFoundException({ error: 'not_found', message: 'Fiche introuvable' });
+    const definition = submission.version.definition as StructureDefinition;
+    const info: SubmissionInfo = {
+      id: submission.id,
+      state: submission.state,
+      authorId: submission.authorId,
+      createdAt: submission.createdAt,
+      updatedAt: submission.updatedAt,
+      data: submission.data as SubmissionData,
+    };
+    return reportData(definition, info, {
+      structureName: submission.structure.name,
+      instanceName: instance.name,
+      timeZone: instance.timeZone,
+      labels: await this.labels(definition, info),
+    });
+  }
+
   private async renderSample(instance: Instance, template: ReportTemplate) {
     const definition = await this.definition(template.structureId);
     if (!definition) {
