@@ -4,10 +4,11 @@ Plateforme no-code de collecte de données terrain : back-office web pour concev
 formulaires (structures), workflows et rapports ; application mobile **100 % hors ligne** pour
 la saisie sur chantier. Conçue pour les PME BTP / maintenance / QHSE en Côte d'Ivoire.
 
-> État : Phases **0 (socle)**, **1 (moteur de formulaires)**, **2 (back-office web)** et
-> **3 (mobile hors ligne)** livrées : designer de formulaires, fiches, référentiels, droits ;
-> application Expo 100 % hors ligne (SQLite, file d'envoi, photos annotées, signature, GPS,
-> scan QR), synchronisation sans doublon ni perte, conflits par champ.
+> État : Phases **0 (socle)**, **1 (moteur de formulaires)**, **2 (back-office web)**,
+> **3 (mobile hors ligne)** et **4 (workflow et tâches)** livrées : designer de formulaires et
+> de workflows, fiches, référentiels, droits ; application Expo 100 % hors ligne (SQLite, file
+> d'envoi, photos annotées, signature, GPS, scan QR), synchronisation sans doublon ni perte,
+> conflits par champ ; boutons de transition, agenda des tâches, notifications.
 > Feuille de route : [TASKS.md](TASKS.md).
 
 ## Démarrage rapide
@@ -79,6 +80,26 @@ Tests sur simulateur iOS avec [Maestro](https://maestro.mobile.dev) :
 ```bash
 maestro test apps/mobile/e2e/reinitialiser.yaml apps/mobile/e2e/saisie-fiche.yaml
 API_STOP="…" API_START="…" apps/mobile/e2e/hors-ligne.sh   # scénario hors ligne complet
+```
+
+## Workflow et tâches (Phase 4)
+
+- **Designer → onglet « Workflow »** : états et transitions dans un graphe (relier deux états
+  crée une transition) ; chaque transition est un bouton d'enregistrement (libellé, couleur,
+  rôles, champs à renseigner, confirmation). Les champs se règlent par état et par rôle
+  (« Par état et par rôle » dans leurs propriétés).
+- **Fiches** : filtre par état avec compteurs, vue calendrier, boutons de transition sur le
+  détail et la saisie, changements d'état dans l'historique.
+- **Agenda** : semaine par personne ou groupe ; glisser une tâche la réassigne et la
+  replanifie. Une tâche indique le formulaire à remplir et peut pré-remplir la fiche.
+- **Mobile** : « Mes tâches » ouvre la fiche pré-remplie, close la tâche à l'envoi ; boutons
+  de workflow utilisables hors ligne ; centre de notifications (cloche) alimenté par la sync.
+- **Push** (facultatif) : `PUSH_ENABLED=true` côté API et un build de l'application avec un
+  projet EAS (`extra.eas.projectId`). Sans push, les notifications arrivent par la sync.
+
+```bash
+maestro test apps/mobile/e2e/taches-workflow.yaml   # après apps/mobile/e2e/planifier-tache.sh
+maestro test apps/mobile/e2e/notifications.yaml     # après validation de la fiche au back-office
 ```
 
 ## Démo (Phase 0)

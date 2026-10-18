@@ -66,6 +66,12 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
 - **Droits sur les fiches** : évalués par structure dans `StructureAccessService` (règles par
   rôle/groupe + filtres de visibilité, repli sur les permissions d'instance) — jamais par `@Can`
   sur les routes de fiches.
+- **Workflow, tâches, notifications (ADR 0008)** : transitions vérifiées par `checkTransition`
+  (`form-engine`) partout ; l'historique des révisions (`transition`, `$state`) est le journal
+  d'événements. Une notification s'écrit dans la transaction de l'événement
+  (`NotificationsService.notify`), le push n'est qu'un relais (`dispatch` après validation).
+- **Migrations Prisma** : `migrate dev --create-only`, retirer les `DROP INDEX "*_sync"` générés
+  (index `xid8` écrits à la main), puis `pnpm db:deploy`.
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger
   `touch_sync_txid`) ; une nouvelle ressource mobile s'ajoute au pull avec curseur `(sync_txid, id)`.
   Les mutations hors ligne passent par les mêmes services que l'API (droits, validation).

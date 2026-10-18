@@ -221,28 +221,28 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 ---
 
-## Phase 4 — Workflow & tâches
+## Phase 4 — Workflow & tâches — *[ADR 0008](docs/adr/0008-workflow-taches-notifications.md)*
 
 **P4.1 Moteur de workflow (API)**
-- [ ] P4.1.1 États/transitions par version de structure, rôles autorisés, champs requis par transition
-- [ ] P4.1.2 Endpoint de transition (validation + historique + événement pour automatisations)
-- [ ] P4.1.3 Visibilité/lecture seule des champs par état et par rôle (dans `form-engine`)
-- [ ] P4.1.4 Transitions hors ligne : mutation de sync, revalidation serveur, rejet expliqué
+- [x] P4.1.1 États/transitions par version de structure, rôles autorisés, champs requis par transition (`checkTransition` dans `form-engine`)
+- [x] P4.1.2 Endpoint de transition (validation + historique + événement pour automatisations) — l'événement est la révision `transition` (`$state`), journal lu par la Phase 5
+- [x] P4.1.3 Visibilité/lecture seule des champs par état et par rôle (dans `form-engine`), réglables dans le designer
+- [x] P4.1.4 Transitions hors ligne : mutation de sync, revalidation serveur, rejet expliqué (`409 invalid_state`)
 
-**P4.2 Éditeur de workflow visuel (web)** : graphe états/transitions (React Flow), configuration des boutons (libellé, couleur, rôles, champs requis).
+**P4.2 Éditeur de workflow visuel (web)** ✅ : graphe états/transitions (React Flow), configuration des boutons (libellé, couleur, rôles, champs requis, confirmation).
 
-**P4.3 Boutons de transition** : web (détail fiche) + mobile (saisie) ; compteurs par état dans le tableau des fiches.
+**P4.3 Boutons de transition** ✅ : web (détail et saisie de fiche) + mobile (saisie) ; compteurs par état dans le tableau des fiches.
 
 **P4.4 Tâches**
-- [ ] P4.4.1 Modèle `Task` (structure, assigné utilisateur/groupe, date, échéance, lieu, statut, fiche liée)
-- [ ] P4.4.2 CRUD + sync mobile des tâches assignées
-- [ ] P4.4.3 Agenda web multi-utilisateurs + glisser-déposer (création, réassignation, replanification)
-- [ ] P4.4.4 Vue calendrier des fiches
-- [ ] P4.4.5 Agenda/tâches mobile, ouverture d'une tâche → fiche pré-remplie
+- [x] P4.4.1 Modèle `Task` (structure, assigné utilisateur/groupe, date, échéance, lieu, statut, fiche liée, pré-remplissage)
+- [x] P4.4.2 CRUD + sync mobile des tâches assignées (tombstones à la réassignation)
+- [x] P4.4.3 Agenda web multi-utilisateurs + glisser-déposer (création, réassignation, replanification)
+- [x] P4.4.4 Vue calendrier des fiches (date de création ou champ date filtrable)
+- [x] P4.4.5 Agenda/tâches mobile, ouverture d'une tâche → fiche pré-remplie, close à l'envoi
 
-**P4.5 Notifications** (D1) : centre de notifications alimenté par la sync (source de vérité) + push Expo désactivable (tokens, envoi via worker, préférences utilisateur).
+**P4.5 Notifications** (D1) ✅ : centre de notifications alimenté par la sync (mobile) et cloche du back-office ; push Expo désactivable (`PUSH_ENABLED`, préférence par appareil), envoyé par le worker. Push non testé sur appareil (projet EAS requis).
 
-**P4.6 Démo** : workflow Brouillon → Soumis → Validé/Rejeté sur « Inspection équipement ».
+**P4.6 Démo** ✅ : workflow Brouillon → Soumis → Validé/Rejeté sur « Inspection équipement » (`pnpm db:seed`).
 
 ---
 
