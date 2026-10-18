@@ -5,7 +5,7 @@ import { ApiError, type Submission } from '@tesserax/sdk';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, ErrorMessage, Loading, PageHeader } from '@/components/ui/display';
+import { Badge, Card, ErrorMessage, Loading, PageHeader } from '@/components/ui/display';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
 import { displayValue, listItemIds, useItemLabels, useUserLabels } from '@/form/display';
@@ -158,6 +158,111 @@ function History({
   );
 }
 
+/** Conflits de modification (P3.7) : valeur appliquée, valeur écrasée, résolution manuelle. */
+function Conflicts({
+  submissionId,
+  definition,
+}: {
+  submissionId: string;
+  definition: StructureDefinition;
+}) {
+  const { short, api, timeZone, can } = useApp();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const conflicts = useQuery({
+    queryKey: [short, 'conflicts', submissionId],
+    queryFn: () => api.submissions.conflicts(submissionId),
+  });
+  const users = useUserLabels(api, short);
+  const fields = new Map([...walkFields(definition.fields)].map(({ field }) => [field.key, field]));
+  const values = (conflicts.data?.data ?? []).flatMap((c) => [
+    { [c.field]: c.appliedValue.value },
+    { [c.field]: c.overwrittenValue.value },
+  ]);
+  const labels = useItemLabels(api, short, listItemIds([...fields.values()], values));
+  const resolve = useMutation({
+    mutationFn: ({ id, resolution }: { id: string; resolution: 'kept' | 'restored' }) =>
+      api.submissions.resolveConflict(submissionId, id, resolution),
+    onSuccess: async () => {
+      toast.success('Conflit résolu');
+      await queryClient.invalidateQueries({ queryKey: [short] });
+    },
+    onError: toast.error,
+  });
+  if (conflicts.isPending) return <Loading />;
+  if (conflicts.error) return <ErrorMessage error={conflicts.error} />;
+  if (conflicts.data.data.length === 0)
+    return <p className="text-sm text-muted">Aucun conflit sur cette fiche.</p>;
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted">
+        Deux modifications concurrentes du même champ : la dernière reçue par le serveur a été
+        appliquée, l’autre est conservée ici.
+      </p>
+      {conflicts.data.data.map((conflict) => {
+        const field = fields.get(conflict.field);
+        return (
+          <Card key={conflict.id} className="p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="font-medium">{field?.label ?? conflict.field}</p>
+                <p className="text-xs text-muted">
+                  Révision {conflict.baseRevision} → {conflict.appliedRevision} ·{' '}
+                  {conflict.authorId
+                    ? (users.get(conflict.authorId) ?? 'Utilisateur')
+                    : 'Intégration'}{' '}
+                  · {formatDateTime(conflict.createdAt, timeZone)}
+                </p>
+              </div>
+              {conflict.resolvedAt ? (
+                <Badge color="#2E8B57">
+                  {conflict.resolution === 'restored'
+                    ? 'Valeur écrasée rétablie'
+                    : 'Valeur appliquée conservée'}
+                </Badge>
+              ) : (
+                <Badge color="#D98A1B">À traiter</Badge>
+              )}
+            </div>
+            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <div className="rounded-md bg-success/5 p-2">
+                <dt className="text-xs text-muted">Appliquée</dt>
+                <dd>{displayValue(field, conflict.appliedValue.value, labels, timeZone, users)}</dd>
+              </div>
+              <div className="rounded-md bg-danger/5 p-2">
+                <dt className="text-xs text-muted">Écrasée</dt>
+                <dd>
+                  {displayValue(field, conflict.overwrittenValue.value, labels, timeZone, users)}
+                </dd>
+              </div>
+            </dl>
+            {!conflict.resolvedAt && can('submission:update') && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={resolve.isPending}
+                  onClick={() => resolve.mutate({ id: conflict.id, resolution: 'kept' })}
+                >
+                  Conserver la valeur appliquée
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={resolve.isPending}
+                  onClick={() => resolve.mutate({ id: conflict.id, resolution: 'restored' })}
+                >
+                  Rétablir la valeur écrasée
+                </Button>
+              </div>
+            )}
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Détail d'une fiche (P2.5.2) : lecture, édition (P2.5.3) et historique champ par champ. */
 export function SubmissionPage() {
   const { submissionId } = useParams({ strict: false }) as { submissionId: string };
@@ -175,6 +280,11 @@ export function SubmissionPage() {
     queryFn: () => api.structures.version(submission.data!.structureId, submission.data!.version),
     enabled: !!submission.data,
   });
+  const conflicts = useQuery({
+    queryKey: [short, 'conflicts', submissionId],
+    queryFn: () => api.submissions.conflicts(submissionId),
+  });
+  const openConflicts = (conflicts.data?.data ?? []).filter((c) => !c.resolvedAt).length;
   const remove = useMutation({
     mutationFn: () => api.submissions.remove(submissionId),
     onSuccess: () => {
@@ -226,6 +336,14 @@ export function SubmissionPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="fiche">Fiche</TabsTrigger>
           <TabsTrigger value="history">Historique</TabsTrigger>
+          <TabsTrigger value="conflicts">
+            Conflits
+            {openConflicts > 0 && (
+              <Badge className="ml-1.5" color="#D98A1B">
+                {openConflicts}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="fiche">
           <Card className="p-6">
@@ -249,6 +367,9 @@ export function SubmissionPage() {
         </TabsContent>
         <TabsContent value="history">
           <History submissionId={submissionId} definition={version.data.definition} />
+        </TabsContent>
+        <TabsContent value="conflicts">
+          <Conflicts submissionId={submissionId} definition={version.data.definition} />
         </TabsContent>
       </Tabs>
     </div>
