@@ -1,0 +1,28 @@
+# Rapport PDF d'une fiche depuis le mobile (P5.1.5), en ligne : généré par le serveur et
+# affiché dans le navigateur intégré. Prérequis : une fiche envoyée (ex. saisie-fiche.yaml).
+appId: host.exp.Exponent
+env:
+  APP_URL: exp://127.0.0.1:8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 60000
+- openLink: ${APP_URL}/--/submissions
+- tapOn:
+    text: .*Plateau — Tour Alpha.*
+    index: 0
+- scrollUntilVisible:
+    element: Rapport PDF
+    direction: UP
+- tapOn: Rapport PDF
+# Navigateur intégré (SFSafariViewController) : bouton de fermeture.
+- extendedWaitUntil:
+    visible: (OK|Done|Terminé|Fermer)
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: rapport-pdf
+- tapOn: (OK|Done|Terminé|Fermer)
+- assertVisible: Rapport PDF

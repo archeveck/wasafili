@@ -31,6 +31,7 @@ import { changed, store } from '@/lib/offline';
 import { profile } from '@/lib/profile';
 import { colors, font, radius, space } from '@/lib/theme';
 import { NativeField } from './native-fields';
+import { ReportButton } from './report-button';
 
 interface Props {
   structureId: string;
@@ -384,6 +385,7 @@ function Editor({
           )}
         </View>
         {existing?.error ? <Text style={styles.error}>{existing.error}</Text> : null}
+        {existing && <ReportButton submission={existing} />}
         {definition.fields.map((field) => (
           <Block key={field.id} field={field} form={form} submissionId={id} />
         ))}

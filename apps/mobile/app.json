@@ -53,7 +53,8 @@
           "enableRemoteNotifications": true,
           "color": "#1F6F5C"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
