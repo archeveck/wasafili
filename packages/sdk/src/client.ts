@@ -1,5 +1,12 @@
 import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
-import { type MutationPayload, type MutationResult, type PullResponse } from '@tesserax/sync';
+import {
+  type MutationPayload,
+  type MutationResult,
+  type NotificationDto,
+  type PullResponse,
+  type TaskDto,
+  type TaskStatus,
+} from '@tesserax/sync';
 import {
   type AccessRule,
   type FileDto,
@@ -17,6 +24,7 @@ import {
   type Revision,
   type Role,
   type Settings,
+  type StateCount,
   type Structure,
   type StructureVersion,
   type Submission,
@@ -73,6 +81,33 @@ export interface RequestOptions {
 export interface ListParams {
   page?: number;
   perPage?: number;
+}
+
+export interface TaskQuery extends ListParams {
+  /** Période (ISO 8601) : tâches qui la chevauchent. */
+  from?: string;
+  to?: string;
+  structureId?: string;
+  assigneeUserId?: string;
+  assigneeGroupId?: string;
+  status?: TaskStatus;
+  /** Seulement les tâches assignées à l'appelant. */
+  mine?: boolean;
+}
+
+/** Champs modifiables d'une tâche (dates ISO 8601). */
+export interface TaskInput {
+  title: string;
+  description?: string | null;
+  assigneeUserId?: string | null;
+  assigneeGroupId?: string | null;
+  startAt: string;
+  endAt: string;
+  dueAt?: string | null;
+  locationLabel?: string | null;
+  location?: { lat: number; lng: number } | null;
+  prefill?: SubmissionData;
+  status?: TaskStatus;
 }
 
 export interface SubmissionQuery extends ListParams {
@@ -227,6 +262,21 @@ export function createClient(options: ClientOptions) {
           id: string,
           body: { data: SubmissionData; clientMutationId?: string; baseRevision?: number },
         ) => patch<Submission>(p(`/submissions/${id}`), body),
+        /** Compteurs par état, avec les filtres de la liste (hors état). */
+        states: (structureId: string, query?: SubmissionQuery) =>
+          get<{ data: StateCount[] }>(
+            p(`/structures/${structureId}/submissions/states`),
+            submissionQuery(query),
+          ),
+        transition: (
+          id: string,
+          body: {
+            transition: string;
+            data?: SubmissionData;
+            clientMutationId?: string;
+            baseRevision?: number;
+          },
+        ) => post<Submission>(p(`/submissions/${id}/transition`), body),
         conflicts: (id: string) =>
           get<{ data: SubmissionConflict[] }>(p(`/submissions/${id}/conflicts`)),
         resolveConflict: (id: string, conflictId: string, resolution: 'kept' | 'restored') =>
@@ -236,6 +286,36 @@ export function createClient(options: ClientOptions) {
         remove: (id: string) => del(p(`/submissions/${id}`)),
         revisions: (id: string, params?: ListParams) =>
           get<Page<Revision>>(p(`/submissions/${id}/revisions`), toQuery(params)),
+      },
+      tasks: {
+        list: (query: TaskQuery = {}) =>
+          get<Page<TaskDto>>(p('/tasks'), {
+            ...toQuery({ page: query.page, perPage: query.perPage }),
+            from: query.from,
+            to: query.to,
+            structure_id: query.structureId,
+            assignee_user_id: query.assigneeUserId,
+            assignee_group_id: query.assigneeGroupId,
+            status: query.status,
+            mine: query.mine,
+          }),
+        get: (id: string) => get<TaskDto>(p(`/tasks/${id}`)),
+        create: (body: TaskInput & { id?: string; structureId: string }) =>
+          post<TaskDto>(p('/tasks'), body),
+        update: (id: string, body: Partial<TaskInput>) => patch<TaskDto>(p(`/tasks/${id}`), body),
+        remove: (id: string) => del(p(`/tasks/${id}`)),
+      },
+      notifications: {
+        list: (params: ListParams & { unread?: boolean } = {}) =>
+          get<Page<NotificationDto> & { meta: { unread: number } }>(p('/notifications'), {
+            ...toQuery(params),
+            unread: params.unread,
+          }),
+        /** Marque comme lues les notifications données (toutes sans liste). */
+        read: (ids?: string[]) => post<{ updated: number }>(p('/notifications/read'), { ids }),
+        registerPushToken: (token: string, platform?: 'ios' | 'android' | 'web') =>
+          post<void>(p('/push-tokens'), { token, platform }),
+        unregisterPushToken: (token: string) => del(p('/push-tokens'), { token }),
       },
       lists: {
         list: (params?: ListParams) => get<Page<List>>(p('/lists'), toQuery(params)),

@@ -131,10 +131,17 @@ export interface Submission {
   updatedAt: string;
 }
 
+export type { NotificationDto as Notification, TaskDto as Task, TaskStatus } from '@tesserax/sync';
+
+export interface StateCount {
+  state: string | null;
+  count: number;
+}
+
 export interface Revision {
   id: string;
   revision: number;
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'transition' | 'delete';
   authorId: string | null;
   clientMutationId: string | null;
   changes: { field: string; before: unknown; after: unknown }[];

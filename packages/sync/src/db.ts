@@ -87,6 +87,40 @@ const MIGRATIONS: string[] = [
   );
   CREATE VIRTUAL TABLE submissions_fts USING fts5(id UNINDEXED, content, tokenize = 'unicode61 remove_diacritics 2');
   `,
+  // 2 — Phase 4 : workflow (état serveur / état local), tâches assignées, notifications.
+  `
+  ALTER TABLE submissions ADD COLUMN server_state TEXT;
+  ALTER TABLE submissions ADD COLUMN task_id TEXT;
+  UPDATE submissions SET server_state = state;
+  ALTER TABLE mutations ADD COLUMN target_state TEXT;
+  CREATE TABLE tasks (
+    id TEXT PRIMARY KEY,
+    structure_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    start_at TEXT NOT NULL,
+    end_at TEXT NOT NULL,
+    due_at TEXT,
+    location_label TEXT,
+    location TEXT,
+    prefill TEXT NOT NULL,
+    status TEXT NOT NULL,
+    submission_id TEXT,
+    -- Fiche saisie depuis la tâche, pas encore acceptée par le serveur.
+    local_submission_id TEXT
+  );
+  CREATE INDEX tasks_start ON tasks (start_at);
+  CREATE TABLE notifications (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    data TEXT NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX notifications_created ON notifications (created_at);
+  `,
 ];
 
 export function migrate(db: SqlDatabase): void {

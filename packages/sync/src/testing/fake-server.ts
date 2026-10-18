@@ -2,6 +2,8 @@ import { type SubmissionData } from '@tesserax/form-schema';
 import {
   type MutationPayload,
   type MutationResult,
+  type NotificationDto,
+  type PulledTask,
   type PulledSubmission,
   type PullResponse,
   type SyncTransport,
@@ -26,6 +28,14 @@ export class FakeServer implements SyncTransport {
   readonly submissions = new Map<string, PulledSubmission & { seq: number }>();
   readonly files = new Set<string>();
   readonly applied = new Set<string>();
+  readonly tasks = new Map<string, PulledTask & { seq: number }>();
+  readonly notifications: (NotificationDto & { seq: number })[] = [];
+  /** Workflow simulé : état à la création et transitions (`from` → `to`). */
+  initialState: string | null = null;
+  workflow: Record<string, { from: string[]; to: string }> = {
+    soumettre: { from: ['brouillon'], to: 'soumis' },
+    valider: { from: ['soumis'], to: 'valide' },
+  };
   pushCalls = 0;
   private seq = 0;
 
@@ -90,6 +100,12 @@ export class FakeServer implements SyncTransport {
             ]
           : [],
       submissions: changed.map(({ seq: _seq, ...s }) => s),
+      tasks: [...this.tasks.values()]
+        .filter((t) => t.seq > since)
+        .map(({ seq: _seq, ...t }) => t as PulledTask),
+      notifications: this.notifications
+        .filter((n) => n.seq > since)
+        .map(({ seq: _seq, ...n }) => n),
     };
   }
 
@@ -111,6 +127,26 @@ export class FakeServer implements SyncTransport {
       throw new TransientError('Coupure pendant l envoi');
     }
     this.files.add(task.fileId);
+  }
+
+  /** Tâche planifiée (ou réassignée ailleurs avec `deleted`) depuis le back-office. */
+  planTask(task: PulledTask) {
+    this.tasks.set(task.id, { ...task, seq: ++this.seq } as PulledTask & { seq: number });
+  }
+
+  notify(notification: NotificationDto) {
+    this.notifications.push({ ...notification, seq: ++this.seq });
+  }
+
+  /** Changement d'état fait par quelqu'un d'autre (back-office). */
+  moveRemotely(id: string, state: string) {
+    const current = this.submissions.get(id)!;
+    this.submissions.set(id, {
+      ...current,
+      state,
+      revision: current.revision! + 1,
+      seq: ++this.seq,
+    });
   }
 
   /** Modification faite par quelqu'un d'autre (back-office). */
@@ -165,7 +201,7 @@ export class FakeServer implements SyncTransport {
         structureVersionId: VERSION,
         deleted: false,
         revision: 1,
-        state: null,
+        state: this.initialState,
         authorId: 'u1',
         data: { ...m.data, calcule: 'serveur' },
         location: null,
@@ -173,12 +209,41 @@ export class FakeServer implements SyncTransport {
         updatedAt: '2026-10-18T10:00:00.000Z',
         seq: ++this.seq,
       });
+      const task = m.taskId ? this.tasks.get(m.taskId) : undefined;
+      if (task && !task.deleted && task.status === 'todo') {
+        this.tasks.set(task.id, {
+          ...task,
+          status: 'done',
+          submissionId: m.submissionId,
+          seq: ++this.seq,
+        });
+      }
     } else if (!existing || existing.deleted) {
       return {
         id: m.id,
         status: 'rejected',
         error: { status: 404, code: 'not_found', message: 'Fiche introuvable' },
       };
+    } else if (m.type === 'transition') {
+      const transition = this.workflow[m.transition];
+      if (!transition?.from.includes(existing.state ?? '')) {
+        return {
+          id: m.id,
+          status: 'rejected',
+          error: {
+            status: 409,
+            code: 'invalid_state',
+            message: `La fiche est à l’état « ${existing.state} »`,
+          },
+        };
+      }
+      this.submissions.set(m.submissionId, {
+        ...existing,
+        data: { ...existing.data, ...m.data },
+        state: transition.to,
+        revision: existing.revision! + 1,
+        seq: ++this.seq,
+      });
     } else if (m.type === 'update') {
       this.submissions.set(m.submissionId, {
         ...existing,

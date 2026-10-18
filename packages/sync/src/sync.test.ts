@@ -291,3 +291,130 @@ describe('session', () => {
     expect(store.cursor).toBeUndefined();
   });
 });
+
+describe('workflow hors ligne', () => {
+  beforeEach(() => {
+    server.initialState = 'brouillon';
+  });
+
+  it('envoie la création puis la transition choisie, état affiché aussitôt', async () => {
+    const id = store.saveDraft({ structureId: STRUCTURE, data: { titre: 'Pompe' } });
+    server.online = false;
+    store.submit(id, undefined, { key: 'soumettre', to: 'soumis' });
+    await engine.sync();
+    expect(store.submission(id)).toMatchObject({ status: 'pending', state: 'soumis' });
+
+    server.online = true;
+    await engine.sync();
+    expect(server.submissions.get(id)).toMatchObject({ state: 'soumis', revision: 2 });
+    expect(store.submission(id)).toMatchObject({ status: 'synced', state: 'soumis' });
+  });
+
+  it('revient à l’état serveur et explique un refus', async () => {
+    const id = createSubmission();
+    await engine.sync();
+    server.online = false;
+    store.transition(id, { key: 'soumettre', to: 'soumis' }, { titre: 'Visite', note: 'RAS' });
+    expect(store.submission(id)).toMatchObject({ state: 'soumis', data: { note: 'RAS' } });
+
+    server.online = true;
+    server.moveRemotely(id, 'valide'); // validée entre-temps depuis le back-office
+    const report = await engine.sync();
+    expect(report.rejected).toBe(1);
+    expect(store.submission(id)).toMatchObject({
+      status: 'error',
+      state: 'valide',
+      error: 'La fiche est à l’état « valide »',
+    });
+    store.discardMutation(store.failedMutations()[0]!.id);
+    expect(store.submission(id)).toMatchObject({ status: 'synced', state: 'valide' });
+  });
+});
+
+describe('tâches et notifications', () => {
+  const task = {
+    id: 'task-1',
+    structureId: STRUCTURE,
+    title: 'Contrôle groupe',
+    description: null,
+    assigneeUserId: 'u1',
+    assigneeGroupId: null,
+    startAt: '2026-11-02T08:00:00.000Z',
+    endAt: '2026-11-02T09:00:00.000Z',
+    dueAt: null,
+    locationLabel: 'Tour Alpha',
+    location: null,
+    prefill: { equipement: 'eq-1' },
+    status: 'todo' as const,
+    submissionId: null,
+    createdAt: '2026-10-18T08:00:00.000Z',
+    updatedAt: '2026-10-18T08:00:00.000Z',
+    deleted: false as const,
+  };
+
+  it('reçoit les tâches assignées, les clôt par la fiche saisie et retire une tâche réassignée', async () => {
+    server.planTask(task);
+    server.planTask({
+      ...task,
+      id: 'task-2',
+      startAt: '2026-11-03T08:00:00.000Z',
+      endAt: '2026-11-03T09:00:00.000Z',
+    });
+    await engine.sync();
+    expect(store.tasks({ to: '2026-11-03T00:00:00.000Z' }).map((t) => t.id)).toEqual(['task-1']);
+    const local = store.task('task-1')!;
+    expect(local).toMatchObject({ status: 'todo', prefill: { equipement: 'eq-1' } });
+
+    server.online = false;
+    const id = store.saveDraft({ structureId: STRUCTURE, data: local.prefill, taskId: local.id });
+    store.saveDraft({ id, structureId: STRUCTURE, data: { ...local.prefill, ok: true } });
+    store.submit(id);
+    expect(store.task('task-1')).toMatchObject({ status: 'done', submissionId: id });
+    expect(store.tasks({ open: true }).map((t) => t.id)).toEqual(['task-2']);
+
+    server.online = true;
+    server.planTask({ id: 'task-2', deleted: true });
+    await engine.sync();
+    expect(server.tasks.get('task-1')).toMatchObject({ status: 'done', submissionId: id });
+    expect(store.task('task-1')).toMatchObject({ status: 'done', submissionId: id });
+    expect(store.task('task-2')).toBeUndefined();
+  });
+
+  it('rouvre la tâche si la fiche saisie est abandonnée', async () => {
+    server.planTask(task);
+    await engine.sync();
+    const id = store.saveDraft({
+      structureId: STRUCTURE,
+      data: { invalide: true },
+      taskId: 'task-1',
+    });
+    store.submit(id);
+    await engine.sync();
+    store.discardMutation(store.failedMutations()[0]!.id);
+    expect(store.task('task-1')?.status).toBe('todo');
+  });
+
+  it('garde les notifications lues localement', async () => {
+    const notification = {
+      id: 'n-1',
+      type: 'task_assigned' as const,
+      title: 'Nouvelle tâche',
+      body: 'Contrôle groupe',
+      data: { taskId: 'task-1' },
+      readAt: null,
+      createdAt: '2026-10-18T08:00:00.000Z',
+    };
+    server.notify(notification);
+    server.notify({ ...notification, id: 'n-2', createdAt: '2026-10-18T09:00:00.000Z' });
+    await engine.sync();
+    expect(store.notifications().map((n) => n.id)).toEqual(['n-2', 'n-1']);
+    expect(store.unreadNotifications()).toBe(2);
+    store.markNotificationsRead('n-1');
+    expect(store.unreadNotifications()).toBe(1);
+    server.notify({ ...notification, title: 'Relance' }); // renvoyée par le serveur, non lue
+    await engine.sync();
+    expect(store.notifications().find((n) => n.id === 'n-1')).toMatchObject({ read: true });
+    store.markNotificationsRead();
+    expect(store.unreadNotifications()).toBe(0);
+  });
+});

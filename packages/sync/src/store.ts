@@ -1,10 +1,13 @@
-import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { initialState, type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
 import { migrate, type SqlDatabase, type SqlValue } from './db.js';
 import {
   type MutationPayload,
   type MutationResult,
+  type NotificationDto,
   type PulledSubmission,
+  type PulledTask,
   type PullResponse,
+  type TaskStatus,
   type UploadTask,
 } from './protocol.js';
 
@@ -51,12 +54,35 @@ export interface LocalSubmission {
   serverData: SubmissionData | null;
   revision: number | null;
   status: SubmissionStatus;
+  /** État de workflow vu localement : serveur, ou cible d'une transition en attente. */
   state: string | null;
   authorId: string | null;
+  /** Tâche dont la fiche est issue. */
+  taskId: string | null;
   location: Location | null;
   error: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LocalTask {
+  id: string;
+  structureId: string;
+  title: string;
+  description: string | null;
+  startAt: string;
+  endAt: string;
+  dueAt: string | null;
+  locationLabel: string | null;
+  location: { lat: number; lng: number } | null;
+  prefill: SubmissionData;
+  /** `done` dès qu'une fiche a été saisie depuis la tâche, même non encore envoyée. */
+  status: TaskStatus;
+  submissionId: string | null;
+}
+
+export interface LocalNotification extends Omit<NotificationDto, 'readAt'> {
+  read: boolean;
 }
 
 export interface QueuedMutation {
@@ -89,6 +115,7 @@ interface SubmissionRow {
   status: SubmissionStatus;
   state: string | null;
   author_id: string | null;
+  task_id: string | null;
   location: string | null;
   error: string | null;
   created_at: string;
@@ -125,6 +152,7 @@ function toSubmission(row: SubmissionRow): LocalSubmission {
     status: row.status,
     state: row.state,
     authorId: row.author_id,
+    taskId: row.task_id,
     location: parse<Location>(row.location),
     error: row.error,
     createdAt: row.created_at,
@@ -205,6 +233,8 @@ export class LocalStore {
         'mutations',
         'uploads',
         'submissions_fts',
+        'tasks',
+        'notifications',
       ]) {
         this.db.run(`DELETE FROM ${table}`);
       }
@@ -350,6 +380,8 @@ export class LocalStore {
     structureId: string;
     data: SubmissionData;
     location?: Location | null;
+    /** Fiche saisie depuis une tâche (conservé aux enregistrements suivants). */
+    taskId?: string | null;
   }): string {
     const existing = input.id ? this.submission(input.id) : undefined;
     if (existing && existing.status !== 'draft')
@@ -362,15 +394,18 @@ export class LocalStore {
     const now = this.now().toISOString();
     this.tx(() => {
       this.db.run(
-        `INSERT INTO submissions (id, structure_id, version_id, local_data, status, location, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET local_data = excluded.local_data, location = excluded.location, updated_at = excluded.updated_at`,
+        `INSERT INTO submissions (id, structure_id, version_id, local_data, status, state, location, task_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET local_data = excluded.local_data, location = excluded.location,
+           task_id = COALESCE(excluded.task_id, submissions.task_id), updated_at = excluded.updated_at`,
         [
           id,
           input.structureId,
           version.id,
           JSON.stringify(input.data),
+          initialState(version.definition.workflow),
           JSON.stringify(input.location ?? null),
+          input.taskId ?? null,
           now,
           now,
         ],
@@ -380,8 +415,11 @@ export class LocalStore {
     return id;
   }
 
-  /** Passe un brouillon à l'envoi : création mise en file (identifiant client conservé). */
-  submit(id: string, data?: SubmissionData): void {
+  /**
+   * Passe un brouillon à l'envoi : création mise en file (identifiant client conservé), suivie
+   * de la transition choisie s'il y en a une (bouton d'enregistrement du workflow).
+   */
+  submit(id: string, data?: SubmissionData, transition?: { key: string; to: string }): void {
     const draft = this.submission(id);
     if (draft?.status !== 'draft') throw new Error('Brouillon introuvable');
     const values = data ?? draft.data;
@@ -406,8 +444,62 @@ export class LocalStore {
               },
             }
           : {}),
+        ...(draft.taskId ? { taskId: draft.taskId } : {}),
       });
+      if (draft.taskId) {
+        this.db.run('UPDATE tasks SET local_submission_id = ? WHERE id = ?', [id, draft.taskId]);
+      }
+      if (transition) {
+        this.enqueue(
+          { id: this.newId(), type: 'transition', submissionId: id, transition: transition.key },
+          transition.to,
+        );
+        this.db.run('UPDATE submissions SET state = ? WHERE id = ?', [transition.to, id]);
+      }
     });
+  }
+
+  /**
+   * Transition de workflow hors ligne (P4.1.4) : l'état cible s'affiche aussitôt ; le serveur
+   * revérifie tout et peut refuser (fiche passée entre-temps à un autre état…). La vérification
+   * locale (`checkTransition` de form-engine) incombe à l'appelant.
+   */
+  transition(id: string, transition: { key: string; to: string }, data?: SubmissionData): void {
+    const current = this.submission(id);
+    if (!current) throw new Error('Fiche introuvable');
+    if (current.status === 'draft') {
+      this.submit(id, data, transition);
+      return;
+    }
+    const changed = data ? this.changedFields(current.data, data) : {};
+    const local = { ...current.data, ...changed };
+    this.tx(() => {
+      this.db.run(
+        `UPDATE submissions SET local_data = ?, state = ?, status = CASE WHEN status = 'error' THEN 'error' ELSE 'pending' END, updated_at = ? WHERE id = ?`,
+        [JSON.stringify(local), transition.to, this.now().toISOString(), id],
+      );
+      this.index(id, local);
+      this.enqueue(
+        {
+          id: this.newId(),
+          type: 'transition',
+          submissionId: id,
+          transition: transition.key,
+          ...(current.revision !== null ? { baseRevision: current.revision } : {}),
+          ...(Object.keys(changed).length > 0 ? { data: changed } : {}),
+        },
+        transition.to,
+      );
+    });
+  }
+
+  private changedFields(before: SubmissionData, after: SubmissionData): SubmissionData {
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+    return Object.fromEntries(
+      [...keys]
+        .filter((key) => !same(before[key], after[key]))
+        .map((key) => [key, after[key] ?? null]),
+    );
   }
 
   /** Modifie une fiche : seuls les champs changés partent, fondés sur la révision connue. */
@@ -418,12 +510,7 @@ export class LocalStore {
       this.saveDraft({ id, structureId: current.structureId, data, location: current.location });
       return;
     }
-    const keys = new Set([...Object.keys(current.data), ...Object.keys(data)]);
-    const changed = Object.fromEntries(
-      [...keys]
-        .filter((key) => !same(current.data[key], data[key]))
-        .map((key) => [key, data[key] ?? null]),
-    );
+    const changed = this.changedFields(current.data, data);
     if (Object.keys(changed).length === 0) return;
     this.tx(() => {
       this.db.run(
@@ -459,7 +546,7 @@ export class LocalStore {
 
   // --- File de mutations ----------------------------------------------------------------
 
-  private enqueue(payload: MutationPayload): void {
+  private enqueue(payload: MutationPayload, targetState: string | null = null): void {
     // Regroupe une modification avec la précédente si celle-ci n'a jamais été tentée : on
     // ne modifie jamais une mutation qui a pu atteindre le serveur (son identifiant y est connu).
     const last = this.db.get<MutationRow>(
@@ -484,13 +571,14 @@ export class LocalStore {
       return;
     }
     this.db.run(
-      `INSERT INTO mutations (id, submission_id, type, payload, base_revision, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+      `INSERT INTO mutations (id, submission_id, type, payload, base_revision, target_state, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
       [
         payload.id,
         payload.submissionId,
         payload.type,
         JSON.stringify(payload),
-        payload.type === 'update' ? (payload.baseRevision ?? null) : null,
+        'baseRevision' in payload ? (payload.baseRevision ?? null) : null,
+        targetState,
         this.now().toISOString(),
       ],
     );
@@ -544,10 +632,10 @@ export class LocalStore {
             message,
             result.id,
           ]);
-          this.db.run(`UPDATE submissions SET status = 'error', error = ? WHERE id = ?`, [
-            result.error.message,
-            row.submission_id,
-          ]);
+          this.db.run(
+            `UPDATE submissions SET status = 'error', error = ?, state = ? WHERE id = ?`,
+            [result.error.message, this.localState(row.submission_id), row.submission_id],
+          );
           continue;
         }
         applied++;
@@ -712,8 +800,110 @@ export class LocalStore {
         );
       }
       for (const submission of page.submissions) this.applyServerSubmission(submission);
+      for (const task of page.tasks ?? []) this.applyServerTask(task);
+      for (const n of page.notifications ?? []) {
+        this.db.run(
+          `INSERT INTO notifications (id, type, title, body, data, read, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (id) DO UPDATE SET read = MAX(notifications.read, excluded.read)`,
+          [n.id, n.type, n.title, n.body, JSON.stringify(n.data), n.readAt ? 1 : 0, n.createdAt],
+        );
+      }
       this.setMeta('cursor', page.cursor);
     });
+  }
+
+  private applyServerTask(task: PulledTask): void {
+    if (task.deleted) {
+      this.db.run('DELETE FROM tasks WHERE id = ?', [task.id]);
+      return;
+    }
+    this.db.run(
+      `INSERT INTO tasks (id, structure_id, title, description, start_at, end_at, due_at, location_label, location, prefill, status, submission_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET structure_id = excluded.structure_id, title = excluded.title,
+         description = excluded.description, start_at = excluded.start_at, end_at = excluded.end_at,
+         due_at = excluded.due_at, location_label = excluded.location_label, location = excluded.location,
+         prefill = excluded.prefill, status = excluded.status, submission_id = excluded.submission_id,
+         local_submission_id = CASE WHEN excluded.submission_id IS NULL THEN tasks.local_submission_id END`,
+      [
+        task.id,
+        task.structureId,
+        task.title,
+        task.description,
+        task.startAt,
+        task.endAt,
+        task.dueAt,
+        task.locationLabel,
+        JSON.stringify(task.location),
+        JSON.stringify(task.prefill),
+        task.status,
+        task.submissionId,
+      ],
+    );
+  }
+
+  // --- Tâches et notifications ---------------------------------------------------------
+
+  /** Tâches assignées, par date ; `from`/`to` (ISO) : tâches qui chevauchent la période. */
+  tasks(options: { from?: string; to?: string; open?: boolean } = {}): LocalTask[] {
+    const where: string[] = [];
+    const params: SqlValue[] = [];
+    if (options.from) {
+      where.push('t.end_at > ?');
+      params.push(options.from);
+    }
+    if (options.to) {
+      where.push('t.start_at < ?');
+      params.push(options.to);
+    }
+    const rows = this.db.all<TaskRow>(
+      `SELECT t.*, ${TASK_STATUS_SQL} AS local_status FROM tasks t ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY t.start_at, t.id`,
+      params,
+    );
+    const tasks = rows.map(toTask);
+    return options.open
+      ? tasks.filter((t) => t.status === 'todo' || t.status === 'in_progress')
+      : tasks;
+  }
+
+  task(id: string): LocalTask | undefined {
+    const row = this.db.get<TaskRow>(
+      `SELECT t.*, ${TASK_STATUS_SQL} AS local_status FROM tasks t WHERE t.id = ?`,
+      [id],
+    );
+    return row && toTask(row);
+  }
+
+  notifications(limit = 100): LocalNotification[] {
+    return this.db
+      .all<{
+        id: string;
+        type: NotificationDto['type'];
+        title: string;
+        body: string | null;
+        data: string;
+        read: number;
+        created_at: string;
+      }>('SELECT * FROM notifications ORDER BY created_at DESC, id LIMIT ?', [limit])
+      .map((row) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        body: row.body,
+        data: JSON.parse(row.data) as NotificationDto['data'],
+        read: row.read === 1,
+        createdAt: row.created_at,
+      }));
+  }
+
+  unreadNotifications(): number {
+    return this.db.get<{ n: number }>('SELECT count(*) AS n FROM notifications WHERE read = 0')!.n;
+  }
+
+  /** Lecture locale (l'état lu n'est pas renvoyé au serveur). Sans identifiant : toutes. */
+  markNotificationsRead(id?: string): void {
+    if (id) this.db.run('UPDATE notifications SET read = 1 WHERE id = ?', [id]);
+    else this.db.run('UPDATE notifications SET read = 1');
   }
 
   /**
@@ -733,10 +923,10 @@ export class LocalStore {
     }
     const serverData = remote.data ?? {};
     this.db.run(
-      `INSERT INTO submissions (id, structure_id, version_id, server_data, local_data, revision, status, state, author_id, location, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?, ?, ?)
+      `INSERT INTO submissions (id, structure_id, version_id, server_data, local_data, revision, status, state, server_state, author_id, location, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET version_id = excluded.version_id, server_data = excluded.server_data,
-         revision = excluded.revision, state = excluded.state, author_id = excluded.author_id,
+         revision = excluded.revision, server_state = excluded.server_state, author_id = excluded.author_id,
          location = excluded.location, created_at = excluded.created_at, updated_at = excluded.updated_at`,
       [
         remote.id,
@@ -745,6 +935,7 @@ export class LocalStore {
         JSON.stringify(serverData),
         JSON.stringify(serverData),
         remote.revision ?? null,
+        remote.state ?? null,
         remote.state ?? null,
         remote.authorId ?? null,
         JSON.stringify(remote.location ?? null),
@@ -771,13 +962,33 @@ export class LocalStore {
       { ...serverData },
     );
     const failed = pending.find((m) => m.status === 'failed');
-    this.db.run(`UPDATE submissions SET local_data = ?, status = ?, error = ? WHERE id = ?`, [
-      JSON.stringify(local),
-      failed ? 'error' : pending.length ? 'pending' : 'synced',
-      failed?.error ?? null,
-      id,
-    ]);
+    this.db.run(
+      `UPDATE submissions SET local_data = ?, status = ?, error = ?, state = ? WHERE id = ?`,
+      [
+        JSON.stringify(local),
+        failed ? 'error' : pending.length ? 'pending' : 'synced',
+        failed?.error ?? null,
+        this.localState(id),
+        id,
+      ],
+    );
     this.index(id, local);
+  }
+
+  /** État local : cible de la dernière transition en attente non refusée, sinon état serveur. */
+  private localState(id: string): string | null {
+    const target = this.db.get<{ target_state: string }>(
+      `SELECT target_state FROM mutations WHERE submission_id = ? AND type = 'transition' AND status <> 'failed' ORDER BY seq DESC LIMIT 1`,
+      [id],
+    );
+    if (target) return target.target_state;
+    const row = this.db.get<{
+      server_state: string | null;
+      state: string | null;
+      server_data: string | null;
+    }>('SELECT server_state, state, server_data FROM submissions WHERE id = ?', [id]);
+    // Jamais synchronisée : l'état initial posé à la création locale fait foi.
+    return row?.server_data === null ? (row?.state ?? null) : (row?.server_state ?? null);
   }
 
   private refreshStatus(id: string): void {
@@ -829,5 +1040,42 @@ function toItem(row: ItemRow): LocalListItem {
     code: row.code,
     label: row.label,
     attributes: JSON.parse(row.attributes) as Record<string, unknown>,
+  };
+}
+
+/** Statut affiché : une fiche saisie depuis la tâche (encore présente localement) la clôt. */
+const TASK_STATUS_SQL = `CASE WHEN t.local_submission_id IS NOT NULL AND t.status IN ('todo', 'in_progress')
+  AND EXISTS (SELECT 1 FROM submissions s WHERE s.id = t.local_submission_id) THEN 'done' ELSE t.status END`;
+
+interface TaskRow {
+  id: string;
+  structure_id: string;
+  title: string;
+  description: string | null;
+  start_at: string;
+  end_at: string;
+  due_at: string | null;
+  location_label: string | null;
+  location: string;
+  prefill: string;
+  local_status: TaskStatus;
+  submission_id: string | null;
+  local_submission_id: string | null;
+}
+
+function toTask(row: TaskRow): LocalTask {
+  return {
+    id: row.id,
+    structureId: row.structure_id,
+    title: row.title,
+    description: row.description,
+    startAt: row.start_at,
+    endAt: row.end_at,
+    dueAt: row.due_at,
+    locationLabel: row.location_label,
+    location: parse<{ lat: number; lng: number }>(row.location),
+    prefill: JSON.parse(row.prefill) as SubmissionData,
+    status: row.local_status,
+    submissionId: row.submission_id ?? row.local_submission_id,
   };
 }

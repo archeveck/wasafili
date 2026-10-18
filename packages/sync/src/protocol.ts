@@ -16,6 +16,41 @@ export interface PulledSubmission {
   updatedAt?: string;
 }
 
+export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
+
+/** Tâche planifiée (P4.4) ; dates ISO 8601 (UTC). */
+export interface TaskDto {
+  id: string;
+  structureId: string;
+  title: string;
+  description: string | null;
+  assigneeUserId: string | null;
+  assigneeGroupId: string | null;
+  startAt: string;
+  endAt: string;
+  dueAt: string | null;
+  locationLabel: string | null;
+  location: { lat: number; lng: number } | null;
+  prefill: SubmissionData;
+  status: TaskStatus;
+  submissionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationDto {
+  id: string;
+  type: 'task_assigned' | 'submission_state';
+  title: string;
+  body: string | null;
+  data: { taskId?: string; submissionId?: string; structureId?: string };
+  readAt: string | null;
+  createdAt: string;
+}
+
+/** Tâche reçue ; `deleted` : supprimée ou plus assignée à l'utilisateur. */
+export type PulledTask = (TaskDto & { deleted: false }) | { id: string; deleted: true };
+
 export interface PullResponse {
   cursor: string;
   hasMore: boolean;
@@ -41,6 +76,8 @@ export interface PullResponse {
     archived: boolean;
   }[];
   submissions: PulledSubmission[];
+  tasks: PulledTask[];
+  notifications: NotificationDto[];
 }
 
 export type MutationPayload =
@@ -51,6 +88,8 @@ export type MutationPayload =
       structureId: string;
       data: SubmissionData;
       location?: { lat: number; lng: number; accuracy?: number };
+      /** Tâche dont la fiche est issue (close par la création). */
+      taskId?: string;
     }
   | {
       id: string;
@@ -58,6 +97,15 @@ export type MutationPayload =
       submissionId: string;
       baseRevision?: number;
       data: SubmissionData;
+    }
+  | {
+      id: string;
+      type: 'transition';
+      submissionId: string;
+      transition: string;
+      baseRevision?: number;
+      /** Modifications enregistrées avec la transition. */
+      data?: SubmissionData;
     }
   | { id: string; type: 'delete'; submissionId: string };
 
