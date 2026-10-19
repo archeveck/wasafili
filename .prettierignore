@@ -12,3 +12,6 @@ CLAUDE.md
 apps/mobile/expo-env.d.ts
 # Généré (pnpm --filter @tesserax/api openapi)
 apps/api/openapi.json
+# Projets natifs générés (expo prebuild)
+apps/mobile/android
+apps/mobile/ios
