@@ -20,6 +20,7 @@ import { formatDateTime } from '@/lib/utils';
 /** Familles d'actions proposées au filtre (préfixe `famille.`). */
 const FAMILIES: [string, string][] = [
   ['auth.', 'Connexions et clés API'],
+  ['apikey.', 'Gestion des clés API'],
   ['user.', 'Membres'],
   ['role.', 'Rôles'],
   ['group.', 'Groupes'],

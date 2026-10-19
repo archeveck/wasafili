@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import {
   CalendarDays,
   History,
+  KeyRound,
   LayoutDashboard,
   MapPinned,
   Workflow,
@@ -60,6 +61,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; permission: string | s
   { to: '/$app/groups', label: 'Groupes', icon: UsersRound, permission: 'group:read' },
   { to: '/$app/roles', label: 'Rôles', icon: ShieldCheck, permission: 'role:read' },
   { to: '/$app/settings', label: 'Paramètres', icon: Settings, permission: 'instance:manage' },
+  { to: '/$app/api-keys', label: 'Clés API', icon: KeyRound, permission: 'apikey:manage' },
   { to: '/$app/audit', label: 'Journal d’audit', icon: History, permission: 'audit:read' },
 ];
 

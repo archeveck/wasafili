@@ -23,9 +23,10 @@ const GROUPS: Record<string, string> = {
   automation: 'Automatisations',
   apikey: 'Clés API',
   audit: 'Audit',
+  dashboard: 'Tableaux de bord',
 };
 
-function PermissionGrid({
+export function PermissionGrid({
   catalogue,
   value,
   onChange,

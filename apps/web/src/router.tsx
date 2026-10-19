@@ -9,6 +9,7 @@ import {
 import { AppsPage } from '@/features/auth/apps';
 import { LoginPage } from '@/features/auth/login';
 import { AccessPage } from '@/features/admin/access-page';
+import { ApiKeysPage } from '@/features/admin/api-keys-page';
 import { AuditPage } from '@/features/admin/audit-page';
 import { GroupsPage } from '@/features/admin/groups-page';
 import { RolesPage } from '@/features/admin/roles-page';
@@ -169,6 +170,11 @@ const teamRoute = createRoute({
   path: 'team',
   component: TeamPage,
 });
+const apiKeysRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'api-keys',
+  component: ApiKeysPage,
+});
 const auditRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'audit',
@@ -200,6 +206,7 @@ const routeTree = rootRoute.addChildren([
       dashboardsRoute,
       dashboardRoute,
       teamRoute,
+      apiKeysRoute,
       auditRoute,
     ]),
   ]),
