@@ -17,7 +17,7 @@ import {
   Users,
   UsersRound,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/overlays';
 import { client } from '@/lib/api';
 import { useApp } from '@/lib/use-app';
+import { PasswordDialog } from './account/password-dialog';
 import { NotificationsMenu } from './notifications-menu';
 
 const NAV: { to: string; label: string; icon: LucideIcon; permission: string | string[] }[] = [
@@ -71,6 +72,7 @@ export function AppLayout() {
   const { short, settings, me, can } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement.style;
@@ -120,6 +122,11 @@ export function AppLayout() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
+              {me?.email && (
+                <DropdownMenuItem onSelect={() => setChangingPassword(true)}>
+                  <KeyRound /> Changer mon mot de passe
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={async () => {
                   await client.logout();
@@ -131,6 +138,13 @@ export function AppLayout() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {me?.email && (
+            <PasswordDialog
+              email={me.email}
+              open={changingPassword}
+              onOpenChange={setChangingPassword}
+            />
+          )}
         </div>
       </aside>
       <main className="min-w-0 flex-1 p-6 lg:p-8">

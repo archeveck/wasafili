@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type Member } from '@tesserax/sdk';
-import { Pencil, Plus, UserMinus } from 'lucide-react';
+import { KeyRound, Pencil, Plus, UserMinus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge, ErrorMessage, Loading, PageHeader, Table, Td, Th } from '@/components/ui/display';
@@ -28,7 +28,7 @@ export function UsersPage() {
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
   const [editing, setEditing] = useState<Member>();
-  const [password, setPassword] = useState<{ email: string; value: string }>();
+  const [password, setPassword] = useState<{ email: string; value: string; reset?: boolean }>();
   const users = useQuery({
     queryKey: [short, 'users'],
     queryFn: () => api.users.list({ perPage: 100 }),
@@ -65,6 +65,16 @@ export function UsersPage() {
       toast.success('Membre modifié');
       await refresh();
     },
+    onError: toast.error,
+  });
+  const resetPassword = useMutation({
+    mutationFn: (member: Member) =>
+      api.users.resetPassword(member.id).then(({ temporaryPassword }) => ({
+        email: member.email,
+        value: temporaryPassword,
+        reset: true,
+      })),
+    onSuccess: setPassword,
     onError: toast.error,
   });
   const remove = useMutation({
@@ -137,6 +147,20 @@ export function UsersPage() {
                       >
                         <Pencil />
                       </Button>
+                      {member.id !== me?.id && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Réinitialiser le mot de passe de ${member.email}`}
+                          onClick={() =>
+                            confirm(
+                              `Réinitialiser le mot de passe de ${member.email} ? Ses sessions seront fermées.`,
+                            ) && resetPassword.mutate(member)
+                          }
+                        >
+                          <KeyRound />
+                        </Button>
+                      )}
                       {member.id !== me?.id && (
                         <Button
                           size="icon"
@@ -256,8 +280,8 @@ export function UsersPage() {
       <Dialog
         open={!!password}
         onOpenChange={(open) => !open && setPassword(undefined)}
-        title="Compte créé"
-        description="Transmettez ce mot de passe provisoire : il ne sera plus affiché."
+        title={password?.reset ? 'Mot de passe réinitialisé' : 'Compte créé'}
+        description="Transmettez ce mot de passe provisoire : il ne sera plus affiché. Le membre pourra le changer depuis son compte."
       >
         <p className="text-sm">{password?.email}</p>
         <p className="mt-2 rounded-md bg-subtle p-3 font-mono text-lg">{password?.value}</p>
