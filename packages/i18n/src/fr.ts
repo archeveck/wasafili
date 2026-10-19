@@ -37,6 +37,7 @@ export const fr = {
         login_failed: 'Connexion refusée',
         client_token: 'Jeton de clé API',
         client_token_failed: 'Clé API refusée',
+        password_change: 'Mot de passe changé',
       },
       apikey: {
         create: 'Clé API créée',
@@ -48,6 +49,7 @@ export const fr = {
         create: 'Membre ajouté',
         update: 'Membre modifié',
         remove: 'Membre retiré',
+        password_reset: 'Mot de passe réinitialisé',
       },
       role: {
         create: 'Rôle créé',

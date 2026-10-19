@@ -39,6 +39,7 @@ export const en: MessageTree = {
         login_failed: 'Sign-in refused',
         client_token: 'API key token',
         client_token_failed: 'API key refused',
+        password_change: 'Password changed',
       },
       apikey: {
         create: 'API key created',
@@ -50,6 +51,7 @@ export const en: MessageTree = {
         create: 'Member added',
         update: 'Member updated',
         remove: 'Member removed',
+        password_reset: 'Password reset',
       },
       role: {
         create: 'Role created',
