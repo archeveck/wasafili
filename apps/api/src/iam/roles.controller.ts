@@ -18,6 +18,7 @@ import { type Instance } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PERMISSIONS } from '../tenancy/permissions';
 import { IamService } from './iam.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const permissions = z.array(z.enum(PERMISSIONS));
 const createSchema = z.object({
@@ -60,6 +61,7 @@ export class RolesController {
   }
 
   @Post()
+  @Audit('role.create')
   @Can('role:manage')
   create(
     @CurrentInstance() instance: Instance,
@@ -69,6 +71,7 @@ export class RolesController {
   }
 
   @Patch(':id')
+  @Audit('role.update')
   @Can('role:manage')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -78,6 +81,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @Audit('role.delete')
   @HttpCode(204)
   @Can('role:manage')
   remove(@Param('id', ParseUUIDPipe) id: string) {

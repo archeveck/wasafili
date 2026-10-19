@@ -207,6 +207,21 @@ describe('automatisations', () => {
     expect(run).toMatchObject({ status: 'succeeded', automationId: automation.body.id, depth: 0 });
     expect(run!.steps.map((s) => s.status)).toEqual(['done', 'done', 'done']);
 
+    // Historique de la fiche (P6.3.2) : visible de son auteur, sans le détail des étapes.
+    const history = await technicien.get(`/v1/acme/submissions/${id}/automation-runs`).expect(200);
+    expect(history.body.data).toEqual([
+      expect.objectContaining({
+        status: 'succeeded',
+        event: 'transition',
+        automation: { id: automation.body.id, name: expect.any(String) },
+        steps: [
+          { type: 'email', status: 'done' },
+          { type: 'notify', status: 'done' },
+          { type: 'create_task', status: 'done' },
+        ],
+      }),
+    ]);
+
     const emails = (await admin.get('/v1/acme/emails').expect(200)).body.data;
     expect(emails).toHaveLength(1);
     expect(emails[0]).toMatchObject({

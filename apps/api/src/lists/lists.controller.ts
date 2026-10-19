@@ -23,6 +23,7 @@ import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { ListsService } from './lists.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const levels = z.array(z.string().trim().min(1).max(100)).min(1).max(10);
 const createListSchema = z.object({
@@ -120,6 +121,7 @@ export class ListsController {
   }
 
   @Post('lists')
+  @Audit('list.create')
   @Can('list:manage')
   create(
     @CurrentInstance() instance: Instance,
@@ -145,6 +147,7 @@ export class ListsController {
   }
 
   @Patch('lists/:id')
+  @Audit('list.update')
   @Can('list:manage')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -154,6 +157,7 @@ export class ListsController {
   }
 
   @Delete('lists/:id')
+  @Audit('list.delete')
   @HttpCode(204)
   @Can('list:manage')
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -201,6 +205,7 @@ export class ListsController {
 
   /** Import CSV/XLSX (multipart : `file`, `mode`, `dry_run`, `mapping` JSON). */
   @Post('lists/:id/import')
+  @Audit('list.import')
   @HttpCode(200)
   @Can('list:manage')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))

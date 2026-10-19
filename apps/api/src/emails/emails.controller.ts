@@ -4,6 +4,7 @@ import { Can } from '../auth/decorators';
 import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { EmailsService } from './emails.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const listSchema = paginationSchema.extend({
   status: z.enum(['queued', 'sent', 'failed']).optional(),
@@ -21,6 +22,7 @@ export class EmailsController {
   }
 
   @Post(':id/retry')
+  @Audit('email.retry')
   @Can('automation:manage')
   retry(@Param('id', ParseUUIDPipe) id: string) {
     return this.emails.retry(id);

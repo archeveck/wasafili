@@ -7,6 +7,7 @@ import { type Instance } from '../generated/prisma/client';
 import { StructuresService } from '../structures/structures.service';
 import { FILTER_OPERATORS } from '../submissions/query';
 import { STRUCTURE_PERMISSIONS, StructureAccessService } from './structure-access.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const ruleSchema = z
   .object({
@@ -45,6 +46,7 @@ export class StructureAccessController {
   }
 
   @Put()
+  @Audit('structure.access', { type: 'structure' })
   @Can('role:manage')
   async replace(
     @CurrentInstance() instance: Instance,

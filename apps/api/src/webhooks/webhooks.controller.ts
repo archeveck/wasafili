@@ -16,6 +16,7 @@ import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { WEBHOOK_EVENTS, WebhooksService } from './webhooks.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const fields = {
   name: z.string().trim().min(1).max(200),
@@ -47,6 +48,7 @@ export class WebhooksController {
   }
 
   @Post()
+  @Audit('webhook.create')
   @Can('automation:manage')
   create(
     @CurrentInstance() instance: Instance,
@@ -63,6 +65,7 @@ export class WebhooksController {
   }
 
   @Patch(':id')
+  @Audit('webhook.update')
   @Can('automation:manage')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,6 +75,7 @@ export class WebhooksController {
   }
 
   @Delete(':id')
+  @Audit('webhook.delete')
   @Can('automation:manage')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -79,6 +83,7 @@ export class WebhooksController {
   }
 
   @Post(':id/secret')
+  @Audit('webhook.secret')
   @Can('automation:manage')
   rotate(@Param('id', ParseUUIDPipe) id: string) {
     return this.webhooks.rotateSecret(id);
@@ -100,6 +105,7 @@ export class WebhooksController {
   }
 
   @Post(':id/deliveries/:deliveryId/retry')
+  @Audit('webhook_delivery.retry', { param: 'deliveryId' })
   @Can('automation:manage')
   redeliver(
     @CurrentInstance() instance: Instance,

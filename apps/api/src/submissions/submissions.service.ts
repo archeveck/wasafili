@@ -9,6 +9,7 @@ import { checkTransition, type EvaluationContext, type FormEngine } from '@tesse
 import {
   COMPUTED_TYPES,
   initialState,
+  rootValueFields,
   type StructureDefinition,
   type SubmissionData,
   walkFields,
@@ -78,6 +79,8 @@ type SubmissionWithVersion = Submission & { version: { version: number } };
 
 const NOT_FOUND = { error: 'not_found', message: 'Fiche introuvable' };
 const MAX_EXPORT_ROWS = 50_000;
+/** Points renvoyés au plus par la carte (P6.1.1) ; au-delà, affiner les filtres. */
+export const MAX_MAP_POINTS = 10_000;
 
 /** Clés des champs dont la valeur est fixée par le serveur ou le moteur, jamais par le client. */
 function serverOwnedKeys(definition: StructureDefinition) {
@@ -192,6 +195,62 @@ export class SubmissionsService {
     return rows.map((row) => ({ state: row.state, count: Number(row.count) }));
   }
 
+  /**
+   * Fiches localisées, avec les filtres de la liste, en GeoJSON (P6.1.1). Le point d'une fiche
+   * est son premier champ géolocalisation renseigné, sinon la position de l'appareil à la saisie.
+   */
+  async map(
+    structureId: string,
+    actor: Actor,
+    input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
+  ) {
+    const { where, order, definition } = await this.query(structureId, actor, input);
+    const fields = rootValueFields(definition?.fields ?? []);
+    const geo = fields.find((field) => field.type === 'geolocation')?.key;
+    const labelKey = fields.find((field) => field.type === 'text')?.key;
+    const point = (axis: 'lat' | 'lng', column: 'latitude' | 'longitude') =>
+      geo
+        ? Prisma.sql`COALESCE(CASE WHEN jsonb_typeof(s.data -> ${geo} -> ${axis}) = 'number'
+            THEN (s.data -> ${geo} ->> ${axis})::float8 END, s.${Prisma.raw(column)})`
+        : Prisma.sql`s.${Prisma.raw(column)}`;
+    const label = labelKey ? Prisma.sql`s.data ->> ${labelKey}` : Prisma.sql`NULL::text`;
+    const rows = await this.prisma.transaction(
+      (tx) => tx.$queryRaw<
+        {
+          id: string;
+          lat: number;
+          lng: number;
+          state: string | null;
+          author_id: string | null;
+          label: string | null;
+          created_at: Date;
+        }[]
+      >`
+        SELECT * FROM (
+          SELECT s.id, ${point('lat', 'latitude')} AS lat, ${point('lng', 'longitude')} AS lng,
+                 s.state, s.author_id, ${label} AS label, s.created_at
+          FROM submissions s WHERE ${where} ORDER BY ${order}, s.id
+        ) p WHERE p.lat IS NOT NULL AND p.lng IS NOT NULL LIMIT ${MAX_MAP_POINTS + 1}`,
+    );
+    const truncated = rows.length > MAX_MAP_POINTS;
+    return {
+      type: 'FeatureCollection' as const,
+      features: rows.slice(0, MAX_MAP_POINTS).map((row) => ({
+        type: 'Feature' as const,
+        id: row.id,
+        geometry: { type: 'Point' as const, coordinates: [row.lng, row.lat] },
+        properties: {
+          id: row.id,
+          state: row.state,
+          authorId: row.author_id,
+          label: row.label,
+          createdAt: row.created_at,
+        },
+      })),
+      meta: { count: Math.min(rows.length, MAX_MAP_POINTS), truncated },
+    };
+  }
+
   /** Export tableur des fiches visibles, avec les mêmes filtres que la liste (P2.5.4). */
   async export(
     structureId: string,
@@ -199,21 +258,7 @@ export class SubmissionsService {
     input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
     format: SpreadsheetFormat,
   ) {
-    const rights = await this.access.effective(structureId, actor);
-    this.require(rights, 'export');
-    const { where, order, definition } = await this.query(structureId, actor, input, rights);
-    const ids = await this.prisma.transaction(
-      (tx) => tx.$queryRaw<{ id: string }[]>`
-        SELECT s.id FROM submissions s WHERE ${where}
-        ORDER BY ${order}, s.id LIMIT ${MAX_EXPORT_ROWS + 1}`,
-    );
-    if (ids.length > MAX_EXPORT_ROWS) {
-      throw new UnprocessableEntityException({
-        error: 'export_too_large',
-        message: `Export limité à ${MAX_EXPORT_ROWS} fiches : affinez les filtres`,
-      });
-    }
-    const rows = await this.load(ids.map(({ id }) => id));
+    const { rows, definition } = await this.exportSelection(structureId, actor, input);
     const fields = definition ? exportColumns(definition) : [];
     const data = rows.map((row) => row.data as Record<string, unknown>);
     const refs = referencedIds(fields, data);
@@ -253,6 +298,36 @@ export class SubmissionsService {
       ]);
     });
     return writeSpreadsheet(format, { headers: [...new Set(headers)], rows: table });
+  }
+
+  /**
+   * Fiches exportables (droit `export`), avec les filtres et le tri de la liste, dans l'ordre :
+   * export tableur (P2.5.4) et export ZIP des photos (P6.4).
+   */
+  async exportSelection(
+    structureId: string,
+    actor: Actor,
+    input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
+  ) {
+    const rights = await this.access.effective(structureId, actor);
+    this.require(rights, 'export');
+    const { where, order, definition } = await this.query(structureId, actor, input, rights);
+    const ids = await this.prisma.transaction(
+      (tx) => tx.$queryRaw<{ id: string }[]>`
+        SELECT s.id FROM submissions s WHERE ${where}
+        ORDER BY ${order}, s.id LIMIT ${MAX_EXPORT_ROWS + 1}`,
+    );
+    if (ids.length > MAX_EXPORT_ROWS) {
+      throw new UnprocessableEntityException({
+        error: 'export_too_large',
+        message: `Export limité à ${MAX_EXPORT_ROWS} fiches : affinez les filtres`,
+      });
+    }
+    const loaded = await this.load(ids.map(({ id }) => id));
+    // `findMany` ne garantit pas l'ordre des identifiants demandés.
+    const byId = new Map(loaded.map((row) => [row.id, row]));
+    const rows = ids.flatMap(({ id }) => (byId.has(id) ? [byId.get(id)!] : []));
+    return { rows, definition };
   }
 
   /**
@@ -321,8 +396,11 @@ export class SubmissionsService {
     });
   }
 
-  /** Conditions SQL communes à la liste et à l'export : périmètre, visibilité, filtres. */
-  private async query(
+  /**
+   * Conditions SQL (alias `s`) de la sélection de fiches visibles : périmètre, visibilité,
+   * filtres. Partagées par la liste, l'export, la carte, les tableaux de bord et l'export ZIP.
+   */
+  async query(
     structureId: string,
     actor: Actor,
     input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
@@ -716,6 +794,37 @@ export class SubmissionsService {
       total,
       pagination,
     );
+  }
+
+  /**
+   * Automatisations exécutées sur la fiche (historique enrichi, P6.3.2) : nom, statut et
+   * nature des étapes. Le détail (destinataires, réponses) reste au journal d'exécution.
+   */
+  async automationRuns(id: string, actor: Actor) {
+    await this.findVisible(id, actor);
+    const runs = await this.prisma.db.automationRun.findMany({
+      where: { submissionId: id },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        status: true,
+        event: true,
+        steps: true,
+        error: true,
+        createdAt: true,
+        finishedAt: true,
+        automation: { select: { id: true, name: true } },
+      },
+    });
+    return runs.map(({ steps, event, ...run }) => ({
+      ...run,
+      event: (event as { type?: string }).type ?? null,
+      steps: (steps as { type: string; status: string }[]).map((step) => ({
+        type: step.type,
+        status: step.status,
+      })),
+    }));
   }
 
   private readScope(rights: StructureRights, actor: Actor): 'all' | 'own' {

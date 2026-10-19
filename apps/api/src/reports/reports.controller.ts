@@ -14,6 +14,7 @@ import { type Actor, Can, CurrentActor, CurrentInstance } from '../auth/decorato
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { ReportsService } from './reports.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const fields = {
   name: z.string().trim().min(1).max(200),
@@ -45,6 +46,7 @@ export class ReportsController {
   }
 
   @Post('structures/:structureId/reports')
+  @Audit('report.create')
   @Can('report:manage')
   create(
     @CurrentInstance() instance: Instance,
@@ -62,6 +64,7 @@ export class ReportsController {
   }
 
   @Patch('reports/:id')
+  @Audit('report.update')
   @Can('report:manage')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -71,6 +74,7 @@ export class ReportsController {
   }
 
   @Delete('reports/:id')
+  @Audit('report.delete')
   @Can('report:manage')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -85,6 +89,7 @@ export class ReportsController {
 
   /** PDF d'une fiche (droits de lecture de la fiche) ou aperçu sur une fiche d'exemple. */
   @Post('reports/:id/render')
+  @Audit('report.render')
   @Can('structure:read')
   async render(
     @CurrentInstance() instance: Instance,

@@ -17,6 +17,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { automationSchema } from './automation-schema';
 import { AutomationsService } from './automations.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const listSchema = z.object({ structure_id: z.uuid().optional() });
 const runsSchema = paginationSchema.extend({
@@ -37,6 +38,7 @@ export class AutomationsController {
   }
 
   @Post('automations')
+  @Audit('automation.create')
   @Can('automation:manage')
   create(
     @CurrentInstance() instance: Instance,
@@ -53,6 +55,7 @@ export class AutomationsController {
   }
 
   @Put('automations/:id')
+  @Audit('automation.update')
   @Can('automation:manage')
   update(
     @CurrentInstance() instance: Instance,
@@ -63,6 +66,7 @@ export class AutomationsController {
   }
 
   @Delete('automations/:id')
+  @Audit('automation.delete')
   @Can('automation:manage')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -76,6 +80,7 @@ export class AutomationsController {
   }
 
   @Post('automation-runs/:id/retry')
+  @Audit('automation_run.retry')
   @Can('automation:manage')
   retry(@Param('id', ParseUUIDPipe) id: string) {
     return this.automations.retry(id);

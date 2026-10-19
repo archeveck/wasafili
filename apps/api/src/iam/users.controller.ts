@@ -17,6 +17,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { IamService, memberDto } from './iam.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const attributes = z.record(
   z.string().regex(/^[a-z][a-z0-9_]*$/),
@@ -77,6 +78,7 @@ export class UsersController {
   }
 
   @Post()
+  @Audit('user.create')
   @Can('user:manage')
   invite(
     @CurrentInstance() instance: Instance,
@@ -86,6 +88,7 @@ export class UsersController {
   }
 
   @Patch(':userId')
+  @Audit('user.update', { param: 'userId' })
   @Can('user:manage')
   update(
     @CurrentActor() actor: Actor,
@@ -96,6 +99,7 @@ export class UsersController {
   }
 
   @Delete(':userId')
+  @Audit('user.remove', { param: 'userId' })
   @HttpCode(204)
   @Can('user:manage')
   remove(@CurrentActor() actor: Actor, @Param('userId', ParseUUIDPipe) userId: string) {

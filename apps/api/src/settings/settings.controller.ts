@@ -4,6 +4,7 @@ import { Can, CurrentInstance } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance, type Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const brandingSchema = z.object({
@@ -63,6 +64,7 @@ export class SettingsController {
   }
 
   @Patch()
+  @Audit('settings.update', { type: 'instance' })
   @Can('instance:manage')
   async update(
     @CurrentInstance() instance: Instance,

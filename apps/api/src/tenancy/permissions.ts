@@ -29,6 +29,7 @@ export const PERMISSIONS = [
   'automation:manage',
   'apikey:manage',
   'audit:read',
+  'dashboard:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -55,6 +56,7 @@ export const SYSTEM_ROLES: Record<SystemRoleKey, { name: string; permissions: Pe
       'submission:export',
       'task:read',
       'task:manage',
+      'dashboard:manage',
     ],
   },
   technicien: {

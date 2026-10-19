@@ -19,6 +19,7 @@ import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { StructuresService, type VersionRef } from './structures.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const listQuery = paginationSchema.extend({
   include_archived: z.enum(['true', 'false']).default('false'),
@@ -66,6 +67,7 @@ export class StructuresController {
   }
 
   @Post()
+  @Audit('structure.create')
   @Can('structure:create')
   create(
     @CurrentInstance() instance: Instance,
@@ -81,6 +83,7 @@ export class StructuresController {
   }
 
   @Patch(':id')
+  @Audit('structure.update')
   @Can('structure:update')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,6 +93,7 @@ export class StructuresController {
   }
 
   @Delete(':id')
+  @Audit('structure.delete')
   @HttpCode(204)
   @Can('structure:delete')
   archive(@Param('id', ParseUUIDPipe) id: string) {
@@ -113,6 +117,7 @@ export class StructuresController {
   }
 
   @Post(':id/publish')
+  @Audit('structure.publish')
   @HttpCode(200)
   @Can('structure:publish')
   publish(@Param('id', ParseUUIDPipe) id: string) {

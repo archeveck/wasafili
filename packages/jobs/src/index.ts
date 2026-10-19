@@ -41,12 +41,26 @@ export interface WebhookJob {
   deliveryId: string;
 }
 
+/** Archive ZIP des photos d'une sélection de fiches (P6.4) ; entrées lues sur l'export. */
+export interface PhotoExportJob {
+  instanceId: string;
+  exportId: string;
+}
+
+/** Purge des archives expirées (tâche récurrente du worker). */
+export type PhotoExportCleanupJob = Record<string, never>;
+
 export interface JobPayloads {
   thumbnail: ThumbnailJob;
   push: PushJob;
   email: EmailJob;
   webhook: WebhookJob;
+  'photos-zip': PhotoExportJob;
+  'photo-exports-cleanup': PhotoExportCleanupJob;
 }
+
+/** Durée pendant laquelle une archive de photos reste téléchargeable. */
+export const PHOTO_EXPORT_TTL_MS = 7 * 24 * 3600 * 1000;
 
 /** Tentatives d'un e-mail (backoff exponentiel depuis 30 s : ≈ 15 min au total). */
 export const EMAIL_ATTEMPTS = 5;

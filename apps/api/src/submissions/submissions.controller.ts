@@ -19,6 +19,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { parseFilters } from './query';
 import { SubmissionsService } from './submissions.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const mutationId = z.string().trim().min(1).max(100);
 const createSchema = z.object({
@@ -103,8 +104,22 @@ export class SubmissionsController {
     };
   }
 
+  /** Fiches localisées en GeoJSON, avec les mêmes filtres que la liste (P6.1.1). */
+  @Get('structures/:structureId/submissions/map')
+  map(
+    @Param('structureId', ParseUUIDPipe) structureId: string,
+    @CurrentActor() actor: Actor,
+    @Query() query: Record<string, unknown>,
+  ) {
+    const params = new ZodValidationPipe(listSchema.omit({ page: true, per_page: true })).transform(
+      query,
+    );
+    return this.submissions.map(structureId, actor, { ...params, filters: parseFilters(query) });
+  }
+
   /** Export CSV/XLSX avec les mêmes filtres que la liste. */
   @Get('structures/:structureId/submissions/export')
+  @Audit('submission.export', { type: 'structure', param: 'structureId', query: true })
   async export(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
@@ -187,6 +202,11 @@ export class SubmissionsController {
     @Body(new ZodValidationPipe(resolveSchema)) body: z.infer<typeof resolveSchema>,
   ) {
     return this.submissions.resolveConflict(instance, id, conflictId, actor, body.resolution);
+  }
+
+  @Get('submissions/:id/automation-runs')
+  async automationRuns(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
+    return { data: await this.submissions.automationRuns(id, actor) };
   }
 
   @Get('submissions/:id/revisions')

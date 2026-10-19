@@ -53,6 +53,9 @@ model Instance {
   deliveries    WebhookDelivery[]
   automations   Automation[]
   runs          AutomationRun[]
+  auditLogs     AuditLog[]
+  dashboards    Dashboard[]
+  photoExports  PhotoExport[]
 
   @@map("instances")
 }
@@ -215,6 +218,7 @@ model Structure {
   reports     ReportTemplate[]
   automations Automation[]
   webhooks    Webhook[]
+  exports     PhotoExport[]
 
   @@unique([id, instanceId])
   @@index([instanceId, name])
@@ -718,4 +722,91 @@ model AutomationRun {
   @@unique([automationId, eventKey])
   @@index([instanceId, createdAt])
   @@map("automation_runs")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 — pilotage
+// ---------------------------------------------------------------------------
+
+/// Journal d'audit (P6.3) : connexions, administration, droits, exports, clés API.
+/// Ajout seul : la RLS n'autorise ni modification ni suppression au rôle applicatif.
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  instanceId    String   @map("instance_id") @db.Uuid
+  /// Utilisateur à l'origine de l'action (sans clé étrangère : l'entrée survit à son compte).
+  actorUserId   String?  @map("actor_user_id") @db.Uuid
+  /// Client d'intégration (identifiant du client OAuth) à l'origine de l'action.
+  actorClientId String?  @map("actor_client_id") @db.Uuid
+  /// E-mail de l'utilisateur ou nom du client au moment de l'action.
+  actorLabel    String?  @map("actor_label")
+  /// `auth.login`, `role.update`, `submission.export`…
+  action        String
+  /// Type de l'objet concerné (`role`, `structure`, `submission`…).
+  targetType    String?  @map("target_type")
+  targetId      String?  @map("target_id")
+  /// Libellé de l'objet au moment de l'action.
+  targetLabel   String?  @map("target_label")
+  /// Paramètres de l'action, secrets retirés.
+  metadata      Json     @default("{}")
+  ip            String?
+  userAgent     String?  @map("user_agent")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId, createdAt])
+  @@index([instanceId, action, createdAt])
+  @@index([instanceId, actorUserId, createdAt])
+  @@index([instanceId, targetId])
+  @@map("audit_logs")
+}
+
+/// Tableau de bord configurable (P6.2) : widgets ordonnés sur une grille de 4 colonnes.
+model Dashboard {
+  id          String   @id @default(uuid()) @db.Uuid
+  instanceId  String   @map("instance_id") @db.Uuid
+  name        String
+  description String?
+  /// `[{ id, type, title, structureId, width, metric, groupBy?, filters, period }]`.
+  widgets     Json     @default("[]")
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, instanceId])
+  @@index([instanceId, name])
+  @@map("dashboards")
+}
+
+/// Export ZIP des photos d'une sélection de fiches (P6.4), préparé par le worker.
+model PhotoExport {
+  id            String    @id @default(uuid()) @db.Uuid
+  instanceId    String    @map("instance_id") @db.Uuid
+  structureId   String    @map("structure_id") @db.Uuid
+  requestedById String?   @map("requested_by_id") @db.Uuid
+  /// `queued`, `running`, `succeeded` ou `failed`.
+  status        String    @default("queued")
+  /// Modèle de nommage des fichiers dans l'archive.
+  pattern       String
+  /// `[{ key, name }]` : objets à archiver et chemin de chacun dans l'archive.
+  entries       Json
+  fileCount     Int       @map("file_count")
+  /// Clé de l'archive dans le bucket, une fois écrite.
+  key           String?
+  size          BigInt?
+  error         String?
+  /// Au-delà, l'archive n'est plus téléchargeable (et supprimée du stockage).
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  instance  Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  structure Structure @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: Cascade)
+
+  @@unique([id, instanceId])
+  @@index([instanceId, createdAt])
+  @@map("photo_exports")
 }

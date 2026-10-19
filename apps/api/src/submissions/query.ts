@@ -11,7 +11,7 @@ export interface Filter {
   value: string;
 }
 
-type Kind = 'text' | 'number' | 'boolean' | 'array';
+export type Kind = 'text' | 'number' | 'boolean' | 'array';
 
 const invalid = (message: string) => new BadRequestException({ error: 'invalid_filter', message });
 
@@ -83,7 +83,8 @@ export function filterableFields(definition: StructureDefinition | undefined): M
   return fields;
 }
 
-const numericValue = (key: string) =>
+/** Valeur numérique d'un champ (NULL si la valeur stockée n'est pas un nombre). */
+export const numericValue = (key: string) =>
   Prisma.sql`(CASE WHEN jsonb_typeof(s.data -> ${key}) = 'number' THEN (s.data ->> ${key})::numeric END)`;
 
 function toNumber(filter: Filter): number {

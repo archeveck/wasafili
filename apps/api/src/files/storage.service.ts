@@ -51,7 +51,14 @@ export class StorageService {
     );
   }
 
-  downloadUrl(key: string, filename?: string): Promise<string> {
+  /** Durée de validité des URL signées, en secondes. */
+  readonly signedUrlTtl = SIGNED_URL_TTL;
+
+  downloadUrl(
+    key: string,
+    filename?: string,
+    disposition: 'inline' | 'attachment' = 'inline',
+  ): Promise<string> {
     return getSignedUrl(
       this.clients().public,
       new GetObjectCommand({
@@ -59,7 +66,7 @@ export class StorageService {
         Key: key,
         ...(filename
           ? {
-              ResponseContentDisposition: `inline; filename*=UTF-8''${encodeURIComponent(filename)}`,
+              ResponseContentDisposition: `${disposition}; filename*=UTF-8''${encodeURIComponent(filename)}`,
             }
           : {}),
       }),

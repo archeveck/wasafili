@@ -19,6 +19,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { IamService } from './iam.service';
+import { Audit } from '../audit/audit.interceptor';
 
 const createGroupSchema = z.object({ name: z.string().trim().min(1).max(100) });
 const membersSchema = z.object({ userIds: z.array(z.uuid()).max(1000) });
@@ -58,6 +59,7 @@ export class GroupsController {
   }
 
   @Patch(':id')
+  @Audit('group.update')
   @Can('group:manage')
   rename(
     @Param('id', ParseUUIDPipe) id: string,
@@ -67,6 +69,7 @@ export class GroupsController {
   }
 
   @Delete(':id')
+  @Audit('group.delete')
   @HttpCode(204)
   @Can('group:manage')
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -74,6 +77,7 @@ export class GroupsController {
   }
 
   @Put(':id/members')
+  @Audit('group.members', { type: 'group' })
   @Can('group:manage')
   async setMembers(
     @CurrentInstance() instance: Instance,
@@ -84,6 +88,7 @@ export class GroupsController {
   }
 
   @Post()
+  @Audit('group.create')
   @Can('group:manage')
   create(
     @CurrentInstance() instance: Instance,

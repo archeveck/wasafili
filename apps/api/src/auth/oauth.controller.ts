@@ -1,5 +1,6 @@
-import { Body, Controller, Header, Headers, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Header, Headers, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { type Request } from 'express';
 import { z } from 'zod';
 import { OAuthError } from '../common/errors';
 import { AuthService } from './auth.service';
@@ -49,6 +50,7 @@ export class OAuthController {
   @UseGuards(ThrottlerGuard)
   async token(
     @Body() body: unknown,
+    @Req() req: Request,
     @Headers('authorization') authorization?: string,
   ): Promise<TokenResponse> {
     const grantType = (body as { grant_type?: unknown } | undefined)?.grant_type;
@@ -61,9 +63,10 @@ export class OAuthController {
     }
 
     const request = parsed.data;
+    const origin = { ip: req.ip ?? null, userAgent: req.get('user-agent') ?? null };
     switch (request.grant_type) {
       case 'password':
-        return this.auth.passwordGrant(request.username, request.password);
+        return this.auth.passwordGrant(request.username, request.password, origin);
       case 'refresh_token':
         return this.tokens.rotate(request.refresh_token);
       case 'client_credentials': {
@@ -71,7 +74,7 @@ export class OAuthController {
         const id = basic?.id ?? request.client_id;
         const secret = basic?.secret ?? request.client_secret;
         if (!id || !secret) throw new OAuthError('invalid_client', 'Identifiants client requis');
-        return this.auth.clientCredentialsGrant(id, secret);
+        return this.auth.clientCredentialsGrant(id, secret, origin);
       }
     }
   }
