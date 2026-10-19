@@ -38,6 +38,12 @@ export const fr = {
         client_token: 'Jeton de clé API',
         client_token_failed: 'Clé API refusée',
       },
+      apikey: {
+        create: 'Clé API créée',
+        update: 'Clé API modifiée',
+        secret: 'Secret de clé API régénéré',
+        revoke: 'Clé API révoquée',
+      },
       user: {
         create: 'Membre ajouté',
         update: 'Membre modifié',

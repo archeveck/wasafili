@@ -40,6 +40,12 @@ export const en: MessageTree = {
         client_token: 'API key token',
         client_token_failed: 'API key refused',
       },
+      apikey: {
+        create: 'API key created',
+        update: 'API key updated',
+        secret: 'API key secret rotated',
+        revoke: 'API key revoked',
+      },
       user: {
         create: 'Member added',
         update: 'Member updated',
