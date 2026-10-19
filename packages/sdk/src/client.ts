@@ -9,6 +9,8 @@ import {
 } from '@tesserax/sync';
 import {
   type AccessRule,
+  type ApiClient,
+  type ApiClientWithSecret,
   type AuditEntry,
   type AuditQuery,
   type Dashboard,
@@ -436,6 +438,16 @@ export function createClient(options: ClientOptions) {
         list: (query: ListParams & { status?: EmailMessage['status'] } = {}) =>
           get<Page<EmailMessage>>(p('/emails'), { ...toQuery(query), status: query.status }),
         retry: (id: string) => post<{ id: string; status: string }>(p(`/emails/${id}/retry`), {}),
+      },
+      apiClients: {
+        list: () => get<{ data: ApiClient[] }>(p('/api-clients')),
+        get: (id: string) => get<ApiClient>(p(`/api-clients/${id}`)),
+        create: (body: { name: string; scopes: string[] }) =>
+          post<ApiClientWithSecret>(p('/api-clients'), body),
+        update: (id: string, body: { name?: string; scopes?: string[] }) =>
+          patch<ApiClient>(p(`/api-clients/${id}`), body),
+        rotateSecret: (id: string) => post<ApiClientWithSecret>(p(`/api-clients/${id}/secret`)),
+        revoke: (id: string) => del(p(`/api-clients/${id}`)),
       },
       webhooks: {
         list: () => get<{ data: Webhook[] }>(p('/webhooks')),

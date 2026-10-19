@@ -289,6 +289,25 @@ export interface EmailMessage {
   createdAt: string;
 }
 
+// --- Clés API (P7.1.4) ---
+
+/** Client OAuth2 `client_credentials` d'une intégration ; `scopes` = permissions accordées. */
+export interface ApiClient {
+  id: string;
+  clientId: string;
+  name: string;
+  scopes: string[];
+  revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Clé API avec son secret, renvoyé seulement à la création et à la rotation. */
+export interface ApiClientWithSecret extends ApiClient {
+  clientSecret: string;
+}
+
 // --- Webhooks (P5.4) ---
 
 export type WebhookEvent =
