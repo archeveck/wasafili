@@ -34,7 +34,8 @@ describe('point d’exploitation du worker', () => {
     });
     const failed = await fetch(down.url('/health'));
     expect(failed.status).toBe(503);
-    expect((await failed.json()).checks.database).toBe('down');
+    const body = (await failed.json()) as { checks: Record<string, string> };
+    expect(body.checks['database']).toBe('down');
   });
 
   it('expose les jobs traités et les files au format Prometheus', async () => {
