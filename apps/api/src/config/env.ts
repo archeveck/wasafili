@@ -58,6 +58,8 @@ const envSchema = z.object({
   APP_URL: z.url().default('http://localhost:5173'),
   /** Exécute les automatisations dans ce processus (file BullMQ dédiée, ADR 0009). */
   AUTOMATIONS_WORKER: z.stringbool().default(true),
+  /** Jeton Bearer exigé par `/metrics` (facultatif : l'endpoint n'est pas publié par le proxy). */
+  METRICS_TOKEN: z.string().min(16).optional(),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

@@ -105,8 +105,8 @@
       "description": "Protocole hors ligne de l’application mobile."
     },
     {
-      "name": "Santé",
-      "description": "Sonde de disponibilité (hors préfixe `/v1`)."
+      "name": "Exploitation",
+      "description": "Sondes et métriques, hors préfixe `/v1` (réseau interne)."
     },
     {
       "name": "Documentation",
@@ -118,10 +118,37 @@
       "get": {
         "operationId": "health.check",
         "tags": [
-          "Santé"
+          "Exploitation"
         ],
-        "summary": "État du service",
-        "description": "État du service : base de données et Redis (200 ou 503).",
+        "summary": "Disponibilité",
+        "description": "Disponibilité : 200 si la base, Redis et le stockage répondent (`status: degraded` si seule la conversion PDF manque), 503 sinon.",
+        "responses": {
+          "200": {
+            "description": "Fichier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": []
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "health.live",
+        "tags": [
+          "Exploitation"
+        ],
+        "summary": "Vivacité",
+        "description": "Vivacité : le processus répond (redémarrage du conteneur sinon), sans tester les dépendances.",
         "parameters": [
           {
             "name": "fields",
@@ -139,6 +166,32 @@
               "application/json": {
                 "schema": {
                   "type": "object"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": []
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "metrics.read",
+        "tags": [
+          "Exploitation"
+        ],
+        "summary": "Métriques au format d'exposition Prometheus",
+        "responses": {
+          "200": {
+            "description": "Fichier.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }

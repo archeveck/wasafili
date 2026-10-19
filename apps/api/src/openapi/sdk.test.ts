@@ -64,7 +64,7 @@ describe('SDK et OpenAPI (P7.1.3)', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('chaque opération est couverte par le SDK, sauf la documentation elle-même', async () => {
+  it('chaque opération est couverte par le SDK, sauf la documentation et l’exploitation', async () => {
     const calls = await sdkCalls();
     const uncovered = operations
       .filter(
@@ -73,6 +73,8 @@ describe('SDK et OpenAPI (P7.1.3)', () => {
       .map((op) => op.operationId);
     expect(uncovered.sort()).toEqual([
       'health.check',
+      'health.live',
+      'metrics.read',
       'openApi.docs',
       'openApi.init',
       'openApi.openapi',

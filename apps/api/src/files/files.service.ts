@@ -4,12 +4,15 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
+  UnsupportedMediaTypeException,
 } from '@nestjs/common';
 import { type Actor } from '../auth/decorators';
 import { ENV, type Env } from '../config/env';
 import { type File } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { JobQueue } from '../queue/queue.module';
+import { isBlockedType, isInlineType, matchesSignature, SIGNATURE_BYTES } from './content-types';
 import { SIGNED_URL_TTL, StorageService } from './storage.service';
 
 const NOT_FOUND = { error: 'not_found', message: 'Fichier introuvable' };
@@ -36,6 +39,12 @@ export class FilesService {
   ) {}
 
   async requestUpload(instanceId: string, actor: Actor, input: UploadRequest) {
+    if (isBlockedType(input.mimeType)) {
+      throw new UnsupportedMediaTypeException({
+        error: 'unsupported_media_type',
+        message: `Type de fichier refusé : ${input.mimeType}`,
+      });
+    }
     if (input.size > this.env.MAX_UPLOAD_BYTES) {
       throw new BadRequestException({
         error: 'file_too_large',
@@ -93,6 +102,14 @@ export class FilesService {
         message: 'Taille du fichier déposé incorrecte',
       });
     }
+    // Une image ou un PDF (affichés dans le navigateur) doit en être vraiment un. Le fichier
+    // reste en attente : le client peut redéposer le bon contenu sous le même identifiant.
+    if (!matchesSignature(file.mimeType, await this.storage.readStart(file.key, SIGNATURE_BYTES))) {
+      throw new UnprocessableEntityException({
+        error: 'file_content_mismatch',
+        message: `Le contenu ne correspond pas au type annoncé (${file.mimeType})`,
+      });
+    }
     const updated = await this.prisma.db.file.update({
       where: { id },
       data: { status: 'uploaded' },
@@ -131,7 +148,14 @@ export class FilesService {
       size: file.size,
       status: file.status,
       createdAt: file.createdAt,
-      url: uploaded ? await this.storage.downloadUrl(file.key, file.name) : null,
+      // Seuls les types vérifiés s'affichent dans le navigateur ; les autres se téléchargent.
+      url: uploaded
+        ? await this.storage.downloadUrl(
+            file.key,
+            file.name,
+            isInlineType(file.mimeType) ? 'inline' : 'attachment',
+          )
+        : null,
       thumbnailUrl:
         uploaded && file.thumbnailKey ? await this.storage.downloadUrl(file.thumbnailKey) : null,
     };

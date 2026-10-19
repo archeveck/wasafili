@@ -108,6 +108,52 @@ describe('fichiers', () => {
     });
     expect(put.ok).toBe(false);
   });
+
+  it('refuse les contenus actifs et un contenu qui ne correspond pas au type annoncé', async () => {
+    for (const mimeType of ['text/html', 'image/svg+xml', 'application/javascript']) {
+      const res = await technicien
+        .post('/v1/acme/files/upload')
+        .send({ name: 'piege', mimeType, size: 10 })
+        .expect(415);
+      expect(res.body.error).toBe('unsupported_media_type');
+    }
+
+    // Du HTML déclaré comme image : déposé, mais refusé à la confirmation, jamais servi.
+    const html = Buffer.from('<html><script>alert(1)</script></html>');
+    const res = await technicien
+      .post('/v1/acme/files/upload')
+      .send({ name: 'photo.png', mimeType: 'image/png', size: html.length })
+      .expect(201);
+    await fetch(res.body.upload.url, {
+      method: 'PUT',
+      headers: res.body.upload.headers,
+      body: html,
+    });
+    const refused = await technicien
+      .post(`/v1/acme/files/${res.body.file.id}/complete`)
+      .expect(422);
+    expect(refused.body.error).toBe('file_content_mismatch');
+    const file = await technicien.get(`/v1/acme/files/${res.body.file.id}`).expect(200);
+    expect(file.body).toMatchObject({ status: 'pending', url: null });
+  });
+
+  it('sert en téléchargement les types qui ne s’affichent pas dans le navigateur', async () => {
+    const csv = Buffer.from('code;libelle\nA;Alpha\n');
+    const res = await technicien
+      .post('/v1/acme/files/upload')
+      .send({ name: 'export.csv', mimeType: 'text/csv', size: csv.length })
+      .expect(201);
+    await fetch(res.body.upload.url, {
+      method: 'PUT',
+      headers: res.body.upload.headers,
+      body: csv,
+    });
+    const done = await technicien.post(`/v1/acme/files/${res.body.file.id}/complete`).expect(200);
+    const disposition = new URL(done.body.url as string).searchParams.get(
+      'response-content-disposition',
+    );
+    expect(disposition).toMatch(/^attachment;/);
+  });
 });
 
 describe('paramètres de l instance', () => {

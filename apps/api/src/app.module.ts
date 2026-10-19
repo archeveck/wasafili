@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { type Request } from 'express';
+import { randomUUID } from 'node:crypto';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { ApiClientsModule } from './api-clients/api-clients.module';
@@ -35,17 +37,38 @@ import { TeamModule } from './team/team.module';
 import { InstanceGuard } from './tenancy/instance.guard';
 import { PermissionGuard } from './tenancy/permission.guard';
 
+/** Identifiant de requête accepté depuis le proxy : court, sans caractère de contrôle. */
+const REQUEST_ID = /^[\w.-]{1,100}$/;
+
 @Module({
   imports: [
     ConfigModule,
     LoggerModule.forRootAsync({
       inject: [ENV],
       useFactory: (env: Env) => ({
+        // Journaux JSON (P7.2.2) : un identifiant par requête, repris de `X-Request-Id` (proxy)
+        // ou généré, renvoyé au client et présent sur chaque ligne ; appelant et instance.
         pinoHttp: {
           level: env.LOG_LEVEL,
           base: { service: 'api' },
           redact: ['req.headers.authorization', 'req.headers.cookie'],
-          autoLogging: { ignore: (req) => req.url === '/health' },
+          genReqId: (req, res) => {
+            const given = req.headers['x-request-id'];
+            const id = typeof given === 'string' && REQUEST_ID.test(given) ? given : randomUUID();
+            res.setHeader('X-Request-Id', id);
+            return id;
+          },
+          customProps: (req) => {
+            const { principal, instance } = req as Request;
+            return {
+              ...(principal?.kind === 'user' ? { userId: principal.userId } : {}),
+              ...(principal?.kind === 'client' ? { clientId: principal.clientId } : {}),
+              ...(instance ? { app: instance.short } : {}),
+            };
+          },
+          autoLogging: {
+            ignore: (req) => /^\/(health|metrics)(\/|$)/.test(req.url ?? ''),
+          },
         },
       }),
     }),

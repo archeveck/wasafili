@@ -57,7 +57,8 @@ const TAGS: Record<string, [name: string, description: string]> = {
   Audit: ['Journal d’audit', 'Connexions, administration, droits et exports.'],
   Notifications: ['Notifications', 'Centre de notifications et jetons push de l’appelant.'],
   Sync: ['Synchronisation mobile', 'Protocole hors ligne de l’application mobile.'],
-  Health: ['Santé', 'Sonde de disponibilité (hors préfixe `/v1`).'],
+  Health: ['Exploitation', 'Sondes et métriques, hors préfixe `/v1` (réseau interne).'],
+  Metrics: ['Exploitation', 'Sondes et métriques, hors préfixe `/v1` (réseau interne).'],
   OpenApi: ['Documentation', 'Ce document et sa page interactive.'],
 };
 const COMPONENT_REF = '#/components/schemas/';
@@ -154,13 +155,14 @@ function relink(value: unknown, rename: ReadonlyMap<string, string>): unknown {
 
 const lowerFirst = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
 
-/** `:app/lists/:id` → `/v1/{app}/lists/{id}` ; `health` reste hors préfixe. */
+/** `:app/lists/:id` → `/v1/{app}/lists/{id}` ; sondes et métriques restent hors préfixe. */
 function openApiPath(controllerPath: string, methodPath: string): string {
   const joined = [controllerPath, methodPath]
     .map((part) => part.replace(/^\/+|\/+$/g, ''))
     .filter(Boolean)
     .join('/');
-  const prefixed = joined === 'health' || joined.startsWith('health/') ? joined : `v1/${joined}`;
+  const unversioned = /^(health|metrics)(\/|$)/.test(joined);
+  const prefixed = unversioned ? joined : `v1/${joined}`;
   return `/${prefixed}`.replace(/:(\w+)/g, '{$1}');
 }
 
@@ -234,7 +236,9 @@ export function buildDocument(controllers: Type[], { version, docs }: BuildOptio
     const section = TAGS[base];
     if (!section) throw new Error(`Section de documentation manquante pour ${controller.name}`);
     const [tag, tagDescription] = section;
-    tags.push({ name: tag, description: tagDescription });
+    if (!tags.some((existing) => existing['name'] === tag)) {
+      tags.push({ name: tag, description: tagDescription });
+    }
     const controllerPaths = [Reflect.getMetadata(PATH_METADATA, controller) as string | string[]]
       .flat()
       .filter((value) => value !== undefined);
@@ -407,7 +411,9 @@ export function buildDocument(controllers: Type[], { version, docs }: BuildOptio
       ].join('\n'),
     },
     servers: [{ url: '/', description: 'Même origine que la documentation' }],
-    tags: Object.values(TAGS).flatMap(([name]) => tags.filter((tag) => tag.name === name)),
+    tags: [...new Set(Object.values(TAGS).map(([name]) => name))].flatMap((name) =>
+      tags.filter((tag) => tag['name'] === name),
+    ),
     paths: sortedPaths,
     components: {
       schemas: components,

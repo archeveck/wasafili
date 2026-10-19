@@ -87,6 +87,7 @@ describe('conventions de l API', () => {
 
   it('expose /health hors préfixe de version', async () => {
     const res = await api(app).get('/health').expect(200);
-    expect(res.body).toEqual({ status: 'ok', checks: { database: 'up', redis: 'up' } });
+    expect(res.body).toMatchObject({ checks: { database: 'up', redis: 'up', storage: 'up' } });
+    expect(['ok', 'degraded']).toContain(res.body.status);
   });
 });

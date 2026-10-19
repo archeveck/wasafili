@@ -1,5 +1,6 @@
 import {
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -72,6 +73,19 @@ export class StorageService {
       }),
       { expiresIn: SIGNED_URL_TTL },
     );
+  }
+
+  /** Premiers octets d'un objet (vérification de signature). */
+  async readStart(key: string, bytes: number): Promise<Buffer> {
+    const object = await this.clients().internal.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key, Range: `bytes=0-${bytes - 1}` }),
+    );
+    return Buffer.from(await object.Body!.transformToByteArray());
+  }
+
+  /** Sonde de santé : le bucket existe et les identifiants sont valides. */
+  async ping(): Promise<void> {
+    await this.clients().internal.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 
   /** Contenu d'un objet (modèles de rapports, images à intégrer). */
