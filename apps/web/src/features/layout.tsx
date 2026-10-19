@@ -2,6 +2,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import {
   CalendarDays,
+  History,
+  LayoutDashboard,
+  MapPinned,
   Workflow,
   ClipboardList,
   FolderTree,
@@ -39,6 +42,13 @@ const NAV: { to: string; label: string; icon: LucideIcon; permission: string | s
     icon: CalendarDays,
     permission: ['task:read', 'task:manage'],
   },
+  {
+    to: '/$app/dashboards',
+    label: 'Tableaux de bord',
+    icon: LayoutDashboard,
+    permission: 'structure:read',
+  },
+  { to: '/$app/team', label: 'Équipes terrain', icon: MapPinned, permission: 'user:read' },
   { to: '/$app/lists', label: 'Référentiels', icon: FolderTree, permission: 'list:read' },
   {
     to: '/$app/automations',
@@ -50,6 +60,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; permission: string | s
   { to: '/$app/groups', label: 'Groupes', icon: UsersRound, permission: 'group:read' },
   { to: '/$app/roles', label: 'Rôles', icon: ShieldCheck, permission: 'role:read' },
   { to: '/$app/settings', label: 'Paramètres', icon: Settings, permission: 'instance:manage' },
+  { to: '/$app/audit', label: 'Journal d’audit', icon: History, permission: 'audit:read' },
 ];
 
 /** Gabarit des pages d'une instance : navigation selon les permissions, couleurs de l'instance. */

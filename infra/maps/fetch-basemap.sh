@@ -1,0 +1,63 @@
+#!/usr/bin/env sh
+# Fond de carte auto-hébergé (P6.1, ADR 0010) : extrait une zone du build OpenStreetMap
+# quotidien de Protomaps au format PMTiles, servi ensuite sous /tiles/ par le back-office.
+#
+#   infra/maps/fetch-basemap.sh                 # Côte d'Ivoire, zoom 0–14
+#   BASEMAP_BBOX=2.2,6.2,3.9,12.5 BASEMAP_MAXZOOM=12 infra/maps/fetch-basemap.sh
+#
+# Données © contributeurs OpenStreetMap (ODbL), attribution affichée sur la carte.
+set -eu
+
+BBOX="${BASEMAP_BBOX:--8.7,4.2,-2.4,10.8}"
+MAXZOOM="${BASEMAP_MAXZOOM:-14}"
+BUILD="${BASEMAP_BUILD:-$(date -u -v-1d +%Y%m%d 2>/dev/null || date -u -d yesterday +%Y%m%d)}"
+PMTILES_VERSION="1.31.2"
+
+DIR=$(cd "$(dirname "$0")" && pwd)
+mkdir -p "$DIR/data" "$DIR/.bin"
+
+PMTILES=$(command -v pmtiles || true)
+if [ -z "$PMTILES" ]; then
+  PMTILES="$DIR/.bin/pmtiles"
+  if [ ! -x "$PMTILES" ]; then
+    case "$(uname -s)-$(uname -m)" in
+      # Empreintes SHA-256 publiées avec la version ${PMTILES_VERSION}.
+      Darwin-arm64)
+        ASSET="go-pmtiles-${PMTILES_VERSION}_Darwin_arm64.zip"
+        EXPECTED=40528f7f616fcbf91207cd48c8fc023d213f6d86c0cbf1f748732803d1880f3d ;;
+      Darwin-x86_64)
+        ASSET="go-pmtiles-${PMTILES_VERSION}_Darwin_x86_64.zip"
+        EXPECTED=1f0dc02eee6c58312dd6c509faee1b5c32f0596568af1bf51f1b034e7a88a65b ;;
+      Linux-x86_64)
+        ASSET="go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz"
+        EXPECTED=3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f ;;
+      Linux-aarch64 | Linux-arm64)
+        ASSET="go-pmtiles_${PMTILES_VERSION}_Linux_arm64.tar.gz"
+        EXPECTED=f8bd47e7ea866863489cad588fbaf2f31f42e5821f7a03f009b3769f05801cb1 ;;
+      *) echo "Plateforme non prise en charge : installez pmtiles (github.com/protomaps/go-pmtiles)" >&2; exit 1 ;;
+    esac
+    BASE="https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}"
+    TMP=$(mktemp -d)
+    trap 'rm -rf "$TMP"' EXIT
+    echo "Téléchargement de pmtiles ${PMTILES_VERSION}…"
+    curl -fsSL -o "$TMP/$ASSET" "$BASE/$ASSET"
+    ACTUAL=$( (sha256sum "$TMP/$ASSET" 2>/dev/null || shasum -a 256 "$TMP/$ASSET") | cut -d' ' -f1)
+    if [ "$EXPECTED" != "$ACTUAL" ]; then
+      echo "Somme de contrôle invalide pour $ASSET" >&2
+      exit 1
+    fi
+    case "$ASSET" in
+      *.zip) unzip -q -o "$TMP/$ASSET" pmtiles -d "$TMP" ;;
+      *) tar -xzf "$TMP/$ASSET" -C "$TMP" pmtiles ;;
+    esac
+    mv "$TMP/pmtiles" "$PMTILES"
+    chmod +x "$PMTILES"
+  fi
+fi
+
+OUT="$DIR/data/basemap.pmtiles"
+echo "Extraction du build ${BUILD} (zone ${BBOX}, zoom ≤ ${MAXZOOM}) vers ${OUT}…"
+"$PMTILES" extract "https://build.protomaps.com/$BUILD.pmtiles" "$OUT.part" \
+  --bbox="$BBOX" --maxzoom="$MAXZOOM"
+mv "$OUT.part" "$OUT"
+echo "Fond de carte prêt : $(du -h "$OUT" | cut -f1)"

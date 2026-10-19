@@ -32,6 +32,86 @@ export const en: MessageTree = {
     max_rows: 'At most {{max}} row(s)',
     read_only: 'Read-only field',
   },
+  audit: {
+    actions: {
+      auth: {
+        login: 'Sign-in',
+        login_failed: 'Sign-in refused',
+        client_token: 'API key token',
+        client_token_failed: 'API key refused',
+      },
+      user: {
+        create: 'Member added',
+        update: 'Member updated',
+        remove: 'Member removed',
+      },
+      role: {
+        create: 'Role created',
+        update: 'Role updated',
+        delete: 'Role deleted',
+      },
+      group: {
+        create: 'Group created',
+        update: 'Group renamed',
+        delete: 'Group deleted',
+        members: 'Group members updated',
+      },
+      settings: {
+        update: 'Settings updated',
+      },
+      structure: {
+        create: 'Form created',
+        update: 'Form updated',
+        delete: 'Form archived',
+        publish: 'Form published',
+        access: 'Form permissions updated',
+      },
+      list: {
+        create: 'List created',
+        update: 'List updated',
+        delete: 'List deleted',
+        import: 'List imported',
+      },
+      report: {
+        create: 'Report template created',
+        update: 'Report template updated',
+        delete: 'Report template deleted',
+        render: 'PDF report generated',
+      },
+      automation: {
+        create: 'Automation created',
+        update: 'Automation updated',
+        delete: 'Automation deleted',
+      },
+      automation_run: {
+        retry: 'Run retried',
+      },
+      webhook: {
+        create: 'Webhook created',
+        update: 'Webhook updated',
+        delete: 'Webhook deleted',
+        secret: 'Webhook secret rotated',
+      },
+      webhook_delivery: {
+        retry: 'Webhook delivery retried',
+      },
+      email: {
+        retry: 'E-mail resent',
+      },
+      dashboard: {
+        create: 'Dashboard created',
+        update: 'Dashboard updated',
+        delete: 'Dashboard deleted',
+      },
+      submission: {
+        export: 'Submissions export (spreadsheet)',
+        photos_export: 'Photos export (ZIP)',
+      },
+      photo_export: {
+        download: 'Photo archive downloaded',
+      },
+    },
+  },
   common: {
     save: 'Save',
     cancel: 'Cancel',

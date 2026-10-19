@@ -30,6 +30,86 @@ export const fr = {
     max_rows: 'Au plus {{max}} ligne(s)',
     read_only: 'Champ non modifiable',
   },
+  audit: {
+    actions: {
+      auth: {
+        login: 'Connexion',
+        login_failed: 'Connexion refusée',
+        client_token: 'Jeton de clé API',
+        client_token_failed: 'Clé API refusée',
+      },
+      user: {
+        create: 'Membre ajouté',
+        update: 'Membre modifié',
+        remove: 'Membre retiré',
+      },
+      role: {
+        create: 'Rôle créé',
+        update: 'Rôle modifié',
+        delete: 'Rôle supprimé',
+      },
+      group: {
+        create: 'Groupe créé',
+        update: 'Groupe renommé',
+        delete: 'Groupe supprimé',
+        members: 'Membres du groupe modifiés',
+      },
+      settings: {
+        update: 'Paramètres modifiés',
+      },
+      structure: {
+        create: 'Formulaire créé',
+        update: 'Formulaire modifié',
+        delete: 'Formulaire archivé',
+        publish: 'Formulaire publié',
+        access: 'Droits du formulaire modifiés',
+      },
+      list: {
+        create: 'Référentiel créé',
+        update: 'Référentiel modifié',
+        delete: 'Référentiel supprimé',
+        import: 'Référentiel importé',
+      },
+      report: {
+        create: 'Modèle de rapport créé',
+        update: 'Modèle de rapport modifié',
+        delete: 'Modèle de rapport supprimé',
+        render: 'Rapport PDF généré',
+      },
+      automation: {
+        create: 'Automatisation créée',
+        update: 'Automatisation modifiée',
+        delete: 'Automatisation supprimée',
+      },
+      automation_run: {
+        retry: 'Exécution relancée',
+      },
+      webhook: {
+        create: 'Webhook créé',
+        update: 'Webhook modifié',
+        delete: 'Webhook supprimé',
+        secret: 'Secret de webhook renouvelé',
+      },
+      webhook_delivery: {
+        retry: 'Livraison de webhook relancée',
+      },
+      email: {
+        retry: 'E-mail renvoyé',
+      },
+      dashboard: {
+        create: 'Tableau de bord créé',
+        update: 'Tableau de bord modifié',
+        delete: 'Tableau de bord supprimé',
+      },
+      submission: {
+        export: 'Export de fiches (tableur)',
+        photos_export: 'Export des photos (ZIP)',
+      },
+      photo_export: {
+        download: 'Archive de photos téléchargée',
+      },
+    },
+  },
   common: {
     save: 'Enregistrer',
     cancel: 'Annuler',

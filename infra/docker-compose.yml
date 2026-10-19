@@ -147,6 +147,8 @@ services:
     build: { context: .., dockerfile: apps/web/Dockerfile }
     depends_on:
       api: { condition: service_healthy }
+    # Fond de carte PMTiles extrait par infra/maps/fetch-basemap.sh (facultatif).
+    volumes: ['./maps/data:/srv/tiles:ro']
     labels:
       - traefik.enable=true
       - traefik.http.routers.web.rule=Host(`app.localhost`)

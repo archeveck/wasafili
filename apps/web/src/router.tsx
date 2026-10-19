@@ -9,10 +9,12 @@ import {
 import { AppsPage } from '@/features/auth/apps';
 import { LoginPage } from '@/features/auth/login';
 import { AccessPage } from '@/features/admin/access-page';
+import { AuditPage } from '@/features/admin/audit-page';
 import { GroupsPage } from '@/features/admin/groups-page';
 import { RolesPage } from '@/features/admin/roles-page';
 import { SettingsPage } from '@/features/admin/settings-page';
 import { UsersPage } from '@/features/admin/users-page';
+import { DashboardPage, DashboardsPage } from '@/features/dashboards/dashboard-page';
 import { DesignerPage } from '@/features/designer/designer-page';
 import { AppLayout } from '@/features/layout';
 import { ListPage } from '@/features/lists/list-page';
@@ -21,6 +23,7 @@ import { StructuresPage } from '@/features/structures/structures-page';
 import { NewSubmissionPage, SubmissionPage } from '@/features/submissions/submission-page';
 import { SubmissionsPage } from '@/features/submissions/submissions-page';
 import { AgendaPage } from '@/features/tasks/agenda-page';
+import { TeamPage } from '@/features/team/team-page';
 import { AutomationEditorPage } from '@/features/automations/automation-editor';
 import { type AutomationsTab, AutomationsPage } from '@/features/automations/automations-page';
 import { ReportsPage } from '@/features/reports/reports-page';
@@ -148,6 +151,29 @@ const settingsRoute = createRoute({
   path: 'settings',
   component: SettingsPage,
 });
+const dashboardsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'dashboards',
+  component: DashboardsPage,
+});
+const dashboardRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'dashboards/$dashboardId',
+  /** `?edit=true` : ouvre directement en édition (tableau tout juste créé). */
+  validateSearch: (search: Record<string, unknown>): { edit?: boolean } =>
+    search['edit'] === true || search['edit'] === 'true' ? { edit: true } : {},
+  component: DashboardPage,
+});
+const teamRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'team',
+  component: TeamPage,
+});
+const auditRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'audit',
+  component: AuditPage,
+});
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -171,6 +197,10 @@ const routeTree = rootRoute.addChildren([
       groupsRoute,
       rolesRoute,
       settingsRoute,
+      dashboardsRoute,
+      dashboardRoute,
+      teamRoute,
+      auditRoute,
     ]),
   ]),
 ]);

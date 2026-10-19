@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { type Field, rootValueFields } from '@tesserax/form-schema';
 import { type Filter, type FilterOperator, type Submission } from '@tesserax/sdk';
-import { ArrowDown, ArrowUp, Download, Filter as FilterIcon, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Download, Filter as FilterIcon, Images, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,9 @@ import { Input, Select } from '@/components/ui/form-controls';
 import { useToast } from '@/components/ui/toast';
 import { displayValue, listItemIds, useItemLabels, useUserLabels } from '@/form/display';
 import { useApp } from '@/lib/use-app';
+import { PhotoExportDialog } from './photo-export-dialog';
 import { SubmissionsCalendar } from './submissions-calendar';
+import { SubmissionsMap } from './submissions-map';
 import { StateBadge, StateFilter } from './workflow';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/overlays';
 import { download, formatDateTime } from '@/lib/utils';
@@ -41,7 +43,8 @@ const OPERATORS: { value: FilterOperator; label: string }[] = [
 ];
 const COLUMN_TYPES = new Set(['photo', 'file', 'signature', 'table', 'info', 'hidden']);
 
-function FilterBar({
+/** Barre de filtres par champ filtrable (tableau des fiches, widgets de tableau de bord). */
+export function FilterBar({
   fields,
   filters,
   onChange,
@@ -151,7 +154,8 @@ export function SubmissionsPage() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [state, setState] = useState<string>();
-  const [view, setView] = useState<'table' | 'calendar'>('table');
+  const [view, setView] = useState<'table' | 'calendar' | 'map'>('table');
+  const [photoExport, setPhotoExport] = useState(false);
 
   const structure = useQuery({
     queryKey: [short, 'structure', structureId],
@@ -283,6 +287,11 @@ export function SubmissionsPage() {
             <Button variant="outline" onClick={() => exportAs('xlsx')}>
               <Download /> Excel
             </Button>
+            {fields.some((f) => f.type === 'photo' || f.type === 'table') && (
+              <Button variant="outline" onClick={() => setPhotoExport(true)}>
+                <Images /> Photos (ZIP)
+              </Button>
+            )}
             {structure.data?.currentVersion && (
               <Button asChild>
                 <Link
@@ -315,13 +324,29 @@ export function SubmissionsPage() {
           setPage(1);
         }}
       />
-      <Tabs value={view} onValueChange={(v) => setView(v as 'table' | 'calendar')}>
+      <PhotoExportDialog
+        open={photoExport}
+        onOpenChange={setPhotoExport}
+        structureId={structureId}
+        filters={filters}
+        state={state}
+        sort={sort}
+      />
+      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
         <TabsList className="mb-4">
           <TabsTrigger value="table">Tableau</TabsTrigger>
           <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+          <TabsTrigger value="map">Carte</TabsTrigger>
         </TabsList>
       </Tabs>
-      {view === 'calendar' ? (
+      {view === 'map' ? (
+        <SubmissionsMap
+          structureId={structureId}
+          workflow={workflow}
+          filters={filters}
+          state={state}
+        />
+      ) : view === 'calendar' ? (
         <SubmissionsCalendar
           structureId={structureId}
           fields={fields}

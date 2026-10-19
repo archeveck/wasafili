@@ -7,7 +7,7 @@ import {
   walkFields,
   type WorkflowTransition,
 } from '@tesserax/form-schema';
-import { ApiError, type Submission } from '@tesserax/sdk';
+import { ApiError, type AutomationRunStatus, type Revision, type Submission } from '@tesserax/sdk';
 import { ArrowLeft, FileText, Pencil, Trash2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -239,6 +239,14 @@ function History({
     queryKey: [short, 'revisions', submissionId],
     queryFn: () => api.submissions.revisions(submissionId, { perPage: 100 }),
   });
+  const conflicts = useQuery({
+    queryKey: [short, 'conflicts', submissionId],
+    queryFn: () => api.submissions.conflicts(submissionId),
+  });
+  const runs = useQuery({
+    queryKey: [short, 'submission-runs', submissionId],
+    queryFn: () => api.submissions.automationRuns(submissionId),
+  });
   const users = useUserLabels(api, short);
   const fields = new Map([...walkFields(definition.fields)].map(({ field }) => [field.key, field]));
   const changes = (revisions.data?.data ?? []).flatMap((r) => r.changes);
@@ -259,67 +267,162 @@ function History({
     transition: 'Changement d’état',
     delete: 'Suppression',
   };
+  // Chronologie unique (P6.3.2) : révisions, conflits et automatisations, du plus récent au plus ancien.
+  const events = [
+    ...revisions.data.data.map((revision) => ({
+      at: revision.createdAt,
+      key: `r-${revision.id}`,
+      node: revisionCard(revision),
+    })),
+    ...(conflicts.data?.data ?? []).flatMap((conflict) => {
+      const field = fields.get(conflict.field)?.label ?? conflict.field;
+      const detected = {
+        at: conflict.createdAt,
+        key: `c-${conflict.id}`,
+        node: (
+          <Card className="border-warning/50 p-4">
+            <p className="text-sm">
+              <span className="font-medium text-warning">Conflit</span> sur « {field} » ·
+              modification simultanée, la dernière reçue a été appliquée ·{' '}
+              <span className="text-muted">{formatDateTime(conflict.createdAt, timeZone)}</span>
+            </p>
+          </Card>
+        ),
+      };
+      if (!conflict.resolvedAt) return [detected];
+      return [
+        detected,
+        {
+          at: conflict.resolvedAt,
+          key: `cr-${conflict.id}`,
+          node: (
+            <Card className="p-4">
+              <p className="text-sm">
+                <span className="font-medium">Conflit résolu</span> sur « {field} » ·{' '}
+                {conflict.resolution === 'restored'
+                  ? 'valeur écrasée rétablie'
+                  : 'valeur appliquée conservée'}{' '}
+                · {author(conflict.resolvedById)} ·{' '}
+                <span className="text-muted">{formatDateTime(conflict.resolvedAt, timeZone)}</span>
+              </p>
+            </Card>
+          ),
+        },
+      ];
+    }),
+    ...(runs.data?.data ?? []).map((run) => ({
+      at: run.createdAt,
+      key: `a-${run.id}`,
+      node: (
+        <Card className="p-4">
+          <p className="text-sm">
+            <span className="inline-flex items-center gap-1 font-medium">
+              <Workflow className="size-3" /> Automatisation « {run.automation.name} »
+            </span>{' '}
+            ·{' '}
+            <span className={RUN_STATUS[run.status].className}>{RUN_STATUS[run.status].label}</span>{' '}
+            · <span className="text-muted">{formatDateTime(run.createdAt, timeZone)}</span>
+          </p>
+          {run.steps.length > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {run.steps
+                .map(
+                  (step) =>
+                    `${STEP_LABELS[step.type] ?? step.type} (${STEP_STATUS[step.status] ?? step.status})`,
+                )
+                .join(' → ')}
+            </p>
+          )}
+          {run.error && <p className="mt-1 text-xs text-danger">{run.error}</p>}
+        </Card>
+      ),
+    })),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+
   return (
     <ol className="space-y-4">
-      {revisions.data.data.map((revision) => (
-        <li key={revision.id}>
-          <Card className="p-4">
-            <p className="text-sm">
-              <span className="font-medium">{ACTIONS[revision.action]}</span> · révision{' '}
-              {revision.revision} ·{' '}
-              {revision.automation ? (
-                <span className="inline-flex items-center gap-1">
-                  <Workflow className="size-3" /> Automatisation « {revision.automation.name} »
-                </span>
-              ) : (
-                author(revision.authorId)
-              )}{' '}
-              · <span className="text-muted">{formatDateTime(revision.createdAt, timeZone)}</span>
-            </p>
-            {revision.action !== 'create' && revision.changes.length > 0 && (
-              <table className="mt-3 w-full text-sm">
-                <tbody>
-                  {revision.changes.map((change) => {
-                    if (change.field === '$state') {
-                      return (
-                        <tr key={change.field} className="border-t border-border">
-                          <td className="py-1.5 pr-3 font-medium">État</td>
-                          <td className="py-1.5 pr-3 text-danger line-through">
-                            {stateLabel(definition.workflow, change.before as string | null)}
-                          </td>
-                          <td className="py-1.5 text-success">
-                            {stateLabel(definition.workflow, change.after as string | null)}
-                          </td>
-                        </tr>
-                      );
-                    }
-                    const field = fields.get(change.field);
-                    return (
-                      <tr key={change.field} className="border-t border-border">
-                        <td className="py-1.5 pr-3 font-medium">{field?.label ?? change.field}</td>
-                        <td className="py-1.5 pr-3 text-danger line-through">
-                          {displayValue(field, change.before, labels, timeZone, users)}
-                        </td>
-                        <td className="py-1.5 text-success">
-                          {displayValue(field, change.after, labels, timeZone, users)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-            {revision.action === 'create' && (
-              <p className="mt-1 text-xs text-muted">
-                {revision.changes.length} champ(s) renseigné(s)
-              </p>
-            )}
-          </Card>
-        </li>
+      {events.map((event) => (
+        <li key={event.key}>{event.node}</li>
       ))}
     </ol>
   );
+
+  function revisionCard(revision: Revision) {
+    return (
+      <Card className="p-4">
+        <p className="text-sm">
+          <span className="font-medium">{ACTIONS[revision.action]}</span> · révision{' '}
+          {revision.revision} ·{' '}
+          {revision.automation ? (
+            <span className="inline-flex items-center gap-1">
+              <Workflow className="size-3" /> Automatisation « {revision.automation.name} »
+            </span>
+          ) : (
+            author(revision.authorId)
+          )}{' '}
+          · <span className="text-muted">{formatDateTime(revision.createdAt, timeZone)}</span>
+        </p>
+        {revision.action !== 'create' && revision.changes.length > 0 && (
+          <table className="mt-3 w-full text-sm">
+            <tbody>
+              {revision.changes.map((change) => {
+                if (change.field === '$state') {
+                  return (
+                    <tr key={change.field} className="border-t border-border">
+                      <td className="py-1.5 pr-3 font-medium">État</td>
+                      <td className="py-1.5 pr-3 text-danger line-through">
+                        {stateLabel(definition.workflow, change.before as string | null)}
+                      </td>
+                      <td className="py-1.5 text-success">
+                        {stateLabel(definition.workflow, change.after as string | null)}
+                      </td>
+                    </tr>
+                  );
+                }
+                const field = fields.get(change.field);
+                return (
+                  <tr key={change.field} className="border-t border-border">
+                    <td className="py-1.5 pr-3 font-medium">{field?.label ?? change.field}</td>
+                    <td className="py-1.5 pr-3 text-danger line-through">
+                      {displayValue(field, change.before, labels, timeZone, users)}
+                    </td>
+                    <td className="py-1.5 text-success">
+                      {displayValue(field, change.after, labels, timeZone, users)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        {revision.action === 'create' && (
+          <p className="mt-1 text-xs text-muted">{revision.changes.length} champ(s) renseigné(s)</p>
+        )}
+      </Card>
+    );
+  }
 }
+
+const RUN_STATUS: Record<AutomationRunStatus, { label: string; className: string }> = {
+  queued: { label: 'en attente', className: 'text-muted' },
+  running: { label: 'en cours', className: 'text-muted' },
+  succeeded: { label: 'réussie', className: 'text-success' },
+  failed: { label: 'en échec', className: 'text-danger' },
+  skipped: { label: 'ignorée', className: 'text-muted' },
+};
+const STEP_LABELS: Record<string, string> = {
+  email: 'e-mail',
+  notify: 'notification',
+  create_task: 'tâche',
+  webhook: 'webhook',
+  update_field: 'mise à jour de champ',
+};
+const STEP_STATUS: Record<string, string> = {
+  done: 'fait',
+  failed: 'échec',
+  skipped: 'ignoré',
+  pending: 'en attente',
+};
 
 /** Conflits de modification (P3.7) : valeur appliquée, valeur écrasée, résolution manuelle. */
 function Conflicts({
