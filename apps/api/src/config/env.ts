@@ -59,7 +59,8 @@ const envSchema = z.object({
   /** Exécute les automatisations dans ce processus (file BullMQ dédiée, ADR 0009). */
   AUTOMATIONS_WORKER: z.stringbool().default(true),
   /** Jeton Bearer exigé par `/metrics` (facultatif : l'endpoint n'est pas publié par le proxy). */
-  METRICS_TOKEN: z.string().min(16).optional(),
+  // Vide (variable docker compose non renseignée) = absent.
+  METRICS_TOKEN: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16).optional()),
   /** Nombre de proxies de confiance devant l'API (Traefik = 1) : sert à lire l'IP cliente. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

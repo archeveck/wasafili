@@ -25,4 +25,9 @@ describe('parseEnv', () => {
   it('refuse un secret JWT trop court', () => {
     expect(() => parseEnv({ ...valid, JWT_SECRET: 'court' })).toThrow(/JWT_SECRET/);
   });
+
+  it('traite un jeton de métriques vide comme absent, refuse un jeton trop court', () => {
+    expect(parseEnv({ ...valid, METRICS_TOKEN: '' }).METRICS_TOKEN).toBeUndefined();
+    expect(() => parseEnv({ ...valid, METRICS_TOKEN: 'court' })).toThrow(/METRICS_TOKEN/);
+  });
 });
