@@ -96,6 +96,14 @@ export class TokensService {
     if (stored) await this.revokeFamily(stored.familyId);
   }
 
+  /** Ferme toutes les sessions d'un utilisateur (changement de mot de passe). */
+  async revokeAllForUser(userId: string): Promise<void> {
+    await this.prisma.db.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   private async revokeFamily(familyId: string): Promise<void> {
     await this.prisma.db.refreshToken.updateMany({
       where: { familyId, revokedAt: null },

@@ -341,6 +341,56 @@
         }
       }
     },
+    "/v1/me/password": {
+      "post": {
+        "operationId": "me.changePassword",
+        "tags": [
+          "Appelant et instances"
+        ],
+        "summary": "Change le mot de passe de l'utilisateur connecté (12 caractères au moins, pas un mot de passe répandu)",
+        "description": "Change le mot de passe de l'utilisateur connecté (12 caractères au moins, pas un mot de passe répandu). Toutes ses sessions sont fermées : il se reconnecte avec le nouveau.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Effectué."
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
     "/v1/oauth/revoke": {
       "post": {
         "operationId": "oAuth.revoke",
@@ -10886,7 +10936,7 @@
                   },
                   "password": {
                     "type": "string",
-                    "minLength": 10,
+                    "minLength": 12,
                     "maxLength": 200
                   },
                   "attributes": {
@@ -11140,6 +11190,67 @@
         "responses": {
           "204": {
             "description": "Effectué."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "user:manage"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/{app}/users/{userId}/password-reset": {
+      "post": {
+        "operationId": "users.resetPassword",
+        "tags": [
+          "Membres"
+        ],
+        "summary": "Réinitialise le mot de passe d'un membre",
+        "description": "Réinitialise le mot de passe d'un membre : un mot de passe provisoire est renvoyé une seule fois et ses sessions sont fermées. Refusé (409) pour un compte partagé avec d'autres instances.\n\nPermission requise : `user:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemporaryPassword"
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -15416,6 +15527,17 @@
           "submissionId",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "TemporaryPassword": {
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "temporaryPassword"
         ]
       },
       "TextField": {

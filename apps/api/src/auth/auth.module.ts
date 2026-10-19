@@ -21,6 +21,6 @@ export const JWT_ISSUER = 'tesserax';
   ],
   controllers: [OAuthController],
   providers: [AuthService, TokensService, JwtAuthGuard],
-  exports: [TokensService, JwtAuthGuard],
+  exports: [AuthService, TokensService, JwtAuthGuard],
 })
 export class AuthModule {}

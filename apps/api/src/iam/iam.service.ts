@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { hashPassword, randomToken } from '../auth/crypto';
+import { TokensService } from '../auth/tokens.service';
+import { runWithContext } from '../common/request-context';
 import { type Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { type TransactionClient } from '../prisma/tenant';
@@ -38,7 +40,10 @@ export function memberDto(member: MemberRow, groups: { id: string; name: string 
 /** Utilisateurs, rôles et groupes d'une instance (P2.6.1). */
 @Injectable()
 export class IamService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tokens: TokensService,
+  ) {}
 
   async getMember(userId: string) {
     const member = await this.prisma.db.membership.findFirst({
@@ -131,6 +136,37 @@ export class IamService {
       },
     });
     return this.getMember(userId);
+  }
+
+  /**
+   * Réinitialisation par un administrateur (ASVS 2.5) : nouveau mot de passe provisoire, renvoyé
+   * une seule fois, et sessions fermées. Refusée pour un compte membre d'autres instances : son
+   * administrateur ne doit pas pouvoir prendre la main sur des accès qu'il ne gère pas.
+   */
+  async resetPassword(actorId: string | null, userId: string) {
+    if (actorId === userId) {
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: 'Changez votre propre mot de passe depuis votre compte',
+      });
+    }
+    await this.findMember(userId);
+    // Hors contexte d'instance, la RLS ne montre que les adhésions de l'utilisateur visé.
+    const instances = await runWithContext({ userId }, () => this.prisma.db.membership.count());
+    if (instances > 1) {
+      throw new ConflictException({
+        error: 'shared_account',
+        message:
+          'Ce compte appartient aussi à d’autres instances : seul son titulaire peut changer son mot de passe',
+      });
+    }
+    const temporaryPassword = randomToken().slice(0, 16);
+    await this.prisma.db.user.update({
+      where: { id: userId },
+      data: { passwordHash: await hashPassword(temporaryPassword) },
+    });
+    await this.tokens.revokeAllForUser(userId);
+    return { temporaryPassword };
   }
 
   /** Retire le membre de l'instance (le compte global est conservé). */

@@ -1,4 +1,9 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, HttpCode, Post, Req } from '@nestjs/common';
+import { type Request } from 'express';
+import { z } from 'zod';
+import { AuthService } from '../auth/auth.service';
+import { passwordSchema } from '../auth/password-policy';
+import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Actor, CurrentActor } from '../auth/decorators';
 import { CurrentPrincipal } from '../auth/decorators';
 import { type Principal } from '../auth/principal';
@@ -6,11 +11,42 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OpenApi } from '../openapi/openapi.decorator';
 import * as resources from '../openapi/resources';
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: passwordSchema,
+});
+
 const instanceSelect = { id: true, short: true, name: true, timeZone: true, locale: true } as const;
 
 @Controller()
 export class MeController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auth: AuthService,
+  ) {}
+
+  /**
+   * Change le mot de passe de l'utilisateur connecté (12 caractères au moins, pas un mot de
+   * passe répandu). Toutes ses sessions sont fermées : il se reconnecte avec le nouveau.
+   */
+  @Post('me/password')
+  @HttpCode(204)
+  async changePassword(
+    @CurrentPrincipal() principal: Principal,
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: z.infer<typeof changePasswordSchema>,
+    @Req() req: Request,
+  ): Promise<void> {
+    if (principal.kind !== 'user') {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'Réservé aux utilisateurs (une clé API n’a pas de mot de passe)',
+      });
+    }
+    await this.auth.changePassword(principal.userId, body.currentPassword, body.newPassword, {
+      ip: req.ip ?? null,
+      userAgent: req.get('user-agent') ?? null,
+    });
+  }
 
   /** Profil de l'appelant. */
   @Get('me')

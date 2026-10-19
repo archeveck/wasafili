@@ -225,3 +225,65 @@ describe('limitation de débit', () => {
     }
   });
 });
+
+describe('changement de mot de passe (ASVS 2.1.6)', () => {
+  const change = (token: string, body: object) =>
+    request(app.getHttpServer())
+      .post('/v1/me/password')
+      .set('Authorization', `Bearer ${token}`)
+      .send(body);
+
+  it('exige l’ancien mot de passe, applique la politique et ferme toutes les sessions', async () => {
+    const session = await login(app, 'technicien@acme.test');
+    const other = await login(app, 'technicien@acme.test');
+    const next = 'une nouvelle phrase de passe';
+
+    const wrong = await change(session.access_token, {
+      currentPassword: 'faux',
+      newPassword: next,
+    });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.error).toBe('invalid_password');
+    for (const weak of ['court', 'MotDePasse2026']) {
+      await change(session.access_token, { currentPassword: PASSWORD, newPassword: weak }).expect(
+        400,
+      );
+    }
+
+    await change(session.access_token, { currentPassword: PASSWORD, newPassword: next }).expect(
+      204,
+    );
+    // Sessions fermées, ancien mot de passe refusé, nouveau accepté.
+    for (const tokens of [session, other]) {
+      await request(app.getHttpServer())
+        .post('/v1/oauth/token')
+        .send({ grant_type: 'refresh_token', refresh_token: tokens.refresh_token })
+        .expect(400);
+    }
+    await request(app.getHttpServer())
+      .post('/v1/oauth/token')
+      .send({ grant_type: 'password', username: 'technicien@acme.test', password: PASSWORD })
+      .expect(400);
+    await login(app, 'technicien@acme.test', next);
+
+    const admin = await login(app, 'admin@acme.test');
+    const audit = await request(app.getHttpServer())
+      .get('/v1/acme/audit-logs?action=auth.password_change')
+      .set('Authorization', `Bearer ${admin.access_token}`)
+      .expect(200);
+    expect(audit.body.data).toHaveLength(1);
+    expect(JSON.stringify(audit.body)).not.toContain(next);
+  });
+
+  it('n’existe pas pour une clé API', async () => {
+    const { clientId, secret } = await createOAuthClient(tenant.instance.id, ['structure:read']);
+    const token = await request(app.getHttpServer())
+      .post('/v1/oauth/token')
+      .send({ grant_type: 'client_credentials', client_id: clientId, client_secret: secret })
+      .expect(200);
+    await change(token.body.access_token as string, {
+      currentPassword: 'x',
+      newPassword: 'une nouvelle phrase de passe',
+    }).expect(403);
+  });
+});

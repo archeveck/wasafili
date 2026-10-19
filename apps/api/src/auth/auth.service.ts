@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { OAuthError } from '../common/errors';
 import { runWithContext } from '../common/request-context';
 import { PrismaService } from '../prisma/prisma.service';
-import { safeEqualHex, sha256, verifyPassword } from './crypto';
+import { hashPassword, safeEqualHex, sha256, verifyPassword } from './crypto';
 import { type TokenResponse, TokensService } from './tokens.service';
 
 /** Origine d'une demande de jeton, pour le journal d'audit. */
@@ -96,5 +96,36 @@ export class AuthService {
       expires_in: this.tokens.accessTokenTtl,
       scope,
     };
+  }
+
+  /**
+   * Changement de mot de passe par l'utilisateur (ASVS 2.1.6) : l'ancien est exigé, puis toutes
+   * les sessions sont fermées (refresh tokens révoqués) ; le client se reconnecte.
+   */
+  async changePassword(
+    userId: string,
+    current: string,
+    next: string,
+    origin: RequestOrigin = {},
+  ): Promise<void> {
+    const user = await this.prisma.db.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!(await verifyPassword(user.passwordHash, current))) {
+      throw new BadRequestException({
+        error: 'invalid_password',
+        message: 'Mot de passe actuel incorrect',
+      });
+    }
+    if (current === next) {
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: 'Le nouveau mot de passe doit être différent de l’actuel',
+      });
+    }
+    await this.prisma.db.user.update({
+      where: { id: userId },
+      data: { passwordHash: await hashPassword(next) },
+    });
+    await this.tokens.revokeAllForUser(userId);
+    await this.audit.recordForUser(userId, { action: 'auth.password_change', ...origin });
   }
 }

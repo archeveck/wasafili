@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
+import { passwordSchema } from '../auth/password-policy';
 import { type Actor, Can, CurrentActor, CurrentInstance } from '../auth/decorators';
 import { pageArgs, type Pagination, paginationSchema, toPage } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
@@ -30,7 +31,7 @@ const inviteSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),
   roleId: z.uuid(),
-  password: z.string().min(10).max(200).optional(),
+  password: passwordSchema.optional(),
   attributes: attributes.optional(),
 });
 const updateSchema = z
@@ -114,5 +115,19 @@ export class UsersController {
   @Can('user:manage')
   remove(@CurrentActor() actor: Actor, @Param('userId', ParseUUIDPipe) userId: string) {
     return this.iam.removeMember(actor.userId, userId);
+  }
+
+  /**
+   * Réinitialise le mot de passe d'un membre : un mot de passe provisoire est renvoyé une seule
+   * fois et ses sessions sont fermées. Refusé (409) pour un compte partagé avec d'autres
+   * instances.
+   */
+  @Post(':userId/password-reset')
+  @Audit('user.password_reset', { param: 'userId' })
+  @HttpCode(200)
+  @Can('user:manage')
+  @OpenApi({ response: resources.temporaryPassword })
+  resetPassword(@CurrentActor() actor: Actor, @Param('userId', ParseUUIDPipe) userId: string) {
+    return this.iam.resetPassword(actor.userId, userId);
   }
 }

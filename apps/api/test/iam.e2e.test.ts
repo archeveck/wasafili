@@ -165,3 +165,43 @@ describe('groupes', () => {
     await admin.delete(`/v1/acme/groups/${group.body.id}`).expect(204);
   });
 });
+
+describe('réinitialisation de mot de passe par un administrateur (ASVS 2.5)', () => {
+  const memberId = async (email: string) => {
+    const res = await admin.get('/v1/acme/users?per_page=100').expect(200);
+    return (res.body.data as { id: string; email: string }[]).find((m) => m.email === email)!.id;
+  };
+
+  it('renvoie un mot de passe provisoire et ferme les sessions du membre', async () => {
+    const before = await login(app, 'technicien@acme.test');
+    const id = await memberId('technicien@acme.test');
+    await superviseur.post(`/v1/acme/users/${id}/password-reset`).expect(403);
+
+    const res = await admin.post(`/v1/acme/users/${id}/password-reset`).expect(200);
+    expect(res.body.temporaryPassword).toHaveLength(16);
+    await api(app)
+      .post('/v1/oauth/token')
+      .send({ grant_type: 'refresh_token', refresh_token: before.refresh_token })
+      .expect(400);
+    await login(app, 'technicien@acme.test', res.body.temporaryPassword as string);
+
+    const self = await memberId('admin@acme.test');
+    await admin.post(`/v1/acme/users/${self}/password-reset`).expect(400);
+  });
+
+  it('refuse pour un compte qui appartient aussi à une autre instance', async () => {
+    const betaAdmin = api(app, (await login(app, 'admin@beta.test')).access_token);
+    const roles = await betaAdmin.get('/v1/beta/roles?per_page=100').expect(200);
+    const roleId = (roles.body.data as { id: string; key: string }[]).find(
+      (r) => r.key === 'technicien',
+    )!.id;
+    await betaAdmin
+      .post('/v1/beta/users')
+      .send({ email: 'technicien@acme.test', firstName: 'T', lastName: 'A', roleId })
+      .expect(201);
+
+    const id = await memberId('technicien@acme.test');
+    const refused = await admin.post(`/v1/acme/users/${id}/password-reset`).expect(409);
+    expect(refused.body.error).toBe('shared_account');
+  });
+});

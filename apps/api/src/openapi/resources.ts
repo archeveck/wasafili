@@ -376,3 +376,8 @@ export const apiClientWithSecret = apiClient
     id: 'ApiClientWithSecret',
     description: 'Clé API et son secret, renvoyé uniquement à la création et à la rotation.',
   });
+
+export const temporaryPassword = z.object({ temporaryPassword: z.string() }).register(resources, {
+  id: 'TemporaryPassword',
+  description: 'Mot de passe provisoire, renvoyé une seule fois, à transmettre au membre.',
+});
