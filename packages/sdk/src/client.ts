@@ -9,6 +9,16 @@ import {
 } from '@tesserax/sync';
 import {
   type AccessRule,
+  type AuditEntry,
+  type AuditQuery,
+  type Dashboard,
+  type DashboardInput,
+  type PhotoExport,
+  type SubmissionAutomationRun,
+  type SubmissionMap,
+  type TeamPosition,
+  type Widget,
+  type WidgetData,
   type Automation,
   type AutomationInput,
   type AutomationRun,
@@ -302,6 +312,62 @@ export function createClient(options: ClientOptions) {
         remove: (id: string) => del(p(`/submissions/${id}`)),
         revisions: (id: string, params?: ListParams) =>
           get<Page<Revision>>(p(`/submissions/${id}/revisions`), toQuery(params)),
+        /** Automatisations exécutées sur la fiche (historique). */
+        automationRuns: (id: string) =>
+          get<{ data: SubmissionAutomationRun[] }>(p(`/submissions/${id}/automation-runs`)),
+        /** Fiches localisées en GeoJSON, avec les filtres de la liste (pagination ignorée). */
+        map: (structureId: string, query?: SubmissionQuery) =>
+          get<SubmissionMap>(
+            p(`/structures/${structureId}/submissions/map`),
+            submissionQuery(query),
+          ),
+      },
+      team: {
+        /** Dernière position connue de chaque membre. */
+        positions: () => get<{ data: TeamPosition[] }>(p('/team/positions')),
+      },
+      dashboards: {
+        list: () => get<{ data: Dashboard[] }>(p('/dashboards')),
+        get: (id: string) => get<Dashboard>(p(`/dashboards/${id}`)),
+        create: (body: DashboardInput) => post<Dashboard>(p('/dashboards'), body),
+        update: (id: string, body: DashboardInput) => put<Dashboard>(p(`/dashboards/${id}`), body),
+        remove: (id: string) => del(p(`/dashboards/${id}`)),
+        /** Valeurs d'un widget, enregistré ou en cours d'édition. */
+        widgetData: (widget: Widget) => post<WidgetData>(p('/dashboards/widget-data'), widget),
+      },
+      audit: {
+        list: ({ page, perPage, actorId, targetId, ...rest }: AuditQuery = {}) =>
+          get<Page<AuditEntry>>(p('/audit-logs'), {
+            ...toQuery({ page, perPage }),
+            ...rest,
+            actor_id: actorId,
+            target_id: targetId,
+          }),
+        actions: () => get<{ data: string[] }>(p('/audit-logs/actions')),
+      },
+      photoExports: {
+        /** Lance l'export ZIP des photos des fiches sélectionnées (mêmes filtres que la liste). */
+        create: (
+          structureId: string,
+          body: Omit<SubmissionQuery, 'page' | 'perPage'> & { pattern?: string },
+        ) => {
+          const { filters = [], authorId, createdFrom, createdTo, ...rest } = body;
+          return post<PhotoExport & { missing: number }>(
+            p(`/structures/${structureId}/photo-exports`),
+            {
+              ...rest,
+              filters,
+              author_id: authorId,
+              created_from: createdFrom,
+              created_to: createdTo,
+            },
+          );
+        },
+        list: (params?: ListParams) => get<Page<PhotoExport>>(p('/photo-exports'), toQuery(params)),
+        get: (id: string) => get<PhotoExport>(p(`/photo-exports/${id}`)),
+        /** URL signée de courte durée vers l'archive. */
+        download: (id: string) =>
+          post<{ id: string; url: string; expiresIn: number }>(p(`/photo-exports/${id}/download`)),
       },
       tasks: {
         list: (query: TaskQuery = {}) =>

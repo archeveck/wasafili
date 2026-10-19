@@ -416,3 +416,140 @@ export interface AutomationRun {
   durationMs: number | null;
   createdAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 6 — pilotage
+// ---------------------------------------------------------------------------
+
+/** Fiche localisée (carte, P6.1.1) : `[longitude, latitude]` en GeoJSON. */
+export interface SubmissionFeature {
+  type: 'Feature';
+  id: string;
+  geometry: { type: 'Point'; coordinates: [number, number] };
+  properties: {
+    id: string;
+    state: string | null;
+    authorId: string | null;
+    label: string | null;
+    createdAt: string;
+  };
+}
+
+export interface SubmissionMap {
+  type: 'FeatureCollection';
+  features: SubmissionFeature[];
+  /** `truncated` : plus de points que la limite, affiner les filtres. */
+  meta: { count: number; truncated: boolean };
+}
+
+/** Dernière position connue d'un membre (P6.1.2). */
+export interface TeamPosition {
+  user: { id: string; email: string; firstName: string; lastName: string };
+  lat: number;
+  lng: number;
+  at: string;
+  source: 'submission' | 'task';
+  sourceId: string;
+  structureId: string;
+}
+
+export type WidgetType = 'kpi' | 'bar' | 'line';
+export type WidgetPeriod = '7d' | '30d' | '90d' | '12m' | 'all';
+export type WidgetMetric = { op: 'count' } | { op: 'sum' | 'avg' | 'min' | 'max'; field: string };
+export type WidgetGroupBy =
+  | { kind: 'state' }
+  | { kind: 'author' }
+  | { kind: 'field'; field: string }
+  | { kind: 'period'; unit: 'day' | 'week' | 'month' };
+
+/** Widget de tableau de bord (P6.2) ; `width` en colonnes sur une grille de 4. */
+export interface Widget {
+  id: string;
+  type: WidgetType;
+  title: string;
+  structureId: string;
+  width: number;
+  metric: WidgetMetric;
+  groupBy?: WidgetGroupBy;
+  filters: Filter[];
+  state?: string;
+  period: WidgetPeriod;
+}
+
+export interface WidgetPoint {
+  key: string | null;
+  label: string;
+  value: number | null;
+}
+
+export type WidgetData =
+  | { type: 'kpi'; value: number | null; count: number }
+  | { type: 'bar' | 'line'; series: WidgetPoint[]; truncated: boolean };
+
+export interface DashboardInput {
+  name: string;
+  description?: string | null;
+  widgets: Widget[];
+}
+
+export interface Dashboard extends DashboardInput {
+  id: string;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Entrée du journal d'audit (P6.3). */
+export interface AuditEntry {
+  id: string;
+  action: string;
+  actorUserId: string | null;
+  actorClientId: string | null;
+  actorLabel: string | null;
+  targetType: string | null;
+  targetId: string | null;
+  targetLabel: string | null;
+  metadata: Record<string, unknown>;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export interface AuditQuery {
+  page?: number;
+  perPage?: number;
+  /** Action exacte (`role.update`) ou famille (`role.`). */
+  action?: string;
+  actorId?: string;
+  targetId?: string;
+  from?: string;
+  to?: string;
+}
+
+/** Automatisation exécutée sur une fiche (historique, P6.3.2). */
+export interface SubmissionAutomationRun {
+  id: string;
+  status: AutomationRunStatus;
+  event: string | null;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  automation: { id: string; name: string };
+  steps: { type: string; status: string }[];
+}
+
+export type PhotoExportStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+/** Export ZIP des photos (P6.4). */
+export interface PhotoExport {
+  id: string;
+  structureId: string;
+  status: PhotoExportStatus;
+  pattern: string;
+  fileCount: number;
+  size: number | null;
+  error: string | null;
+  expiresAt: string;
+  completedAt: string | null;
+  createdAt: string;
+}

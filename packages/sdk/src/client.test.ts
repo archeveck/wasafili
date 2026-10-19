@@ -167,4 +167,31 @@ describe('client', () => {
     expect(store.value).toBeNull();
     expect(JSON.parse(fetch.mock.calls[0]![1]!.body as string)).toEqual({ token: 'r1' });
   });
+
+  it('carte, audit et export de photos : paramètres au format de l API', async () => {
+    const calls: { url: string; body?: unknown }[] = [];
+    const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push({ url, ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+      return json(200, {});
+    });
+    const app = createClient({
+      baseUrl: 'http://api',
+      tokens: memoryStore(tokens('a')),
+      fetch: fetch as never,
+    }).app('acme');
+    const filters = [{ key: 'categorie', operator: 'eq' as const, value: 'pompe' }];
+    await app.submissions.map('s1', { filters, state: 'valide' });
+    await app.audit.list({ action: 'role.', actorId: 'u1', perPage: 50 });
+    await app.photoExports.create('s1', { filters, authorId: 'u2', pattern: '{n}' });
+    expect(decodeURI(calls[0]!.url)).toBe(
+      'http://api/v1/acme/structures/s1/submissions/map?state=valide&filter[categorie]=pompe',
+    );
+    expect(calls[1]!.url).toBe(
+      'http://api/v1/acme/audit-logs?per_page=50&action=role.&actor_id=u1',
+    );
+    expect(calls[2]).toEqual({
+      url: 'http://api/v1/acme/structures/s1/photo-exports',
+      body: { pattern: '{n}', filters, author_id: 'u2' },
+    });
+  });
 });
