@@ -162,6 +162,59 @@ jobs:
       - run: pnpm --filter @tesserax/mobile exec expo export --platform ios --output-dir dist-check
       - run: pnpm --filter @tesserax/mobile exec expo export --platform android --output-dir dist-check
 
+  # Builds natifs sans compte Expo (D2, P7.3) : expo prebuild puis outils natifs. Longs : sur
+  # la branche principale seulement. Les builds signés passent par EAS (eas.json).
+  android:
+    name: Build Android autonome (prebuild + Gradle)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@tesserax/mobile^..." build
+      - run: pnpm --filter @tesserax/mobile exec expo prebuild --platform android --no-install
+      - run: ./gradlew assembleRelease --no-daemon
+        working-directory: apps/mobile/android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tesserax-android-preview
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+
+  ios:
+    name: Build iOS autonome (prebuild + Xcode, simulateur)
+    if: github.event_name == 'push'
+    runs-on: macos-15
+    env:
+      APP_VARIANT: preview
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@tesserax/mobile^..." build
+      - run: pnpm --filter @tesserax/mobile exec expo prebuild --platform ios
+      - name: Compilation pour le simulateur (sans signature)
+        working-directory: apps/mobile/ios
+        run: >-
+          xcodebuild -workspace *.xcworkspace -scheme "$(basename *.xcworkspace .xcworkspace)"
+          -configuration Release -sdk iphonesimulator -derivedDataPath build
+          CODE_SIGNING_ALLOWED=NO build
+
   docker:
     name: Build des images Docker
     runs-on: ubuntu-latest
