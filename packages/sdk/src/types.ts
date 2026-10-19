@@ -1,6 +1,9 @@
 import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
 
-/** Types des réponses de l'API `/v1` (amorce manuelle ; générés depuis l'OpenAPI en P7.1.3). */
+/**
+ * Types des réponses de l'API `/v1`, écrits à la main et partagés avec `@tesserax/form-schema`.
+ * Chaque méthode du client est vérifiée contre `apps/api/openapi.json` (test de l'API).
+ */
 
 export interface Page<T> {
   data: T[];

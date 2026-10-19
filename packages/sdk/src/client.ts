@@ -29,6 +29,7 @@ import {
   type ReportTemplate,
   type Webhook,
   type WebhookDelivery,
+  type WebhookEvent,
   type WebhookInput,
   type FileDto,
   type Filter,
@@ -248,6 +249,8 @@ export function createClient(options: ClientOptions) {
           patch<Settings>(p('/settings'), body),
       },
       structures: {
+        /** JSON Schema de la définition d'un formulaire (outillage, validation externe). */
+        schema: () => get<Record<string, unknown>>(p('/structures/schema')),
         list: (params: ListParams & { includeArchived?: boolean } = {}) =>
           get<Page<Structure>>(p('/structures'), {
             ...toQuery(params),
@@ -390,6 +393,7 @@ export function createClient(options: ClientOptions) {
       reports: {
         list: (structureId: string) =>
           get<{ data: ReportTemplate[] }>(p(`/structures/${structureId}/reports`)),
+        get: (id: string) => get<ReportTemplate>(p(`/reports/${id}`)),
         tags: (structureId: string) =>
           get<ReportTags>(p(`/structures/${structureId}/reports/tags`)),
         create: (
@@ -435,6 +439,8 @@ export function createClient(options: ClientOptions) {
       },
       webhooks: {
         list: () => get<{ data: Webhook[] }>(p('/webhooks')),
+        get: (id: string) => get<Webhook>(p(`/webhooks/${id}`)),
+        events: () => get<{ data: WebhookEvent[] }>(p('/webhooks/events')),
         create: (body: WebhookInput) => post<Webhook & { secret: string }>(p('/webhooks'), body),
         update: (id: string, body: Partial<WebhookInput> & { enabled?: boolean }) =>
           patch<Webhook>(p(`/webhooks/${id}`), body),

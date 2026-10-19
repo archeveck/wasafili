@@ -2,7 +2,7 @@
   "name": "@tesserax/sdk",
   "version": "0.0.0",
   "private": true,
-  "description": "Client API typé partagé par le web et le mobile (amorce ; génération OpenAPI en P7.1.3)",
+  "description": "Client API typé partagé par le web et le mobile, vérifié contre l'OpenAPI de l'API",
   "type": "module",
   "exports": {
     ".": {
