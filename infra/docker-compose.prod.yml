@@ -1,0 +1,127 @@
+# Production (P7.2.3) : Traefik termine TLS (Let's Encrypt), seuls les ports 80 et 443 sont
+# publiés. Deux noms d'hôte pointant vers le serveur :
+#   APP_DOMAIN    back-office et API (/v1)        ex. tesserax.exemple.ci
+#   FILES_DOMAIN  stockage (URL signées)          ex. fichiers.tesserax.exemple.ci
+#
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d --build
+#
+# Variables obligatoires (infra/.env) : APP_DOMAIN, FILES_DOMAIN, ACME_EMAIL, JWT_SECRET,
+# POSTGRES_PASSWORD, TESSERAX_OWNER_PASSWORD, TESSERAX_APP_PASSWORD, MINIO_ROOT_USER,
+# MINIO_ROOT_PASSWORD, SMTP_URL, MAIL_FROM. Procédure complète : docs/exploitation.md.
+
+x-prod-env: &prod-env
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DATABASE_URL: postgresql://tesserax_app:${TESSERAX_APP_PASSWORD:?requis}@postgres:5432/tesserax
+  REDIS_URL: redis://redis:6379
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (32 caractères au moins)}
+  TRUST_PROXY: 2
+  S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: https://${FILES_DOMAIN:?requis}
+  S3_BUCKET: ${S3_BUCKET:-tesserax}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:?requis}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?requis}
+  GOTENBERG_URL: http://gotenberg:3000
+  APP_URL: https://${APP_DOMAIN:?requis}
+  SMTP_URL: ${SMTP_URL:?relais SMTP requis (D5)}
+  MAIL_FROM: ${MAIL_FROM:?requis}
+  # Garde SSRF des webhooks : pas d'adresse privée en production.
+  WEBHOOK_ALLOW_PRIVATE: 'false'
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+
+services:
+  traefik:
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=letsencrypt
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?requis}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
+      - --ping=true
+      - --log.format=json
+      - --accesslog=true
+      - --accesslog.format=json
+    ports: !override ['80:80', '443:443']
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    restart: unless-stopped
+
+  web:
+    labels: !override
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.web.entrypoints=websecure
+      - traefik.http.routers.web.middlewares=hsts@docker
+      - traefik.http.middlewares.hsts.headers.stsSeconds=31536000
+      - traefik.http.middlewares.hsts.headers.stsIncludeSubdomains=true
+      - traefik.http.services.web.loadbalancer.server.port=80
+    environment:
+      S3_PUBLIC_ORIGIN: https://${FILES_DOMAIN}
+    restart: unless-stopped
+
+  # Stockage exposé pour les URL signées (dépôts et téléchargements directs) ; console fermée.
+  minio:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?requis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?requis}
+      MINIO_BROWSER: 'off'
+    ports: !reset []
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.files.rule=Host(`${FILES_DOMAIN}`)
+      - traefik.http.routers.files.entrypoints=websecure
+      - traefik.http.routers.files.middlewares=hsts@docker
+      - traefik.http.services.files.loadbalancer.server.port=9000
+    restart: unless-stopped
+
+  # L'API n'est jointe qu'à travers nginx (même origine que le back-office).
+  api:
+    environment: *prod-env
+    labels: !reset []
+    restart: unless-stopped
+  worker:
+    environment: *prod-env
+    restart: unless-stopped
+  migrate:
+    environment:
+      <<: *prod-env
+      DATABASE_URL: postgresql://tesserax_owner:${TESSERAX_OWNER_PASSWORD:?requis}@postgres:5432/tesserax
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?requis}
+      TESSERAX_OWNER_PASSWORD: ${TESSERAX_OWNER_PASSWORD:?requis}
+      TESSERAX_APP_PASSWORD: ${TESSERAX_APP_PASSWORD:?requis}
+    ports: !reset []
+    restart: unless-stopped
+  redis:
+    ports: !reset []
+    restart: unless-stopped
+  gotenberg:
+    ports: !reset []
+    restart: unless-stopped
+  minio-init:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?requis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?requis}
+  backup:
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?requis}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:?requis}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?requis}
+    restart: unless-stopped
+  # Données fictives et faux serveur SMTP : hors production.
+  demo:
+    profiles: [demo]
+  mailpit:
+    profiles: [outils]
+
+volumes:
+  letsencrypt:

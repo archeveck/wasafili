@@ -6,13 +6,18 @@
  * ZIP des photos.
  *
  *   node infra/demo/fiches-terrain.mjs [nombre]     # 24 par défaut
+ *   node infra/demo/fiches-terrain.mjs --si-vide    # rien si le formulaire a déjà des fiches
  *
  * Prérequis : instance de démo (`pnpm db:seed`) et API démarrée. Variables : API_URL, API_HOST.
+ * `docker compose up` le lance avec `--si-vide` (service `demo`) : relancer la stack ne
+ * duplique pas les données.
  */
 const API = process.env.API_URL ?? 'http://localhost:3000';
 const HOST = process.env.API_HOST;
 const PASSWORD = 'Tesserax2026!';
-const COUNT = Number(process.argv[2] ?? 24);
+const args = process.argv.slice(2);
+const ONLY_IF_EMPTY = args.includes('--si-vide');
+const COUNT = Number(args.find((arg) => /^\d+$/.test(arg)) ?? 24);
 // PNG 1×1 : signature et photo.
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -83,6 +88,18 @@ const list = (await call(technicien, 'GET', '/demo/lists?per_page=100')).data.fi
 const items = (await call(technicien, 'GET', `/demo/lists/${list.id}/items?per_page=100`)).data;
 const byCode = Object.fromEntries(items.map((item) => [item.code, item.id]));
 const today = new Date().toISOString().slice(0, 10);
+
+if (ONLY_IF_EMPTY) {
+  const existing = await call(
+    technicien,
+    'GET',
+    `/demo/structures/${structure.id}/submissions?per_page=1`,
+  );
+  if (existing.meta.total > 0) {
+    console.log(`Démonstration déjà présente (${existing.meta.total} fiche(s)) : rien à faire.`);
+    process.exit(0);
+  }
+}
 
 for (let i = 0; i < COUNT; i += 1) {
   const site = pick(SITES, i);

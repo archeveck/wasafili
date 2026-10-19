@@ -16,7 +16,7 @@ pnpm db:seed                 # instance « demo » + 3 utilisateurs
 pnpm dev                     # api (:3000), web (:5173), worker
 pnpm lint && pnpm typecheck && pnpm test   # vérifications rapides (sans base)
 pnpm test:integration        # tests API contre la base tesserax_test (infra requise)
-docker compose -f infra/docker-compose.yml --profile full up -d --build   # stack complète
+cd infra && docker compose up -d --build   # stack complète
 ```
 
 ## Structure

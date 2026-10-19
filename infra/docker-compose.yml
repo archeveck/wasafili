@@ -1,7 +1,9 @@
-# Stack Tesserax.
+# Stack Tesserax (P7.2.4).
+#   Stack complète + démo :  docker compose up -d --build        (à la racine du dépôt)
+#                            → http://app.localhost:8080 (admin@tesserax.local / Tesserax2026!)
 #   Infra seule (dev) :      pnpm infra:up
-#   Stack complète + démo :  docker compose -f infra/docker-compose.yml --profile full up -d --build
-# Les valeurs par défaut conviennent au développement local ; surcharger via infra/.env
+#   Production (TLS) :       voir docs/exploitation.md (surcouche docker-compose.prod.yml)
+# Les valeurs par défaut conviennent au poste local ; surcharger via infra/.env
 # (voir .env.example à la racine) pour tout autre usage.
 name: tesserax
 
@@ -11,7 +13,8 @@ x-app-env: &app-env
   DATABASE_URL: postgresql://tesserax_app:${TESSERAX_APP_PASSWORD:-tesserax_app}@postgres:5432/tesserax
   REDIS_URL: redis://redis:6379
   JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-dev-only-change-me}
-  TRUST_PROXY: 1
+  # Traefik puis nginx (web) devant l'API : l'IP cliente est à deux sauts (limites par IP).
+  TRUST_PROXY: 2
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
   S3_BUCKET: ${S3_BUCKET:-tesserax}
@@ -102,10 +105,9 @@ services:
       timeout: 3s
       retries: 20
 
-  # ---------- Applications (profil "full") ----------
+  # ---------- Applications ----------
 
   migrate:
-    profiles: [full]
     image: tesserax/api:dev
     build: { context: .., dockerfile: apps/api/Dockerfile }
     command: ['sh', '-c', 'pnpm db:deploy && pnpm db:seed']
@@ -117,7 +119,6 @@ services:
     restart: 'no'
 
   api:
-    profiles: [full]
     image: tesserax/api:dev
     build: { context: .., dockerfile: apps/api/Dockerfile }
     environment: *app-env
@@ -135,16 +136,22 @@ services:
       - traefik.http.services.api.loadbalancer.server.port=3000
 
   worker:
-    profiles: [full]
     build: { context: .., dockerfile: apps/worker/Dockerfile }
     environment: *app-env
     depends_on:
       redis: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3002/health']
+      interval: 10s
+      timeout: 3s
+      retries: 20
 
   web:
-    profiles: [full]
     build: { context: .., dockerfile: apps/web/Dockerfile }
+    environment:
+      # Origine du stockage autorisée par la CSP (photos et dépôts par URL signée).
+      S3_PUBLIC_ORIGIN: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
     depends_on:
       api: { condition: service_healthy }
     # Fond de carte PMTiles extrait par infra/maps/fetch-basemap.sh (facultatif).
@@ -154,9 +161,41 @@ services:
       - traefik.http.routers.web.rule=Host(`app.localhost`)
       - traefik.http.services.web.loadbalancer.server.port=80
 
-  # TLS Let's Encrypt et variante Tailscale : P7.2.3.
+  # Inspections localisées de démonstration, saisies par l'API (une seule fois : --si-vide).
+  # Réseau de MinIO : `localhost:9000` (adresse des URL signées) y désigne bien le stockage.
+  demo:
+    image: node:24-alpine
+    network_mode: service:minio
+    environment:
+      API_URL: http://api:3000
+    volumes: ['./demo:/demo:ro']
+    command: ['node', '/demo/fiches-terrain.mjs', '--si-vide']
+    depends_on:
+      api: { condition: service_healthy }
+      worker: { condition: service_healthy }
+    restart: 'no'
+
+  # Sauvegardes quotidiennes et vérification de restauration (P7.2.1, docs/exploitation.md).
+  backup:
+    build: { context: ./backup }
+    environment:
+      PGHOST: postgres
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATABASE: tesserax
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-tesserax}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-tesserax}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-tesserax-minio-secret}
+      BACKUP_CRON: ${BACKUP_CRON:-30 2 * * *}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes: ['${BACKUP_DIR:-./backups}:/backups']
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_healthy }
+
+  # Point d'entrée HTTP local ; TLS Let's Encrypt : docker-compose.prod.yml.
   traefik:
-    profiles: [full]
     image: traefik:v3.6
     command:
       - --providers.docker=true

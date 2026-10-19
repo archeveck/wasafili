@@ -27,7 +27,7 @@ pnpm dev               # API sur http://localhost:3000, web sur http://localhost
 Stack complète conteneurisée (migrations + seed automatiques, derrière Traefik) :
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile full up -d --build
+cd infra && docker compose up -d --build
 curl -H 'Host: api.localhost' http://localhost:8080/health
 ```
 
