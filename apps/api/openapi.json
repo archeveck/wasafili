@@ -13,92 +13,104 @@
   ],
   "tags": [
     {
-      "name": "Health"
+      "name": "Authentification",
+      "description": "Jetons OAuth2 : `client_credentials` pour les intégrations."
     },
     {
-      "name": "OpenApi",
-      "description": "Documentation de l'API : document OpenAPI 3.1 et page interactive (Swagger UI).\nLe document est généré depuis les routes (`pnpm --filter"
+      "name": "Appelant et instances",
+      "description": "Identité de l’appelant et instances accessibles."
     },
     {
-      "name": "Audit",
-      "description": "Journal d'audit de l'instance (P6.3) : `/{app}/audit-logs`."
+      "name": "Formulaires",
+      "description": "Formulaires versionnés ; une version publiée est immuable."
     },
     {
-      "name": "OAuth"
+      "name": "Fiches",
+      "description": "Fiches saisies, filtres, workflow, historique et conflits. Les droits dépendent du formulaire."
     },
     {
-      "name": "Me"
+      "name": "Fichiers",
+      "description": "Dépôt direct par URL signée (photos, signatures, pièces jointes)."
     },
     {
-      "name": "Users"
+      "name": "Référentiels",
+      "description": "Référentiels hiérarchiques, import et export CSV/XLSX."
     },
     {
-      "name": "Roles"
+      "name": "Tâches",
+      "description": "Fiches à saisir, planifiées et assignées."
     },
     {
-      "name": "Groups"
-    },
-    {
-      "name": "Structures"
-    },
-    {
-      "name": "Submissions",
-      "description": "Fiches. Les droits sont évalués par structure dans le service (règles de la structure,\nsinon permissions d'instance du rôle) : pas de `@Can` d'instance ici."
-    },
-    {
-      "name": "StructureAccess",
-      "description": "Droits par structure (P2.6.2) et filtres de visibilité (P2.6.3)."
-    },
-    {
-      "name": "Sync",
-      "description": "Synchronisation hors ligne (P3.2.2, P3.2.3). Les droits sont ceux de l'API classique."
-    },
-    {
-      "name": "Tasks",
-      "description": "Tâches planifiées (agenda)."
-    },
-    {
-      "name": "Lists"
-    },
-    {
-      "name": "Files",
-      "description": "Tout membre de l'instance peut déposer des fichiers (photos, signatures, pièces jointes)."
-    },
-    {
-      "name": "Settings",
-      "description": "Personnalisation de l'instance (P2.7) : lisible par tout membre, modifiable par l'admin."
-    },
-    {
-      "name": "Notifications",
-      "description": "Centre de notifications de l'appelant et jetons push de ses appareils."
+      "name": "Rapports",
+      "description": "Modèles DOCX et rapports PDF des fiches."
     },
     {
       "name": "Webhooks",
-      "description": "Webhooks sortants (P5.4) : `/{app}/webhooks`."
+      "description": "Notifications sortantes signées (HMAC-SHA256)."
     },
     {
-      "name": "Emails",
-      "description": "Journal d'envoi des e-mails (P5.2)."
+      "name": "Automatisations",
+      "description": "Déclencheurs, actions et journal d’exécution."
     },
     {
-      "name": "Reports",
-      "description": "Modèles de rapports (P5.1) et génération PDF."
+      "name": "E-mails",
+      "description": "Journal des e-mails envoyés par les automatisations."
     },
     {
-      "name": "Automations",
-      "description": "Automatisations (P5.3) et journal d'exécution (P5.3.5)."
+      "name": "Exports de photos",
+      "description": "Archives ZIP des photos d’une sélection de fiches."
     },
     {
-      "name": "Team",
-      "description": "Suivi des équipes terrain (P6.1.2) : `/{app}/team/positions`."
+      "name": "Tableaux de bord",
+      "description": "Indicateurs calculés sur les fiches lisibles par l’appelant."
     },
     {
-      "name": "Dashboards",
-      "description": "Tableaux de bord (P6.2) : `/{app}/dashboards`. Tout membre les consulte ; les chiffres\nsuivent ses droits sur les fiches. `dashboard:manage` pour les créer et les modifier."
+      "name": "Équipes terrain",
+      "description": "Dernières positions connues des membres."
     },
     {
-      "name": "PhotoExports",
-      "description": "Export ZIP des photos (P6.4). Les droits sont ceux de l'export des fiches de la structure\n(évalués dans le service) ; un export n'est visible que de son demandeur."
+      "name": "Membres",
+      "description": "Membres de l’instance, rôles et attributs."
+    },
+    {
+      "name": "Groupes",
+      "description": "Groupes de membres (droits, assignation)."
+    },
+    {
+      "name": "Rôles",
+      "description": "Rôles et permissions d’instance."
+    },
+    {
+      "name": "Droits des formulaires",
+      "description": "Droits par rôle et groupe, filtres de visibilité."
+    },
+    {
+      "name": "Clés API",
+      "description": "Identifiants des intégrations ; leurs permissions sont leurs scopes."
+    },
+    {
+      "name": "Paramètres",
+      "description": "Nom, fuseau, image de marque et menu mobile de l’instance."
+    },
+    {
+      "name": "Journal d’audit",
+      "description": "Connexions, administration, droits et exports."
+    },
+    {
+      "name": "Notifications",
+      "description": "Centre de notifications et jetons push de l’appelant."
+    },
+    {
+      "name": "Synchronisation mobile",
+      "description": "Protocole hors ligne de l’application mobile."
+    },
+    {
+      "name": "Santé",
+      "description": "Sonde de disponibilité (hors préfixe `/v1`)."
+    },
+    {
+      "name": "Documentation",
+      "description": "Ce document et sa page interactive."
     }
   ],
   "paths": {
@@ -106,7 +118,7 @@
       "get": {
         "operationId": "health.check",
         "tags": [
-          "Health"
+          "Santé"
         ],
         "summary": "État du service",
         "description": "État du service : base de données et Redis (200 ou 503).",
@@ -142,7 +154,7 @@
       "get": {
         "operationId": "me.apps",
         "tags": [
-          "Me"
+          "Appelant et instances"
         ],
         "summary": "Instances (« apps ») accessibles à l'appelant",
         "description": "Instances (« apps ») accessibles à l'appelant : sert à la sélection d'instance.",
@@ -191,7 +203,7 @@
       "get": {
         "operationId": "openApi.docs",
         "tags": [
-          "OpenApi"
+          "Documentation"
         ],
         "summary": "Documentation interactive de l'API",
         "responses": {
@@ -217,7 +229,7 @@
       "get": {
         "operationId": "openApi.init",
         "tags": [
-          "OpenApi"
+          "Documentation"
         ],
         "summary": "Initialisation de la page de documentation",
         "responses": {
@@ -243,7 +255,7 @@
       "get": {
         "operationId": "me.me",
         "tags": [
-          "Me"
+          "Appelant et instances"
         ],
         "summary": "Profil de l'appelant",
         "parameters": [
@@ -280,7 +292,7 @@
       "post": {
         "operationId": "oAuth.revoke",
         "tags": [
-          "OAuth"
+          "Authentification"
         ],
         "summary": "Révocation d'un refresh token (RFC 7009)",
         "description": "Révocation d'un refresh token (RFC 7009) : déconnexion de la session. Toujours 200.",
@@ -342,7 +354,7 @@
       "post": {
         "operationId": "oAuth.token",
         "tags": [
-          "OAuth"
+          "Authentification"
         ],
         "summary": "Endpoint de jeton OAuth2 (corps JSON ou `application/x-www-form-urlencoded`)",
         "requestBody": {
@@ -505,7 +517,7 @@
       "get": {
         "operationId": "openApi.openapi",
         "tags": [
-          "OpenApi"
+          "Documentation"
         ],
         "summary": "Document OpenAPI 3.1 de l'API",
         "responses": {
@@ -527,11 +539,489 @@
         "security": []
       }
     },
+    "/v1/{app}/api-clients": {
+      "get": {
+        "operationId": "apiClients.list",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Clés API de l'instance, actives puis révoquées",
+        "description": "Permission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Attributs à renvoyer, séparés par des virgules (`id` est toujours inclus).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApiClient"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "apiClients.create",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Crée une clé API",
+        "description": "Crée une clé API. Le secret (`clientSecret`) n'est renvoyé qu'ici : seul son empreinte est conservée. Les permissions accordées doivent être détenues par l'appelant.\n\nPermission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "scopes": {
+                    "maxItems": 27,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "instance:manage",
+                        "user:read",
+                        "user:manage",
+                        "role:read",
+                        "role:manage",
+                        "group:read",
+                        "group:manage",
+                        "structure:read",
+                        "structure:create",
+                        "structure:update",
+                        "structure:publish",
+                        "structure:delete",
+                        "list:read",
+                        "list:manage",
+                        "submission:create",
+                        "submission:read:own",
+                        "submission:read:all",
+                        "submission:update",
+                        "submission:delete",
+                        "submission:export",
+                        "task:read",
+                        "task:manage",
+                        "report:manage",
+                        "automation:manage",
+                        "apikey:manage",
+                        "audit:read",
+                        "dashboard:manage"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "scopes"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiClientWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/{app}/api-clients/{id}": {
+      "get": {
+        "operationId": "apiClients.get",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Détail d'une clé API (sans son secret)",
+        "description": "Permission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Attributs à renvoyer, séparés par des virgules (`id` est toujours inclus).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiClient"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "apiClients.update",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Renomme une clé ou change ses permissions, effectives dès la requête suivante",
+        "description": "Permission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "scopes": {
+                    "maxItems": 27,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "instance:manage",
+                        "user:read",
+                        "user:manage",
+                        "role:read",
+                        "role:manage",
+                        "group:read",
+                        "group:manage",
+                        "structure:read",
+                        "structure:create",
+                        "structure:update",
+                        "structure:publish",
+                        "structure:delete",
+                        "list:read",
+                        "list:manage",
+                        "submission:create",
+                        "submission:read:own",
+                        "submission:read:all",
+                        "submission:update",
+                        "submission:delete",
+                        "submission:export",
+                        "task:read",
+                        "task:manage",
+                        "report:manage",
+                        "automation:manage",
+                        "apikey:manage",
+                        "audit:read",
+                        "dashboard:manage"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiClient"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "apiClients.revoke",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Révoque une clé",
+        "description": "Révoque une clé : ses jetons sont refusés dès la requête suivante.\n\nPermission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Effectué."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/{app}/api-clients/{id}/secret": {
+      "post": {
+        "operationId": "apiClients.rotate",
+        "tags": [
+          "Clés API"
+        ],
+        "summary": "Remplace le secret",
+        "description": "Remplace le secret ; le nouveau n'est renvoyé qu'ici, l'ancien cesse de fonctionner.\n\nPermission requise : `apikey:manage`.",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant court de l’instance (`GET /v1/apps`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiClientWithSecret"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "apikey:manage"
+            ]
+          }
+        ]
+      }
+    },
     "/v1/{app}/audit-logs": {
       "get": {
         "operationId": "audit.list",
         "tags": [
-          "Audit"
+          "Journal d’audit"
         ],
         "summary": "Journal d'audit de l'instance, du plus récent au plus ancien",
         "description": "Journal d'audit de l'instance, du plus récent au plus ancien. Filtre `action` : action exacte ou famille (`role`, `auth`…).\n\nPermission requise : `audit:read`.",
@@ -653,7 +1143,7 @@
       "get": {
         "operationId": "audit.actions",
         "tags": [
-          "Audit"
+          "Journal d’audit"
         ],
         "summary": "Actions journalisées (catalogue des valeurs de `action`)",
         "description": "Permission requise : `audit:read`.",
@@ -713,7 +1203,7 @@
       "get": {
         "operationId": "automations.runs",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Exécutions des automatisations (journal), filtrables par automatisation, fiche et statut",
         "description": "Permission requise : `automation:manage`.",
@@ -825,7 +1315,7 @@
       "post": {
         "operationId": "automations.retry",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Relance une exécution en échec",
         "description": "Permission requise : `automation:manage`.",
@@ -886,7 +1376,7 @@
       "get": {
         "operationId": "automations.list",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Automatisations de l'instance",
         "description": "Permission requise : `automation:manage`.",
@@ -955,7 +1445,7 @@
       "post": {
         "operationId": "automations.create",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Crée une automatisation (déclencheur, conditions json-logic, actions)",
         "description": "Permission requise : `automation:manage`.",
@@ -1518,7 +2008,7 @@
       "get": {
         "operationId": "automations.get",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Détail d'une automatisation",
         "description": "Permission requise : `automation:manage`.",
@@ -1585,7 +2075,7 @@
       "put": {
         "operationId": "automations.update",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Remplace la configuration d'une automatisation",
         "description": "Permission requise : `automation:manage`.",
@@ -2155,7 +2645,7 @@
       "delete": {
         "operationId": "automations.remove",
         "tags": [
-          "Automations"
+          "Automatisations"
         ],
         "summary": "Supprime une automatisation (son journal d'exécution est conservé)",
         "description": "Permission requise : `automation:manage`.",
@@ -2209,7 +2699,7 @@
       "get": {
         "operationId": "dashboards.list",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Tableaux de bord de l'instance",
         "parameters": [
@@ -2259,7 +2749,7 @@
       "post": {
         "operationId": "dashboards.create",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Crée un tableau de bord",
         "description": "Permission requise : `dashboard:manage`.",
@@ -2532,7 +3022,7 @@
       "post": {
         "operationId": "dashboards.data",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Valeurs d'un widget, enregistré ou en cours d'édition (aperçu)",
         "parameters": [
@@ -2768,7 +3258,7 @@
       "get": {
         "operationId": "dashboards.get",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Détail d'un tableau de bord et de ses widgets",
         "parameters": [
@@ -2827,7 +3317,7 @@
       "put": {
         "operationId": "dashboards.update",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Remplace un tableau de bord (nom, widgets)",
         "description": "Permission requise : `dashboard:manage`.",
@@ -3107,7 +3597,7 @@
       "delete": {
         "operationId": "dashboards.remove",
         "tags": [
-          "Dashboards"
+          "Tableaux de bord"
         ],
         "summary": "Supprime un tableau de bord",
         "description": "Permission requise : `dashboard:manage`.",
@@ -3161,7 +3651,7 @@
       "get": {
         "operationId": "emails.list",
         "tags": [
-          "Emails"
+          "E-mails"
         ],
         "summary": "E-mails envoyés par les automatisations, avec leur statut",
         "description": "Permission requise : `automation:manage`.",
@@ -3255,7 +3745,7 @@
       "post": {
         "operationId": "emails.retry",
         "tags": [
-          "Emails"
+          "E-mails"
         ],
         "summary": "Renvoie un e-mail en échec",
         "description": "Permission requise : `automation:manage`.",
@@ -3316,7 +3806,7 @@
       "post": {
         "operationId": "files.requestUpload",
         "tags": [
-          "Files"
+          "Fichiers"
         ],
         "summary": "Demande le dépôt d'un fichier",
         "description": "Demande le dépôt d'un fichier : renvoie une URL signée de dépôt direct. Rejouer avec le même `id` reprend un dépôt interrompu sans doublon.",
@@ -3398,7 +3888,7 @@
       "get": {
         "operationId": "files.get",
         "tags": [
-          "Files"
+          "Fichiers"
         ],
         "summary": "Métadonnées d'un fichier et URL signée de lecture (fichier déposé)",
         "parameters": [
@@ -3459,7 +3949,7 @@
       "post": {
         "operationId": "files.complete",
         "tags": [
-          "Files"
+          "Fichiers"
         ],
         "summary": "Confirme le dépôt",
         "description": "Confirme le dépôt : l'objet doit exister avec la taille annoncée.",
@@ -3513,7 +4003,7 @@
       "get": {
         "operationId": "groups.list",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Groupes de l'instance",
         "description": "Permission requise : `group:read`.",
@@ -3593,7 +4083,7 @@
       "post": {
         "operationId": "groups.create",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Crée un groupe",
         "description": "Permission requise : `group:manage`.",
@@ -3668,7 +4158,7 @@
       "get": {
         "operationId": "groups.get",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Détail d'un groupe et de ses membres",
         "description": "Permission requise : `group:read`.",
@@ -3735,7 +4225,7 @@
       "patch": {
         "operationId": "groups.rename",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Renomme un groupe",
         "description": "Permission requise : `group:manage`.",
@@ -3817,7 +4307,7 @@
       "delete": {
         "operationId": "groups.remove",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Supprime un groupe",
         "description": "Permission requise : `group:manage`.",
@@ -3871,7 +4361,7 @@
       "put": {
         "operationId": "groups.setMembers",
         "tags": [
-          "Groups"
+          "Groupes"
         ],
         "summary": "Remplace la liste des membres d'un groupe",
         "description": "Permission requise : `group:manage`.",
@@ -3958,7 +4448,7 @@
       "get": {
         "operationId": "lists.lookup",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Éléments de tous les référentiels",
         "description": "Éléments de tous les référentiels, par code (scan QR) ou par identifiants (libellés des valeurs affichées dans les listes de fiches).\n\nPermission requise : `list:read`.",
@@ -4048,7 +4538,7 @@
       "get": {
         "operationId": "lists.list",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Référentiels de l'instance",
         "description": "Permission requise : `list:read`.",
@@ -4143,7 +4633,7 @@
       "post": {
         "operationId": "lists.create",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Crée un référentiel (un niveau par libellé de `levels`)",
         "description": "Permission requise : `list:manage`.",
@@ -4233,7 +4723,7 @@
       "get": {
         "operationId": "lists.get",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Détail d'un référentiel",
         "description": "Permission requise : `list:read`.",
@@ -4300,7 +4790,7 @@
       "patch": {
         "operationId": "lists.update",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Modifie un référentiel",
         "description": "Permission requise : `list:manage`.",
@@ -4400,7 +4890,7 @@
       "delete": {
         "operationId": "lists.remove",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Supprime un référentiel",
         "description": "Permission requise : `list:manage`.",
@@ -4454,7 +4944,7 @@
       "get": {
         "operationId": "lists.export",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Exporte un référentiel (CSV ou XLSX)",
         "description": "Permission requise : `list:read`.",
@@ -4537,7 +5027,7 @@
       "post": {
         "operationId": "lists.import",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Import CSV/XLSX (multipart",
         "description": "Import CSV/XLSX (multipart : `file`, `mode`, `dry_run`, `mapping` JSON).\n\nPermission requise : `list:manage`.",
@@ -4639,7 +5129,7 @@
       "get": {
         "operationId": "lists.items",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Éléments d'un référentiel, filtrables par parent, niveau, code ou texte",
         "description": "Permission requise : `list:read`.",
@@ -4797,7 +5287,7 @@
       "post": {
         "operationId": "lists.createItem",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Ajoute un élément à un référentiel",
         "description": "Permission requise : `list:manage`.",
@@ -4908,7 +5398,7 @@
       "patch": {
         "operationId": "lists.updateItem",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Modifie un élément, ou le restaure (`archived",
         "description": "Modifie un élément, ou le restaure (`archived: false`).\n\nPermission requise : `list:manage`.",
@@ -5030,7 +5520,7 @@
       "delete": {
         "operationId": "lists.archiveItem",
         "tags": [
-          "Lists"
+          "Référentiels"
         ],
         "summary": "Archive un élément",
         "description": "Archive un élément : il reste lisible dans les fiches qui l'utilisent.\n\nPermission requise : `list:manage`.",
@@ -5093,7 +5583,7 @@
       "get": {
         "operationId": "me.member",
         "tags": [
-          "Me"
+          "Appelant et instances"
         ],
         "summary": "Rôle et permissions de l'appelant dans l'instance (affichage des actions possibles)",
         "parameters": [
@@ -5293,7 +5783,7 @@
       "get": {
         "operationId": "photoExports.list",
         "tags": [
-          "PhotoExports"
+          "Exports de photos"
         ],
         "summary": "Exports ZIP de photos demandés par l'appelant",
         "parameters": [
@@ -5367,7 +5857,7 @@
       "get": {
         "operationId": "photoExports.get",
         "tags": [
-          "PhotoExports"
+          "Exports de photos"
         ],
         "summary": "État d'un export ZIP de photos",
         "parameters": [
@@ -5428,7 +5918,7 @@
       "post": {
         "operationId": "photoExports.download",
         "tags": [
-          "PhotoExports"
+          "Exports de photos"
         ],
         "summary": "URL signée de courte durée vers l'archive",
         "parameters": [
@@ -5597,7 +6087,7 @@
       "get": {
         "operationId": "reports.get",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Détail d'un modèle de rapport",
         "description": "Permission requise : `structure:read`.",
@@ -5664,7 +6154,7 @@
       "patch": {
         "operationId": "reports.update",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Modifie un modèle de rapport (nom, fichier DOCX, nom du PDF)",
         "description": "Permission requise : `report:manage`.",
@@ -5758,7 +6248,7 @@
       "delete": {
         "operationId": "reports.remove",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Supprime un modèle de rapport",
         "description": "Permission requise : `report:manage`.",
@@ -5812,7 +6302,7 @@
       "post": {
         "operationId": "reports.render",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "PDF d'une fiche (droits de lecture de la fiche) ou aperçu sur une fiche d'exemple",
         "description": "Permission requise : `structure:read`.",
@@ -5892,7 +6382,7 @@
       "get": {
         "operationId": "reports.template",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Télécharge le fichier DOCX d'un modèle de rapport",
         "description": "Permission requise : `report:manage`.",
@@ -5961,7 +6451,7 @@
       "get": {
         "operationId": "roles.list",
         "tags": [
-          "Roles"
+          "Rôles"
         ],
         "summary": "Rôles de l'instance",
         "description": "Permission requise : `role:read`.",
@@ -6041,7 +6531,7 @@
       "post": {
         "operationId": "roles.create",
         "tags": [
-          "Roles"
+          "Rôles"
         ],
         "summary": "Crée un rôle",
         "description": "Permission requise : `role:manage`.",
@@ -6157,7 +6647,7 @@
       "get": {
         "operationId": "roles.catalogue",
         "tags": [
-          "Roles"
+          "Rôles"
         ],
         "summary": "Catalogue des permissions disponibles (éditeur de rôles)",
         "description": "Permission requise : `role:read`.",
@@ -6217,7 +6707,7 @@
       "patch": {
         "operationId": "roles.update",
         "tags": [
-          "Roles"
+          "Rôles"
         ],
         "summary": "Modifie un rôle (nom, permissions)",
         "description": "Permission requise : `role:manage`.",
@@ -6331,7 +6821,7 @@
       "delete": {
         "operationId": "roles.remove",
         "tags": [
-          "Roles"
+          "Rôles"
         ],
         "summary": "Supprime un rôle sans membre",
         "description": "Permission requise : `role:manage`.",
@@ -6385,7 +6875,7 @@
       "get": {
         "operationId": "settings.get",
         "tags": [
-          "Settings"
+          "Paramètres"
         ],
         "summary": "Paramètres de l'instance",
         "description": "Paramètres de l'instance : nom, fuseau, langue, image de marque, menu mobile.",
@@ -6436,7 +6926,7 @@
       "patch": {
         "operationId": "settings.update",
         "tags": [
-          "Settings"
+          "Paramètres"
         ],
         "summary": "Modifie les paramètres de l'instance",
         "description": "Permission requise : `instance:manage`.",
@@ -6589,7 +7079,7 @@
       "get": {
         "operationId": "structures.list",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Formulaires de l'instance",
         "description": "Permission requise : `structure:read`.",
@@ -6696,7 +7186,7 @@
       "post": {
         "operationId": "structures.create",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Crée un formulaire et son premier brouillon",
         "description": "Permission requise : `structure:create`.",
@@ -6776,7 +7266,7 @@
       "get": {
         "operationId": "structures.schema",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "JSON Schema de la définition (documentation, outils externes)",
         "description": "Permission requise : `structure:read`.",
@@ -6836,7 +7326,7 @@
       "get": {
         "operationId": "structures.get",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Détail d'un formulaire et de ses versions",
         "description": "Permission requise : `structure:read`.",
@@ -6903,7 +7393,7 @@
       "patch": {
         "operationId": "structures.update",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Renomme ou décrit un formulaire",
         "description": "Permission requise : `structure:update`.",
@@ -6993,7 +7483,7 @@
       "delete": {
         "operationId": "structures.archive",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Archive un formulaire",
         "description": "Archive un formulaire : plus de nouvelle fiche, les fiches existantes restent.\n\nPermission requise : `structure:delete`.",
@@ -7047,7 +7537,7 @@
       "get": {
         "operationId": "structureAccess.get",
         "tags": [
-          "StructureAccess"
+          "Droits des formulaires"
         ],
         "summary": "Droits par rôle et par groupe sur un formulaire, avec leurs filtres de visibilité",
         "description": "Permission requise : `role:read`.",
@@ -7114,7 +7604,7 @@
       "put": {
         "operationId": "structureAccess.replace",
         "tags": [
-          "StructureAccess"
+          "Droits des formulaires"
         ],
         "summary": "Remplace les droits d'un formulaire",
         "description": "Permission requise : `role:manage`.",
@@ -7263,7 +7753,7 @@
       "put": {
         "operationId": "structures.saveDraft",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Enregistre le brouillon de la définition (crée le brouillon au besoin)",
         "description": "Permission requise : `structure:update`.",
@@ -7343,7 +7833,7 @@
       "post": {
         "operationId": "structures.publish",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Publie le brouillon",
         "description": "Publie le brouillon : il devient la version courante, immuable.\n\nPermission requise : `structure:publish`.",
@@ -7404,7 +7894,7 @@
       "get": {
         "operationId": "structures.version",
         "tags": [
-          "Structures"
+          "Formulaires"
         ],
         "summary": "Une version d'un formulaire, avec sa définition",
         "description": "Permission requise : `structure:read`.",
@@ -7481,7 +7971,7 @@
       "post": {
         "operationId": "photoExports.create",
         "tags": [
-          "PhotoExports"
+          "Exports de photos"
         ],
         "summary": "Prépare une archive ZIP des photos d'une sélection de fiches (mêmes filtres que la liste)",
         "description": "Prépare une archive ZIP des photos d'une sélection de fiches (mêmes filtres que la liste). L'archive est assemblée en arrière-plan.",
@@ -7611,7 +8101,7 @@
       "get": {
         "operationId": "reports.list",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Modèles de rapport d'un formulaire",
         "description": "Permission requise : `structure:read`.",
@@ -7689,7 +8179,7 @@
       "post": {
         "operationId": "reports.create",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Crée un modèle de rapport à partir d'un fichier DOCX déjà déposé",
         "description": "Permission requise : `report:manage`.",
@@ -7789,7 +8279,7 @@
       "get": {
         "operationId": "reports.tags",
         "tags": [
-          "Reports"
+          "Rapports"
         ],
         "summary": "Balises utilisables dans un modèle DOCX pour ce formulaire",
         "description": "Permission requise : `report:manage`.",
@@ -7858,7 +8348,7 @@
       "get": {
         "operationId": "submissions.list",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Fiches d'un formulaire, paginées",
         "description": "Fiches d'un formulaire, paginées. Filtres `filter[cle]=v` ou `filter[cle][op]=v`, tri `sort=cle` ou `sort=-cle` (décroissant), période de création, état, auteur.",
@@ -8030,7 +8520,7 @@
       "post": {
         "operationId": "submissions.create",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Crée une fiche dans la version publiée du formulaire",
         "description": "Crée une fiche dans la version publiée du formulaire. Avec `clientMutationId`, un rejeu renvoie la fiche existante (200) sans doublon.",
@@ -8145,7 +8635,7 @@
       "get": {
         "operationId": "submissions.export",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Export CSV/XLSX avec les mêmes filtres que la liste",
         "parameters": [
@@ -8295,9 +8785,9 @@
       "get": {
         "operationId": "submissions.map",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
-        "summary": "Fiches localisées en GeoJSON, avec les mêmes filtres que la liste (P6.1.1)",
+        "summary": "Fiches localisées en GeoJSON, avec les mêmes filtres que la liste",
         "parameters": [
           {
             "name": "app",
@@ -8434,9 +8924,9 @@
       "get": {
         "operationId": "submissions.states",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
-        "summary": "Nombre de fiches par état de workflow, avec les mêmes filtres que la liste (P4.3)",
+        "summary": "Nombre de fiches par état de workflow, avec les mêmes filtres que la liste",
         "parameters": [
           {
             "name": "app",
@@ -8584,7 +9074,7 @@
       "get": {
         "operationId": "submissions.get",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Détail d'une fiche",
         "parameters": [
@@ -8643,7 +9133,7 @@
       "patch": {
         "operationId": "submissions.update",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Modifie les champs d'une fiche",
         "description": "Modifie les champs d'une fiche. Seuls les champs envoyés changent ; avec `baseRevision`, un champ modifié entre-temps est enregistré comme conflit.",
@@ -8729,7 +9219,7 @@
       "delete": {
         "operationId": "submissions.remove",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Supprime une fiche",
         "parameters": [
@@ -8787,7 +9277,7 @@
       "get": {
         "operationId": "submissions.automationRuns",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Automatisations exécutées sur une fiche",
         "parameters": [
@@ -8848,7 +9338,7 @@
       "get": {
         "operationId": "submissions.conflicts",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Conflits de modification d'une fiche",
         "parameters": [
@@ -8909,7 +9399,7 @@
       "post": {
         "operationId": "submissions.resolveConflict",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Résout un conflit",
         "description": "Résout un conflit : garder la valeur appliquée ou restaurer la valeur écrasée.",
@@ -8997,7 +9487,7 @@
       "get": {
         "operationId": "submissions.revisions",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Historique des révisions d'une fiche (champ par champ)",
         "parameters": [
@@ -9095,7 +9585,7 @@
       "post": {
         "operationId": "submissions.transition",
         "tags": [
-          "Submissions"
+          "Fiches"
         ],
         "summary": "Applique une transition de workflow, avec éventuellement des champs à enregistrer",
         "parameters": [
@@ -9187,7 +9677,7 @@
       "get": {
         "operationId": "sync.pull",
         "tags": [
-          "Sync"
+          "Synchronisation mobile"
         ],
         "summary": "Synchronisation mobile",
         "description": "Synchronisation mobile : changements depuis un curseur (formulaires, référentiels, fiches, tâches, notifications).",
@@ -9260,7 +9750,7 @@
       "post": {
         "operationId": "sync.push",
         "tags": [
-          "Sync"
+          "Synchronisation mobile"
         ],
         "summary": "Synchronisation mobile",
         "description": "Synchronisation mobile : mutations hors ligne idempotentes (`clientMutationId`).",
@@ -9493,7 +9983,7 @@
       "get": {
         "operationId": "tasks.list",
         "tags": [
-          "Tasks"
+          "Tâches"
         ],
         "summary": "Tâches, filtrables par période, formulaire, assigné et statut",
         "description": "Permission requise : `task:read` ou `task:manage`.",
@@ -9649,7 +10139,7 @@
       "post": {
         "operationId": "tasks.create",
         "tags": [
-          "Tasks"
+          "Tâches"
         ],
         "summary": "Crée une tâche",
         "description": "Crée une tâche : une fiche à saisir, assignée à un membre ou un groupe.\n\nPermission requise : `task:manage`.",
@@ -9840,7 +10330,7 @@
       "get": {
         "operationId": "tasks.get",
         "tags": [
-          "Tasks"
+          "Tâches"
         ],
         "summary": "Détail d'une tâche",
         "description": "Permission requise : `task:read` ou `task:manage`.",
@@ -9908,7 +10398,7 @@
       "patch": {
         "operationId": "tasks.update",
         "tags": [
-          "Tasks"
+          "Tâches"
         ],
         "summary": "Modifie une tâche",
         "description": "Permission requise : `task:manage`.",
@@ -10092,7 +10582,7 @@
       "delete": {
         "operationId": "tasks.remove",
         "tags": [
-          "Tasks"
+          "Tâches"
         ],
         "summary": "Supprime une tâche",
         "description": "Permission requise : `task:manage`.",
@@ -10146,7 +10636,7 @@
       "get": {
         "operationId": "team.positions",
         "tags": [
-          "Team"
+          "Équipes terrain"
         ],
         "summary": "Dernière position connue de chaque membre (fiches et tâches lisibles par l'appelant)",
         "description": "Permission requise : `user:read`.",
@@ -10206,7 +10696,7 @@
       "get": {
         "operationId": "users.list",
         "tags": [
-          "Users"
+          "Membres"
         ],
         "summary": "Membres de l'instance (la RLS limite les adhésions à l'instance courante)",
         "description": "Permission requise : `user:read`.",
@@ -10301,7 +10791,7 @@
       "post": {
         "operationId": "users.invite",
         "tags": [
-          "Users"
+          "Membres"
         ],
         "summary": "Ajoute un membre",
         "description": "Ajoute un membre ; un compte est créé avec un mot de passe temporaire s'il n'existe pas.\n\nPermission requise : `user:manage`.",
@@ -10411,7 +10901,7 @@
       "get": {
         "operationId": "users.get",
         "tags": [
-          "Users"
+          "Membres"
         ],
         "summary": "Détail d'un membre",
         "description": "Permission requise : `user:read`.",
@@ -10478,7 +10968,7 @@
       "patch": {
         "operationId": "users.update",
         "tags": [
-          "Users"
+          "Membres"
         ],
         "summary": "Modifie un membre (rôle, attributs, activation)",
         "description": "Permission requise : `user:manage`.",
@@ -10570,7 +11060,7 @@
       "delete": {
         "operationId": "users.remove",
         "tags": [
-          "Users"
+          "Membres"
         ],
         "summary": "Retire un membre de l'instance",
         "description": "Permission requise : `user:manage`.",
@@ -11388,6 +11878,132 @@
   },
   "components": {
     "schemas": {
+      "ApiClient": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revokedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastUsedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "name",
+          "scopes",
+          "revokedAt",
+          "lastUsedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ApiClientWithSecret": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revokedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastUsedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clientSecret": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "name",
+          "scopes",
+          "revokedAt",
+          "lastUsedAt",
+          "createdAt",
+          "updatedAt",
+          "clientSecret"
+        ]
+      },
       "App": {
         "type": "object",
         "properties": {

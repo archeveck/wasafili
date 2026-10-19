@@ -30,6 +30,11 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<I
     LOG_LEVEL: 'silent',
     DATABASE_URL: TEST_DATABASE_URL,
     LOGIN_RATE_LIMIT_PER_MINUTE: '1000',
+    RATE_LIMIT_USER_PER_MINUTE: '100000',
+    RATE_LIMIT_CLIENT_PER_MINUTE: '100000',
+    RATE_LIMIT_INSTANCE_PER_MINUTE: '100000',
+    // Compteurs propres à chaque application de test (Redis partagé entre exécutions).
+    RATE_LIMIT_PREFIX: `tesserax-test:rate-limit:${crypto.randomUUID()}`,
     // Files isolées : un worker de développement ne doit pas consommer les jobs des tests.
     QUEUE_PREFIX: TEST_QUEUE_PREFIX,
     ...env,

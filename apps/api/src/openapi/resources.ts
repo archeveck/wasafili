@@ -351,3 +351,28 @@ export const tokenResponse = z
       'Jeton OAuth2. `refresh_token` : grants `password` et `refresh_token` uniquement ; ' +
       '`scope` : permissions d’un client d’intégration.',
   });
+
+export const apiClient = z
+  .object({
+    id: uuid,
+    clientId: z.string(),
+    name: z.string(),
+    scopes: z.array(z.string()),
+    revokedAt: nullable(dateTime),
+    lastUsedAt: nullable(dateTime),
+    createdAt: dateTime,
+    updatedAt: dateTime,
+  })
+  .register(resources, {
+    id: 'ApiClient',
+    description:
+      'Clé API (client OAuth2 `client_credentials`). `scopes` : permissions accordées, ' +
+      'qui deviennent les scopes de ses jetons.',
+  });
+
+export const apiClientWithSecret = apiClient
+  .extend({ clientSecret: z.string() })
+  .register(resources, {
+    id: 'ApiClientWithSecret',
+    description: 'Clé API et son secret, renvoyé uniquement à la création et à la rotation.',
+  });

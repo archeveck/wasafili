@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { ENV, type Env } from '../config/env';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -18,11 +17,6 @@ export const JWT_ISSUER = 'tesserax';
         signOptions: { algorithm: 'HS256', issuer: JWT_ISSUER },
         verifyOptions: { algorithms: ['HS256'], issuer: JWT_ISSUER },
       }),
-    }),
-    // Limitation basique de l'endpoint de jeton (mémoire locale) ; Redis en Phase 7 (P7.1.5).
-    ThrottlerModule.forRootAsync({
-      inject: [ENV],
-      useFactory: (env: Env) => [{ ttl: 60_000, limit: env.LOGIN_RATE_LIMIT_PER_MINUTE }],
     }),
   ],
   controllers: [OAuthController],

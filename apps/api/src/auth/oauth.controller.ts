@@ -1,5 +1,4 @@
-import { Body, Controller, Header, Headers, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Header, Headers, HttpCode, Post, Req } from '@nestjs/common';
 import { type Request } from 'express';
 import { z } from 'zod';
 import { OAuthError } from '../common/errors';
@@ -7,6 +6,7 @@ import { AuthService } from './auth.service';
 import { Public } from './decorators';
 import { type TokenResponse, TokensService } from './tokens.service';
 import { OpenApi } from '../openapi/openapi.decorator';
+import { RateLimitByIp } from '../rate-limit/rate-limit.guard';
 import { tokenResponse } from '../openapi/resources';
 
 const tokenRequestSchema = z.discriminatedUnion('grant_type', [
@@ -51,7 +51,7 @@ export class OAuthController {
   @Post('token')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  @UseGuards(ThrottlerGuard)
+  @RateLimitByIp()
   @OpenApi({
     body: tokenRequestSchema,
     consumes: ['application/x-www-form-urlencoded', 'application/json'],

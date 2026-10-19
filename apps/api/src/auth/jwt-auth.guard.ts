@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { type Request } from 'express';
-import { currentContext } from '../common/request-context';
+import { currentContext, runWithContext } from '../common/request-context';
+import { PrismaService } from '../prisma/prisma.service';
 import { IS_PUBLIC } from './decorators';
 import { type Principal } from './principal';
 import { TokensService } from './tokens.service';
@@ -17,6 +18,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly tokens: TokensService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -41,12 +43,7 @@ export class JwtAuthGuard implements CanActivate {
 
     const principal: Principal =
       claims.typ === 'client' && claims.inst
-        ? {
-            kind: 'client',
-            clientId: claims.sub,
-            instanceId: claims.inst,
-            permissions: claims.scope ? claims.scope.split(' ') : [],
-          }
+        ? await this.clientPrincipal(claims.sub, claims.inst)
         : { kind: 'user', userId: claims.sub };
     req.principal = principal;
     if (principal.kind === 'user') {
@@ -54,5 +51,25 @@ export class JwtAuthGuard implements CanActivate {
       if (store) store.userId = principal.userId;
     }
     return true;
+  }
+
+  /**
+   * Client d'intégration : relu à chaque requête, pour qu'une révocation ou un changement de
+   * permissions s'applique tout de suite plutôt qu'à l'expiration du jeton (P7.1.4).
+   */
+  private async clientPrincipal(clientId: string, instanceId: string): Promise<Principal> {
+    const client = await runWithContext({ instanceId }, () =>
+      this.prisma.db.oAuthClient.findUnique({
+        where: { id: clientId },
+        select: { scopes: true, revokedAt: true },
+      }),
+    );
+    if (!client || client.revokedAt) {
+      throw new UnauthorizedException({
+        error: 'invalid_token',
+        message: 'Clé API révoquée ou supprimée',
+      });
+    }
+    return { kind: 'client', clientId, instanceId, permissions: client.scopes };
   }
 }

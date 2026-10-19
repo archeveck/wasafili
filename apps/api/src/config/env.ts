@@ -24,7 +24,16 @@ const envSchema = z.object({
         .map((origin) => origin.trim())
         .filter(Boolean),
     ),
+  /** Limitation de débit (P7.1.5), requêtes par minute : endpoint de jeton par adresse IP… */
   LOGIN_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
+  /** … par utilisateur (la synchronisation mobile envoie des rafales) … */
+  RATE_LIMIT_USER_PER_MINUTE: z.coerce.number().int().positive().default(600),
+  /** … par client d'intégration (clé API) … */
+  RATE_LIMIT_CLIENT_PER_MINUTE: z.coerce.number().int().positive().default(300),
+  /** … et par instance, tous appelants confondus. */
+  RATE_LIMIT_INSTANCE_PER_MINUTE: z.coerce.number().int().positive().default(3000),
+  /** Préfixe Redis des compteurs. */
+  RATE_LIMIT_PREFIX: z.string().min(1).default('tesserax:rate-limit'),
   /** Stockage S3 (MinIO) des fichiers. Absent : endpoints fichiers indisponibles (503). */
   S3_ENDPOINT: z.url().optional(),
   /** Adresse du stockage vue des clients (URL signées) ; par défaut S3_ENDPOINT. */

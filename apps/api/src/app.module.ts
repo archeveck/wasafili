@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import { ApiClientsModule } from './api-clients/api-clients.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { AutomationsModule } from './automations/automations.module';
@@ -18,6 +19,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { OpenApiModule } from './openapi/openapi.module';
 import { PhotoExportsModule } from './photo-exports/photo-exports.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RateLimitGuard } from './rate-limit/rate-limit.guard';
+import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
 import { ReportsModule } from './reports/reports.module';
@@ -48,11 +51,13 @@ import { PermissionGuard } from './tenancy/permission.guard';
     }),
     PrismaModule,
     RedisModule,
+    RateLimitModule,
     HealthModule,
     OpenApiModule,
     AuditModule,
     AuthModule,
     IamModule,
+    ApiClientsModule,
     StructuresModule,
     SubmissionsModule,
     ListsModule,
@@ -71,9 +76,10 @@ import { PermissionGuard } from './tenancy/permission.guard';
     PhotoExportsModule,
   ],
   providers: [
-    // Ordre significatif : authentification → instance (contexte RLS) → permissions.
+    // Ordre significatif : authentification → instance (contexte RLS) → débit → permissions.
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
     { provide: APP_GUARD, useClass: InstanceGuard },
+    { provide: APP_GUARD, useExisting: RateLimitGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_INTERCEPTOR, useClass: FieldsInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

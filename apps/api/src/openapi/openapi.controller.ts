@@ -43,10 +43,7 @@ const DOCS_INIT = `window.ui = SwaggerUIBundle({
 });
 `;
 
-/**
- * Documentation de l'API : document OpenAPI 3.1 et page interactive (Swagger UI).
- * Le document est généré depuis les routes (`pnpm --filter @tesserax/api openapi`).
- */
+/** Documentation de l'API : document OpenAPI 3.1 et page interactive. */
 @Controller()
 @Public()
 export class OpenApiController {

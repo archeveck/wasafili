@@ -28,6 +28,38 @@ const HTTP_METHODS: Partial<Record<RequestMethod, string>> = {
   [RequestMethod.DELETE]: 'delete',
 };
 const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete'];
+
+/** Sections publiques de la documentation, dans l'ordre de lecture d'un intégrateur. */
+const TAGS: Record<string, [name: string, description: string]> = {
+  OAuth: ['Authentification', 'Jetons OAuth2 : `client_credentials` pour les intégrations.'],
+  Me: ['Appelant et instances', 'Identité de l’appelant et instances accessibles.'],
+  Structures: ['Formulaires', 'Formulaires versionnés ; une version publiée est immuable.'],
+  Submissions: [
+    'Fiches',
+    'Fiches saisies, filtres, workflow, historique et conflits. Les droits dépendent du formulaire.',
+  ],
+  Files: ['Fichiers', 'Dépôt direct par URL signée (photos, signatures, pièces jointes).'],
+  Lists: ['Référentiels', 'Référentiels hiérarchiques, import et export CSV/XLSX.'],
+  Tasks: ['Tâches', 'Fiches à saisir, planifiées et assignées.'],
+  Reports: ['Rapports', 'Modèles DOCX et rapports PDF des fiches.'],
+  Webhooks: ['Webhooks', 'Notifications sortantes signées (HMAC-SHA256).'],
+  Automations: ['Automatisations', 'Déclencheurs, actions et journal d’exécution.'],
+  Emails: ['E-mails', 'Journal des e-mails envoyés par les automatisations.'],
+  PhotoExports: ['Exports de photos', 'Archives ZIP des photos d’une sélection de fiches.'],
+  Dashboards: ['Tableaux de bord', 'Indicateurs calculés sur les fiches lisibles par l’appelant.'],
+  Team: ['Équipes terrain', 'Dernières positions connues des membres.'],
+  Users: ['Membres', 'Membres de l’instance, rôles et attributs.'],
+  Groups: ['Groupes', 'Groupes de membres (droits, assignation).'],
+  Roles: ['Rôles', 'Rôles et permissions d’instance.'],
+  StructureAccess: ['Droits des formulaires', 'Droits par rôle et groupe, filtres de visibilité.'],
+  ApiClients: ['Clés API', 'Identifiants des intégrations ; leurs permissions sont leurs scopes.'],
+  Settings: ['Paramètres', 'Nom, fuseau, image de marque et menu mobile de l’instance.'],
+  Audit: ['Journal d’audit', 'Connexions, administration, droits et exports.'],
+  Notifications: ['Notifications', 'Centre de notifications et jetons push de l’appelant.'],
+  Sync: ['Synchronisation mobile', 'Protocole hors ligne de l’application mobile.'],
+  Health: ['Santé', 'Sonde de disponibilité (hors préfixe `/v1`).'],
+  OpenApi: ['Documentation', 'Ce document et sa page interactive.'],
+};
 const COMPONENT_REF = '#/components/schemas/';
 
 /** Contrôleurs de l'application, dans l'ordre des modules (sans instancier quoi que ce soit). */
@@ -135,7 +167,11 @@ function openApiPath(controllerPath: string, methodPath: string): string {
 /** Première phrase du commentaire : résumé ; le reste : description. */
 function splitComment(comment: string | undefined): { summary?: string; description?: string } {
   if (!comment) return {};
-  const text = comment.replace(/\s*\n\s*/g, ' ').trim();
+  // Références aux tâches du projet (« (P6.1.1) ») : utiles aux développeurs seulement.
+  const text = comment
+    .replace(/\s*\(P\d+(\.\d+)*(, P\d+(\.\d+)*)*\)/g, '')
+    .replace(/\s*\n\s*/g, ' ')
+    .trim();
   let end = text.search(/[.:;](\s|$)/);
   // Phrase longue : le résumé s'arrête à la première incise.
   if (end < 0 || end > 120) end = text.search(/ \(|, /);
@@ -195,9 +231,10 @@ export function buildDocument(controllers: Type[], { version, docs }: BuildOptio
 
   for (const controller of controllers) {
     const base = controller.name.replace(/Controller$/, '');
-    const tag = base;
-    const classDoc = docs.get(controller.name);
-    tags.push({ name: tag, ...(classDoc ? { description: classDoc } : {}) });
+    const section = TAGS[base];
+    if (!section) throw new Error(`Section de documentation manquante pour ${controller.name}`);
+    const [tag, tagDescription] = section;
+    tags.push({ name: tag, description: tagDescription });
     const controllerPaths = [Reflect.getMetadata(PATH_METADATA, controller) as string | string[]]
       .flat()
       .filter((value) => value !== undefined);
@@ -370,7 +407,7 @@ export function buildDocument(controllers: Type[], { version, docs }: BuildOptio
       ].join('\n'),
     },
     servers: [{ url: '/', description: 'Même origine que la documentation' }],
-    tags,
+    tags: Object.values(TAGS).flatMap(([name]) => tags.filter((tag) => tag.name === name)),
     paths: sortedPaths,
     components: {
       schemas: components,
