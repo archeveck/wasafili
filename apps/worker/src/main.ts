@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { type JobName, type JobPayloads, QUEUE_NAME } from '@tesserax/jobs';
+import { AUTOMATION_QUEUE_NAME, type JobName, type JobPayloads, QUEUE_NAME } from '@tesserax/jobs';
 import { type Job, Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import nodemailer from 'nodemailer';
@@ -7,6 +7,7 @@ import pg from 'pg';
 import { pino } from 'pino';
 import { loadEnv } from './env.js';
 import { processEmail } from './email.js';
+import { startOpsServer, workerMetrics } from './ops.js';
 import { cleanupPhotoExports, processPhotoExport } from './photo-export.js';
 import { processPush } from './push.js';
 import { processThumbnail } from './thumbnail.js';
@@ -89,16 +90,30 @@ void scheduler
   )
   .catch((err: unknown) => logger.error({ err }, 'planification de la purge des exports'));
 
+// Exploitation : santé et métriques (files du worker et des automatisations de l'API).
+const automations = new Queue(AUTOMATION_QUEUE_NAME, { connection, prefix: env.QUEUE_PREFIX });
+const metrics = workerMetrics([scheduler, automations]);
+const ops = startOpsServer({
+  port: env.WORKER_OPS_PORT,
+  registry: metrics.registry,
+  checks: { redis: () => connection.ping(), database: () => db.query('SELECT 1') },
+});
+
 worker.on('ready', () => logger.info({ queue: QUEUE_NAME }, 'worker prêt'));
-worker.on('completed', (job) => logger.info({ jobId: job.id, name: job.name }, 'job terminé'));
-worker.on('failed', (job, err) =>
-  logger.error({ jobId: job?.id, name: job?.name, err }, 'job en échec'),
-);
+worker.on('completed', (job) => {
+  metrics.record(job, 'completed');
+  logger.info({ jobId: job.id, name: job.name }, 'job terminé');
+});
+worker.on('failed', (job, err) => {
+  metrics.record(job, 'failed');
+  logger.error({ jobId: job?.id, name: job?.name, err }, 'job en échec');
+});
 
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'arrêt du worker');
+  ops.close();
   await worker.close();
-  await scheduler.close();
+  await Promise.all([scheduler.close(), automations.close()]);
   await Promise.all([connection.quit(), db.end()]);
   process.exit(0);
 }

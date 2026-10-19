@@ -22,6 +22,8 @@ const envSchema = z.object({
   WEBHOOK_ALLOW_PRIVATE: z.stringbool().default(false),
   /** Livraisons échouées d'affilée avant désactivation d'un webhook. */
   WEBHOOK_DISABLE_AFTER: z.coerce.number().int().min(1).default(5),
+  /** Port interne de `/health` et `/metrics` (P7.2.2). */
+  WORKER_OPS_PORT: z.coerce.number().int().positive().default(3002),
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;
