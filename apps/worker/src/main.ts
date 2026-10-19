@@ -1,12 +1,13 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { type JobName, type JobPayloads, QUEUE_NAME } from '@tesserax/jobs';
-import { type Job, Worker } from 'bullmq';
+import { type Job, Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import nodemailer from 'nodemailer';
 import pg from 'pg';
 import { pino } from 'pino';
 import { loadEnv } from './env.js';
 import { processEmail } from './email.js';
+import { cleanupPhotoExports, processPhotoExport } from './photo-export.js';
 import { processPush } from './push.js';
 import { processThumbnail } from './thumbnail.js';
 import { httpSender, processWebhook } from './webhook.js';
@@ -59,6 +60,13 @@ const handlers: Handlers = {
       final: isFinal(job),
     });
   },
+  'photos-zip': async (payload, job) => {
+    await processPhotoExport(payload, { s3, bucket: env.S3_BUCKET, db, final: isFinal(job) });
+  },
+  'photo-exports-cleanup': async () => {
+    const removed = await cleanupPhotoExports({ s3, bucket: env.S3_BUCKET, db });
+    if (removed > 0) logger.info({ removed }, 'archives de photos expirées supprimées');
+  },
 };
 
 const worker = new Worker(
@@ -71,6 +79,16 @@ const worker = new Worker(
   { connection, concurrency: 4, prefix: env.QUEUE_PREFIX },
 );
 
+// Purge des archives de photos expirées, toutes les 6 heures (idempotent au redémarrage).
+const scheduler = new Queue(QUEUE_NAME, { connection, prefix: env.QUEUE_PREFIX });
+void scheduler
+  .upsertJobScheduler(
+    'photo-exports-cleanup',
+    { every: 6 * 3600 * 1000 },
+    { name: 'photo-exports-cleanup', data: {}, opts: { removeOnComplete: 10, removeOnFail: 50 } },
+  )
+  .catch((err: unknown) => logger.error({ err }, 'planification de la purge des exports'));
+
 worker.on('ready', () => logger.info({ queue: QUEUE_NAME }, 'worker prêt'));
 worker.on('completed', (job) => logger.info({ jobId: job.id, name: job.name }, 'job terminé'));
 worker.on('failed', (job, err) =>
@@ -80,6 +98,7 @@ worker.on('failed', (job, err) =>
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'arrêt du worker');
   await worker.close();
+  await scheduler.close();
   await Promise.all([connection.quit(), db.end()]);
   process.exit(0);
 }
