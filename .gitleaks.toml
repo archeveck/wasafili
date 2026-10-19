@@ -1,0 +1,10 @@
+# Détection de secrets (P7.4.3) : règles par défaut de gitleaks, plus les secrets de clés API
+# Tesserax, reconnaissables à leur préfixe.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "tesserax-api-key-secret"
+description = "Secret de clé API Tesserax (client_credentials)"
+regex = '''tsxsk_[A-Za-z0-9_-]{43}'''
+keywords = ["tsxsk_"]

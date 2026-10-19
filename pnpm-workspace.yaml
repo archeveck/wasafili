@@ -9,3 +9,12 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
   - sharp
+
+# Audit des dépendances (P7.4.3, docs/security/dependances.md) : alertes sans correctif publié,
+# limitées à l'outillage de build mobile (CLI Expo, Metro, plugin Xcode), jamais embarquées
+# dans les images serveur ni dans l'application. À réexaminer à chaque montée d'Expo.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-w5hq-g745-h8pq
+    - GHSA-86w9-cpqp-85rv
+    - GHSA-vfj7-8cjw-p6xm

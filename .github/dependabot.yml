@@ -1,0 +1,26 @@
+# Mises à jour de sécurité et de maintenance (P7.4.3), regroupées pour limiter le bruit.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      securite:
+        applies-to: security-updates
+        patterns: ['*']
+      mineures:
+        update-types: [minor, patch]
+        patterns: ['*']
+    # Expo et React Native évoluent ensemble, par montée de SDK (npx expo install --fix).
+    ignore:
+      - dependency-name: 'expo*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native*'
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: docker
+    directories: [/apps/api, /apps/web, /apps/worker, /infra/backup]
+    schedule: { interval: weekly, day: monday }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
