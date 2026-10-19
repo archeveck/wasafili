@@ -35,7 +35,8 @@ cd infra && docker compose up -d --build   # stack complète
   `npx expo install`. React est épinglé à la même version exacte dans tout le monorepo (un seul
   exemplaire, sinon « invalid hook call »). Données : `@tesserax/sync` (base SQLite locale, file
   d'envoi, moteur) ; jamais d'appel API direct pour lire ou écrire des fiches.
-  e2e : Maestro (`apps/mobile/e2e`, simulateur iOS + Expo Go).
+  e2e : Maestro (`apps/mobile/e2e`, simulateur iOS + Expo Go : `pnpm start` = `expo start --go`).
+  Builds : `eas.json` (profils, `APP_VARIANT`) ou `expo prebuild` + Gradle/Xcode (D2).
 - `packages/sync` — stockage local et moteur de synchronisation, indépendants de la plateforme
   (testés avec `node:sqlite`).
 - `packages/*` — ESM, compilés vers `dist/` (`turbo` construit les dépendances avant
@@ -80,6 +81,13 @@ cd infra && docker compose up -d --build   # stack complète
   porte `@Audit('famille.action')` (liste `AUDIT_ACTIONS`, libellés `audit.actions` dans
   `packages/i18n`) ; `audit_logs` est en ajout seul. Fond de carte : `infra/maps/fetch-basemap.sh`
   (servi sous `/tiles/`).
+- **API publique et exploitation (ADR 0011)** : une route se résume en JSDoc (résumé de
+  l'OpenAPI), trouve sa section dans `TAGS` (`openapi/document.ts`) ; une ressource publique
+  déclare sa réponse (`@OpenApi`, schéma dans `openapi/resources.ts`, vérifié en intégration) ;
+  le SDK la couvre (test). Puis `pnpm --filter @tesserax/api openapi` (fichier versionné).
+  Fichiers : types actifs refusés, signature vérifiée (`files/content-types.ts`). Pile Docker :
+  `cd infra && docker compose up` (pas de compose à la racine : le `.env` de dev s'y
+  appliquerait) ; production : `docker-compose.prod.yml`, procédure `docs/exploitation.md`.
 - **Migrations Prisma** : `migrate dev --create-only`, retirer les `DROP INDEX "*_sync"` générés
   (index `xid8` écrits à la main), puis `pnpm db:deploy`.
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger

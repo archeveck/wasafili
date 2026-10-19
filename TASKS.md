@@ -143,7 +143,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 - [x] P2.1.1 Vite + React + TanStack Router/Query + shadcn/ui + `packages/ui` (tokens)
 - [x] P2.1.2 Auth (login, refresh silencieux, sélection d'instance), layout, navigation
 - [x] P2.1.3 i18n FR (EN prêt), fuseau Africa/Abidjan par défaut (D14)
-- [x] P2.1.4 `packages/sdk` : client typé généré depuis l'OpenAPI (amorce, finalisé en Phase 7)
+- [x] P2.1.4 `packages/sdk` : client typé (amorce ; vérifié contre l'OpenAPI en Phase 7)
 
 **P2.2 `packages/form-renderer`**
 - [x] P2.2.1 Contrat de composant de champ partagé (props, valeur, erreurs, état visible/requis issus de `form-engine`)
@@ -292,28 +292,30 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 ---
 
-## Phase 7 — API publique & industrialisation
+## Phase 7 — API publique & industrialisation — *[ADR 0011](docs/adr/0011-api-publique-exploitation.md)*
 
 **P7.1 API publique**
-- [ ] P7.1.1 Revue des ressources `/v1` (`/apps`, structures, submissions, lists, tasks, users, reports, files/upload, webhooks) : cohérence, `fields=`, pagination
-- [ ] P7.1.2 OpenAPI généré automatiquement + doc publiée (Scalar/Swagger UI)
-- [ ] P7.1.3 Génération finale de `packages/sdk`, utilisée par web et mobile
-- [ ] P7.1.4 Clés API / clients OAuth `client_credentials` gérés dans l'admin (scopes)
-- [ ] P7.1.5 Rate limiting (Redis) par client et par instance
-- [ ] P7.1.6 Exemple de workflow n8n (JSON importable + doc)
+- [x] P7.1.1 Revue des ressources `/v1` (`/apps`, structures, submissions, lists, tasks, users, reports, files/upload, webhooks) : cohérence, `fields=`, pagination — collections d'activité paginées, listes de configuration en `{ data }` ; requêtes des fiches validées par pipe (documentées)
+- [x] P7.1.2 OpenAPI généré automatiquement + doc publiée (Swagger UI auto-hébergé, `/v1/docs`) — depuis les métadonnées NestJS, Zod et la JSDoc ; réponses vérifiées par contrat en intégration
+- [x] P7.1.3 `packages/sdk` utilisé par web et mobile, **vérifié** contre l'OpenAPI (écart : écrit à la main, cf. ADR 0011 §3 ; chaque méthode correspond à une opération, toutes couvertes)
+- [x] P7.1.4 Clés API / clients OAuth `client_credentials` gérés dans l'admin (scopes = permissions, rotation, révocation immédiate)
+- [x] P7.1.5 Rate limiting (Redis) par client, par utilisateur, par instance et par IP (jeton)
+- [x] P7.1.6 Exemple de workflow n8n (JSON importable + doc) — vérifié avec n8n 2.43.8
 
-**P7.2 Exploitation**
-- [ ] P7.2.1 Sauvegardes PostgreSQL (pg_dump planifié/WAL) + MinIO (mc mirror), procédure de restauration testée
-- [ ] P7.2.2 Healthchecks complets, logs structurés JSON, métriques basiques
-- [ ] P7.2.3 Traefik + TLS Let's Encrypt, variante d'accès privé Tailscale documentée
-- [ ] P7.2.4 `docker compose up` = stack complète + données de démo (critère d'acceptation)
+**P7.2 Exploitation** ([docs/exploitation.md](docs/exploitation.md))
+- [x] P7.2.1 Sauvegardes PostgreSQL (pg_dump planifié) + stockage (`mc mirror`), vérification de restauration automatique, restauration testée après sinistre simulé
+- [x] P7.2.2 Healthchecks complets (API, worker), logs structurés JSON corrélés (`X-Request-Id`), métriques Prometheus
+- [x] P7.2.3 Traefik + TLS Let's Encrypt (`docker-compose.prod.yml`), variante d'accès privé Tailscale documentée (non testée sur un tailnet réel)
+- [x] P7.2.4 `docker compose up` (dans `infra/`) = stack complète + données de démo (critère d'acceptation)
 
-**P7.3 Mobile** (D2) : builds EAS Android/iOS (profils dev/preview/prod) + chemin autonome `expo prebuild` + Gradle en CI.
+**P7.3 Mobile** (D2) ✅ : profils EAS `development` / `preview` / `production` (`APP_VARIANT`, clé Google Maps par variable) + chemin autonome `expo prebuild` + Gradle (APK construit localement) et Xcode en CI.
 
 **P7.4 Sécurité (OWASP ASVS niveau 1)**
-- [ ] P7.4.1 Checklist ASVS L1 passée et tracée dans `docs/security/`
-- [ ] P7.4.2 En-têtes de sécurité, CORS strict, validation des uploads (type, taille), URLs signées courtes
-- [ ] P7.4.3 Audit des dépendances en CI, revue des secrets
+- [x] P7.4.1 Checklist ASVS L1 passée et tracée dans `docs/security/` (4 écarts partiels justifiés)
+- [x] P7.4.2 En-têtes de sécurité, CORS strict, validation des uploads (types actifs refusés, signature, taille), URLs signées courtes ; politique de mot de passe, changement et réinitialisation
+- [x] P7.4.3 Audit des dépendances en CI, recherche de secrets (gitleaks), Dependabot
+
+- Fini quand : `cd infra && docker compose up` démarre la stack avec la démo et les 10 parcours Playwright y passent (aussi en HTTPS derrière la surcouche de production) ; sauvegarde, vérification et restauration testées ; workflows n8n exécutés ; tests d'intégration (contrat OpenAPI compris) verts.
 
 ---
 
@@ -325,7 +327,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 | 10 fiches avec photos en mode avion, sync sans doublon ni perte | P3.2, P3.5, P3.8.1 |
 | Validation → rapport PDF envoyé par e-mail | P4.1, P5.1–P5.3, P5.5 |
 | Isolation stricte entre instances | P0.6.4 (étendu à chaque nouvelle ressource) |
-| `docker compose up` démarre tout avec démo | P0.2, P7.2.4 |
+| `docker compose up` démarre tout avec démo | P0.2, P7.2.4 ✅ |
 
 ## ADR à rédiger (`docs/adr/`)
 

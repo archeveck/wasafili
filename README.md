@@ -24,21 +24,25 @@ pnpm db:seed           # données de démo
 pnpm dev               # API sur http://localhost:3000, web sur http://localhost:5173
 ```
 
-Stack complète conteneurisée (migrations + seed automatiques, derrière Traefik) :
+Stack complète conteneurisée, avec données de démonstration (migrations, seed, inspections
+localisées, sauvegardes) :
 
 ```bash
 cd infra && docker compose up -d --build
-curl -H 'Host: api.localhost' http://localhost:8080/health
+# → http://app.localhost:8080  (admin@tesserax.local / Tesserax2026!)
 ```
 
-| Service                  | URL locale                                                 |
-| ------------------------ | ---------------------------------------------------------- |
-| API (dev)                | http://localhost:3000 — via Traefik : `api.localhost:8080` |
-| Back-office (dev)        | http://localhost:5173 — via Traefik : `app.localhost:8080` |
-| PostgreSQL               | `localhost:5440`                                           |
-| Console MinIO            | http://localhost:9001                                      |
-| Mailpit (e-mails de dev) | http://localhost:8025                                      |
-| Gotenberg                | http://localhost:3001                                      |
+Production (TLS Let's Encrypt, secrets obligatoires), sauvegardes, supervision, builds
+mobiles : [docs/exploitation.md](docs/exploitation.md).
+
+| Service                  | URL locale                                                |
+| ------------------------ | --------------------------------------------------------- |
+| API (dev)                | http://localhost:3000 — documentation : `/v1/docs`        |
+| Back-office (dev)        | http://localhost:5173 — conteneurs : `app.localhost:8080` |
+| PostgreSQL               | `localhost:5440`                                          |
+| Console MinIO            | http://localhost:9001                                     |
+| Mailpit (e-mails de dev) | http://localhost:8025                                     |
+| Gotenberg                | http://localhost:3001                                     |
 
 Les ports se changent dans `.env` (voir [.env.example](.env.example)).
 
@@ -149,6 +153,29 @@ maestro test apps/mobile/e2e/carte-fiches.yaml   # carte mobile
 Sans fond de carte installé, les cartes web s'affichent sur un fond neutre. Variables :
 `BASEMAP_BBOX` (zone, défaut Côte d'Ivoire), `BASEMAP_MAXZOOM` (défaut 14).
 
+## API publique et exploitation (Phase 7)
+
+- **Documentation** : `/v1/docs` (OpenAPI 3.1, `/v1/openapi.json`), générée depuis le code et
+  vérifiée contre les réponses réelles ; bouton Authorize avec une clé API.
+- **Clés API** (back-office, « Clés API ») : permissions choisies, secret montré une fois,
+  rotation, révocation immédiate ; quotas par clé, utilisateur, instance et IP (`429`).
+- **n8n** : deux workflows importables, [docs/integrations/n8n](docs/integrations/n8n/README.md)
+  (rapport PDF des fiches validées par webhook signé ; export horaire paginé).
+- **Exploitation** : `/health`, `/metrics` (Prometheus, API et worker), journaux JSON
+  corrélés, sauvegardes quotidiennes avec vérification de restauration, Traefik + TLS.
+- **Sécurité** : checklist [OWASP ASVS niveau 1](docs/security/asvs-l1.md), en-têtes et CSP,
+  contrôle des fichiers déposés, politique de mot de passe, audit des dépendances et
+  recherche de secrets en CI.
+- **Mobile** : profils EAS `development` / `preview` / `production`, build autonome
+  `expo prebuild` + Gradle / Xcode en CI.
+
+```bash
+pnpm --filter @tesserax/api openapi            # régénère apps/api/openapi.json (versionné)
+docker compose -f infra/docker-compose.yml exec backup backup.sh   # sauvegarde immédiate
+docker compose -f infra/docker-compose.yml exec backup verify.sh   # vérification de restauration
+pnpm --filter @tesserax/web test:e2e           # dont api-keys.spec.ts, account.spec.ts
+```
+
 ## Démo (Phase 0)
 
 Comptes de démonstration de l'instance `demo` (mot de passe `Tesserax2026!`) :
@@ -206,7 +233,8 @@ pnpm test:integration                      # API contre PostgreSQL/Redis (infra 
 Les tests d'intégration couvrent le parcours de session (login → appel protégé → refresh →
 logout), la rotation et la détection de réutilisation des refresh tokens, le grant
 `client_credentials`, la limitation de débit, l'**isolation entre instances** (au niveau base
-et HTTP) et la matrice de droits des rôles système.
+et HTTP) et la matrice de droits des rôles système. Chaque réponse documentée y est aussi
+vérifiée contre son schéma OpenAPI (contrat).
 
 ## Architecture
 
@@ -232,5 +260,6 @@ docs/adr/   décisions d'architecture
 - [ADR 0008 — Workflow, tâches et notifications](docs/adr/0008-workflow-taches-notifications.md)
 - [ADR 0009 — Rapports, automatisations et webhooks](docs/adr/0009-rapports-automatisations.md)
 - [ADR 0010 — Pilotage : cartes, tableaux de bord, audit, export ZIP](docs/adr/0010-pilotage.md)
+- [ADR 0011 — API publique et exploitation](docs/adr/0011-api-publique-exploitation.md)
 
 Conventions de code et commandes détaillées : [CLAUDE.md](CLAUDE.md).
