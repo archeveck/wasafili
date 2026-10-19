@@ -6,7 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
 
 const listSchema = paginationSchema.extend({
-  /** Action exacte (`role.update`) ou famille (`role.`). */
+  /** Action exacte (`role.update`) ou préfixe d'une famille (`role.`, `automation`). */
   action: z.string().trim().max(100).optional(),
   actor_id: z.uuid().optional(),
   target_id: z.string().trim().max(100).optional(),

@@ -1,5 +1,6 @@
 import { loadDotEnv } from '../src/config/dotenv';
 import { createPrismaClient } from '../src/prisma/tenant';
+import { seedDemoDashboard } from '../src/seed/seed-dashboard';
 import { seedDemoContent } from '../src/seed/seed-demo';
 import { seedDemoReports } from '../src/seed/seed-reports';
 import { type SeedUser, seedInstance } from '../src/seed/seed-instance';
@@ -40,6 +41,11 @@ async function main(): Promise<void> {
       `Instance « ${instance.short} » prête : ${users.length} utilisateurs, ` +
         `référentiel « ${list.name} », structure « ${structure.name} ».`,
     );
+    const dashboard = await seedDemoDashboard(client, {
+      instanceId: instance.id,
+      structureId: structure.id,
+    });
+    console.log(`Tableau de bord « ${dashboard.name} » prêt.`);
     const env = process.env;
     if (env['S3_ENDPOINT'] && env['S3_ACCESS_KEY'] && env['S3_SECRET_KEY']) {
       const { report, automation } = await seedDemoReports(client, {

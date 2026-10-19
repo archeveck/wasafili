@@ -161,10 +161,11 @@ export class AuditService {
 
   async list(query: AuditQuery) {
     const where: Prisma.AuditLogWhereInput = {
+      // Action connue : égalité ; sinon préfixe (`role.`, `automation` couvre `automation_run.*`).
       ...(query.action
-        ? query.action.endsWith('.')
-          ? { action: { startsWith: query.action } }
-          : { action: query.action }
+        ? (AUDIT_ACTIONS as readonly string[]).includes(query.action)
+          ? { action: query.action }
+          : { action: { startsWith: query.action } }
         : {}),
       ...(query.actor_id ? { actorUserId: query.actor_id } : {}),
       ...(query.target_id ? { targetId: query.target_id } : {}),

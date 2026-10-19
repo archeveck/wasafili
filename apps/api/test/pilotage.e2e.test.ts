@@ -5,6 +5,8 @@ import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { tenantTransaction } from '../src/prisma/tenant';
+import { seedDemoDashboard } from '../src/seed/seed-dashboard';
+import { seedDemoContent } from '../src/seed/seed-demo';
 import {
   api,
   createTenant,
@@ -206,6 +208,17 @@ describe('tableaux de bord (P6.2)', () => {
     expect(JSON.stringify(invalid.body.details)).toContain('par période');
     await data(admin, widget({ metric: { op: 'sum', field: 'nom' } }), 422);
     await data(admin, widget({ type: 'bar', groupBy: { kind: 'field', field: 'mesure' } }), 422);
+  });
+
+  it('le tableau de bord de démonstration est calculable, widget par widget', async () => {
+    const demo = await seedDemoContent(owner(), tenant.instance.id);
+    await seedDemoDashboard(owner(), {
+      instanceId: tenant.instance.id,
+      structureId: demo.structure.id,
+    });
+    const [dashboard] = (await admin.get('/v1/acme/dashboards').expect(200)).body.data;
+    expect(dashboard.widgets).toHaveLength(7);
+    for (const widget of dashboard.widgets) await data(admin, widget);
   });
 
   it('enregistre un tableau de bord (dashboard:manage), consultable par tous', async () => {
