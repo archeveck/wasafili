@@ -551,6 +551,9 @@ export function createClient(options: ClientOptions) {
         update: (id: string, body: { roleId?: string; attributes?: Member['attributes'] }) =>
           patch<Member>(p(`/users/${id}`), body),
         remove: (id: string) => del(p(`/users/${id}`)),
+        /** Mot de passe provisoire (renvoyé une fois) ; refusé pour un compte multi-instances. */
+        resetPassword: (id: string) =>
+          post<{ temporaryPassword: string }>(p(`/users/${id}/password-reset`)),
       },
       roles: {
         list: (params?: ListParams) => get<Page<Role>>(p('/roles'), toQuery(params)),
@@ -627,6 +630,11 @@ export function createClient(options: ClientOptions) {
     },
     isAuthenticated: () => options.tokens.get() !== null,
     me: () => get<Me>('/me'),
+    /** Change le mot de passe ; toutes les sessions sont fermées, il faut se reconnecter. */
+    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+      await post<void>('/me/password', { currentPassword, newPassword });
+      options.tokens.set(null);
+    },
     apps: () => get<{ data: InstanceSummary[] }>('/apps'),
     app,
   };
