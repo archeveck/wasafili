@@ -13,7 +13,7 @@ COPY apps/web apps/web
 # Paquets partagés (form-schema, form-engine, sdk…) puis le back-office.
 RUN pnpm --filter @tesserax/web... build
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 # Gabarits substitués au démarrage (envsubst de l'image officielle) : la CSP vise l'origine
 # publique du stockage (S3_PUBLIC_ORIGIN, déduite de S3_PUBLIC_ENDPOINT par docker compose).
 ENV NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
