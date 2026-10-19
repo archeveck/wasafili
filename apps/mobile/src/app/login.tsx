@@ -1,7 +1,7 @@
 import { ApiError } from '@tesserax/sdk';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Field, Input, styles } from '@/components/ui';
 import { t } from '@/lib/i18n';
@@ -12,6 +12,8 @@ export default function Login() {
   const { expired } = useLocalSearchParams<{ expired?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Afficher le mot de passe saisi (ASVS 2.1.12) : utile sur un clavier tactile, au soleil.
+  const [revealed, setRevealed] = useState(false);
   const [server, setServer] = useState(serverUrl());
   const [showServer, setShowServer] = useState(false);
   const [error, setError] = useState<string>();
@@ -68,12 +70,26 @@ export default function Login() {
           <Input
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!revealed}
+            autoCapitalize="none"
             textContentType="password"
             accessibilityLabel={t('auth.password')}
             testID="login-password"
             onSubmitEditing={() => void submit()}
           />
+          <Pressable
+            onPress={() => setRevealed((value) => !value)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: revealed }}
+            accessibilityLabel="Afficher le mot de passe"
+            testID="login-reveal"
+            hitSlop={8}
+            style={{ alignSelf: 'flex-end', paddingTop: space.xs }}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '600' }}>
+              {revealed ? 'Masquer' : 'Afficher'}
+            </Text>
+          </Pressable>
         </Field>
         <Button
           title={t('auth.login')}

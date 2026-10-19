@@ -17,7 +17,8 @@ env:
       - scrollUntilVisible:
           element: Se déconnecter
       - tapOn: Se déconnecter
+      # Bouton de la boîte de confirmation (au-dessus d'« Annuler »), pas le lien de la page.
       - tapOn:
           text: Se déconnecter
-          index: 1
+          above: Annuler
 - assertVisible: Se connecter

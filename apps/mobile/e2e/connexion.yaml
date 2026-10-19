@@ -1,0 +1,33 @@
+# Connexion (ASVS 2.1.12) : le mot de passe saisi peut être affiché puis masqué avant l'envoi.
+# Part d'un appareil déconnecté : maestro test e2e/reinitialiser.yaml e2e/connexion.yaml
+appId: host.exp.Exponent
+env:
+  APP_URL: exp://127.0.0.1:8081
+  EMAIL: technicien@tesserax.local
+  PASSWORD: Tesserax2026!
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: Se connecter
+    timeout: 60000
+- tapOn:
+    id: login-email
+- inputText: ${EMAIL}
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- assertNotVisible: ${PASSWORD}
+- tapOn:
+    id: login-reveal
+- assertVisible: ${PASSWORD}
+- takeScreenshot: connexion-mot-de-passe-affiche
+- tapOn:
+    id: login-reveal
+- assertNotVisible: ${PASSWORD}
+- tapOn:
+    id: login-password
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 90000
