@@ -1,7 +1,7 @@
 # Tesserax — conventions du dépôt
 
 Plateforme no-code de collecte de données terrain (back-office web + mobile hors ligne).
-Spécification : [PROMPT_claude_code_clone_daxium.md](PROMPT_claude_code_clone_daxium.md).
+Spécification : [PROMPT_claude_code_clone_daxium.md](prompt/PROMPT_claude_code_clone_daxium.md).
 Découpage et décisions (D1–D14) : [TASKS.md](TASKS.md) — cocher les tâches au fil de l'eau.
 Décisions structurantes : [docs/adr/](docs/adr/).
 

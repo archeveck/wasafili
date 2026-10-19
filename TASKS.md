@@ -1,6 +1,6 @@
 # TASKS — Découpage du projet Tesserax
 
-Source : [PROMPT_claude_code_clone_daxium.md](PROMPT_claude_code_clone_daxium.md).
+Source : [PROMPT_claude_code_clone_daxium.md](prompt/PROMPT_claude_code_clone_daxium.md).
 Convention : `Px.y` = tâche (≈ 1 PR / 1 série de commits atomiques), `Px.y.z` = sous-tâche (≈ 1 commit).
 Chaque tâche a un critère **Fini quand** ; une phase n'est close que si toutes ses tâches le sont + tests verts + seed + README + démo décrite.
 
