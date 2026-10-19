@@ -1,8 +1,10 @@
 import 'reflect-metadata';
 import { type INestApplication } from '@nestjs/common';
 import { type NestExpressApplication } from '@nestjs/platform-express';
+import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { afterAll, expect } from 'vitest';
 import { configureApp } from '../src/app';
 import { randomToken, sha256 } from '../src/auth/crypto';
 import { AppModule } from '../src/app.module';
@@ -13,6 +15,7 @@ import { createPrismaClient, tenantTransaction } from '../src/prisma/tenant';
 import { seedDemoContent } from '../src/seed/seed-demo';
 import { seedInstance, type SeedUser } from '../src/seed/seed-instance';
 import { type SystemRoleKey } from '../src/tenancy/permissions';
+import { contractViolations, ResponseContractInterceptor } from './contract';
 
 loadDotEnv();
 export const TEST_DATABASE_URL = process.env['TEST_DATABASE_URL']!;
@@ -34,9 +37,15 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<I
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bufferLogs: true });
   configureApp(app, app.get<Env>(ENV));
+  app.useGlobalInterceptors(new ResponseContractInterceptor(app.get(Reflector)));
   await app.init();
   return app;
 }
+
+// Toute réponse documentée non conforme à son schéma OpenAPI fait échouer le fichier de tests.
+afterAll(() => {
+  expect(contractViolations).toEqual([]);
+});
 
 let ownerClient: PrismaClient | undefined;
 

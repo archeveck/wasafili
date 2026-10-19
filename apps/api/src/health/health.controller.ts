@@ -14,6 +14,7 @@ export class HealthController {
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
+  /** État du service : base de données et Redis (200 ou 503). */
   @Public()
   @Get()
   async check(@Res({ passthrough: true }) res: Response) {

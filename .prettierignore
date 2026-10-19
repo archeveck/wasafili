@@ -10,3 +10,5 @@ CLAUDE.md
 **/.expo
 **/dist-check
 apps/mobile/expo-env.d.ts
+# Généré (pnpm --filter @tesserax/api openapi)
+apps/api/openapi.json

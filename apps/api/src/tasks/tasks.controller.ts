@@ -16,6 +16,8 @@ import { paginationSchema } from '../common/pagination';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { TASK_STATUSES, TasksService } from './tasks.service';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable().optional();
 const fields = {
@@ -55,8 +57,10 @@ const listSchema = paginationSchema.extend({
 export class TasksController {
   constructor(private readonly tasks: TasksService) {}
 
+  /** Tâches, filtrables par période, formulaire, assigné et statut. */
   @Get()
   @CanAny('task:read', 'task:manage')
+  @OpenApi({ page: resources.task })
   list(
     @CurrentActor() actor: Actor,
     @Query(new ZodValidationPipe(listSchema)) query: z.infer<typeof listSchema>,
@@ -64,14 +68,18 @@ export class TasksController {
     return this.tasks.list(actor, query);
   }
 
+  /** Détail d'une tâche. */
   @Get(':id')
   @CanAny('task:read', 'task:manage')
+  @OpenApi({ response: resources.task })
   get(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return this.tasks.get(id, actor);
   }
 
+  /** Crée une tâche : une fiche à saisir, assignée à un membre ou un groupe. */
   @Post()
   @Can('task:manage')
+  @OpenApi({ response: resources.task })
   create(
     @CurrentInstance() instance: Instance,
     @CurrentActor() actor: Actor,
@@ -80,8 +88,10 @@ export class TasksController {
     return this.tasks.create(instance, actor, body);
   }
 
+  /** Modifie une tâche. */
   @Patch(':id')
   @Can('task:manage')
+  @OpenApi({ response: resources.task })
   update(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -91,6 +101,7 @@ export class TasksController {
     return this.tasks.update(instance, id, actor, body);
   }
 
+  /** Supprime une tâche. */
   @Delete(':id')
   @Can('task:manage')
   @HttpCode(204)

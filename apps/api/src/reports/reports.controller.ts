@@ -15,6 +15,8 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { ReportsService } from './reports.service';
 import { Audit } from '../audit/audit.interceptor';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const fields = {
   name: z.string().trim().min(1).max(200),
@@ -33,21 +35,26 @@ const renderSchema = z.object({ submissionId: z.uuid().optional() });
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
+  /** Modèles de rapport d'un formulaire. */
   @Get('structures/:structureId/reports')
   @Can('structure:read')
+  @OpenApi({ list: resources.reportTemplate })
   list(@Param('structureId', ParseUUIDPipe) structureId: string) {
     return this.reports.list(structureId);
   }
 
+  /** Balises utilisables dans un modèle DOCX pour ce formulaire. */
   @Get('structures/:structureId/reports/tags')
   @Can('report:manage')
   tags(@Param('structureId', ParseUUIDPipe) structureId: string) {
     return this.reports.tags(structureId);
   }
 
+  /** Crée un modèle de rapport à partir d'un fichier DOCX déjà déposé. */
   @Post('structures/:structureId/reports')
   @Audit('report.create')
   @Can('report:manage')
+  @OpenApi({ response: resources.reportTemplate })
   create(
     @CurrentInstance() instance: Instance,
     @CurrentActor() actor: Actor,
@@ -57,15 +64,19 @@ export class ReportsController {
     return this.reports.create(instance, structureId, actor, body);
   }
 
+  /** Détail d'un modèle de rapport. */
   @Get('reports/:id')
   @Can('structure:read')
+  @OpenApi({ response: resources.reportTemplate })
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.reports.get(id);
   }
 
+  /** Modifie un modèle de rapport (nom, fichier DOCX, nom du PDF). */
   @Patch('reports/:id')
   @Audit('report.update')
   @Can('report:manage')
+  @OpenApi({ response: resources.reportTemplate })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(updateSchema)) body: z.infer<typeof updateSchema>,
@@ -73,6 +84,7 @@ export class ReportsController {
     return this.reports.update(id, body);
   }
 
+  /** Supprime un modèle de rapport. */
   @Delete('reports/:id')
   @Audit('report.delete')
   @Can('report:manage')
@@ -81,6 +93,7 @@ export class ReportsController {
     return this.reports.remove(id);
   }
 
+  /** Télécharge le fichier DOCX d'un modèle de rapport. */
   @Get('reports/:id/template')
   @Can('report:manage')
   template(@Param('id', ParseUUIDPipe) id: string) {
@@ -91,6 +104,7 @@ export class ReportsController {
   @Post('reports/:id/render')
   @Audit('report.render')
   @Can('structure:read')
+  @OpenApi({ response: resources.renderedReport })
   async render(
     @CurrentInstance() instance: Instance,
     @CurrentActor() actor: Actor,

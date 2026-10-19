@@ -38,6 +38,7 @@ export class StructureAccessController {
     private readonly structures: StructuresService,
   ) {}
 
+  /** Droits par rôle et par groupe sur un formulaire, avec leurs filtres de visibilité. */
   @Get()
   @Can('role:read')
   async get(@Param('id', ParseUUIDPipe) id: string) {
@@ -45,6 +46,7 @@ export class StructureAccessController {
     return { data: await this.access.rules(id) };
   }
 
+  /** Remplace les droits d'un formulaire. */
   @Put()
   @Audit('structure.access', { type: 'structure' })
   @Can('role:manage')

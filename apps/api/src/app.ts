@@ -1,5 +1,6 @@
 import { type NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
+import { getAbsoluteFSPath } from 'swagger-ui-dist';
 import { requestContextMiddleware } from './common/request-context';
 import { type Env } from './config/env';
 
@@ -8,6 +9,8 @@ export function configureApp(app: NestExpressApplication, env: Env): NestExpress
   app.useLogger(app.get(Logger));
   app.use(requestContextMiddleware);
   app.setGlobalPrefix('v1', { exclude: ['health'] });
+  // Fichiers statiques de Swagger UI (page `/v1/docs`).
+  app.useStaticAssets(getAbsoluteFSPath(), { prefix: '/v1/docs/assets/', index: false });
   app.enableCors({ origin: env.CORS_ORIGINS });
   app.disable('x-powered-by');
   // Pas d'ETag : une API (et surtout la synchronisation) ne doit pas répondre 304 depuis un cache.

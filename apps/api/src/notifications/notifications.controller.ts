@@ -19,6 +19,7 @@ const unregisterSchema = z.object({ token: z.string().trim().min(1).max(500) });
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
+  /** Notifications de l'appelant. */
   @Get('notifications')
   list(
     @CurrentActor() actor: Actor,
@@ -27,6 +28,7 @@ export class NotificationsController {
     return this.notifications.list(actor, query);
   }
 
+  /** Marque des notifications comme lues. */
   @Post('notifications/read')
   @HttpCode(200)
   read(
@@ -36,6 +38,7 @@ export class NotificationsController {
     return this.notifications.markRead(actor, body.ids);
   }
 
+  /** Enregistre un jeton de notification push (mobile). */
   @Post('push-tokens')
   @HttpCode(204)
   register(
@@ -46,6 +49,7 @@ export class NotificationsController {
     return this.notifications.registerToken(instance.id, actor, body.token, body.platform);
   }
 
+  /** Retire un jeton de notification push. */
   @Delete('push-tokens')
   @HttpCode(204)
   unregister(

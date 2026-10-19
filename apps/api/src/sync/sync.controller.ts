@@ -51,6 +51,10 @@ const pullSchema = z.object({
 export class SyncController {
   constructor(private readonly sync: SyncService) {}
 
+  /**
+   * Synchronisation mobile : changements depuis un curseur (formulaires, référentiels, fiches,
+   * tâches, notifications).
+   */
   @Get('pull')
   pull(
     @CurrentInstance() instance: Instance,
@@ -60,6 +64,7 @@ export class SyncController {
     return this.sync.pull(instance, actor, query.cursor, query.limit);
   }
 
+  /** Synchronisation mobile : mutations hors ligne idempotentes (`clientMutationId`). */
   @Post('push')
   @HttpCode(200)
   async push(

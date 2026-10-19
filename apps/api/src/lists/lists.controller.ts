@@ -24,6 +24,8 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { ListsService } from './lists.service';
 import { Audit } from '../audit/audit.interceptor';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const levels = z.array(z.string().trim().min(1).max(100)).min(1).max(10);
 const createListSchema = z.object({
@@ -112,17 +114,21 @@ const MIME = {
 export class ListsController {
   constructor(private readonly lists: ListsService) {}
 
+  /** Référentiels de l'instance. */
   @Get('lists')
   @Can('list:read')
+  @OpenApi({ page: resources.list })
   list(
     @Query(new ZodValidationPipe(paginationSchema)) pagination: z.infer<typeof paginationSchema>,
   ) {
     return this.lists.list(pagination);
   }
 
+  /** Crée un référentiel (un niveau par libellé de `levels`). */
   @Post('lists')
   @Audit('list.create')
   @Can('list:manage')
+  @OpenApi({ response: resources.list })
   create(
     @CurrentInstance() instance: Instance,
     @Body(new ZodValidationPipe(createListSchema)) body: z.infer<typeof createListSchema>,
@@ -136,19 +142,24 @@ export class ListsController {
    */
   @Get('list-items')
   @Can('list:read')
+  @OpenApi({ list: resources.listItem })
   lookup(@Query(new ZodValidationPipe(lookupSchema)) query: z.infer<typeof lookupSchema>) {
     return this.lists.lookup(query).then((data) => ({ data }));
   }
 
+  /** Détail d'un référentiel. */
   @Get('lists/:id')
   @Can('list:read')
+  @OpenApi({ response: resources.list })
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.lists.get(id);
   }
 
+  /** Modifie un référentiel. */
   @Patch('lists/:id')
   @Audit('list.update')
   @Can('list:manage')
+  @OpenApi({ response: resources.list })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(updateListSchema)) body: z.infer<typeof updateListSchema>,
@@ -156,6 +167,7 @@ export class ListsController {
     return this.lists.update(id, body);
   }
 
+  /** Supprime un référentiel. */
   @Delete('lists/:id')
   @Audit('list.delete')
   @HttpCode(204)
@@ -164,8 +176,10 @@ export class ListsController {
     return this.lists.remove(id);
   }
 
+  /** Éléments d'un référentiel, filtrables par parent, niveau, code ou texte. */
   @Get('lists/:id/items')
   @Can('list:read')
+  @OpenApi({ page: resources.listItem })
   items(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(new ZodValidationPipe(itemQuerySchema)) query: z.infer<typeof itemQuerySchema>,
@@ -173,8 +187,10 @@ export class ListsController {
     return this.lists.items(id, query);
   }
 
+  /** Ajoute un élément à un référentiel. */
   @Post('lists/:id/items')
   @Can('list:manage')
+  @OpenApi({ response: resources.listItem })
   createItem(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -183,8 +199,10 @@ export class ListsController {
     return this.lists.createItem(instance.id, id, body);
   }
 
+  /** Modifie un élément, ou le restaure (`archived: false`). */
   @Patch('lists/:id/items/:itemId')
   @Can('list:manage')
+  @OpenApi({ response: resources.listItem })
   updateItem(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('itemId', ParseUUIDPipe) itemId: string,
@@ -193,6 +211,7 @@ export class ListsController {
     return this.lists.updateItem(id, itemId, body);
   }
 
+  /** Archive un élément : il reste lisible dans les fiches qui l'utilisent. */
   @Delete('lists/:id/items/:itemId')
   @HttpCode(204)
   @Can('list:manage')
@@ -209,6 +228,7 @@ export class ListsController {
   @HttpCode(200)
   @Can('list:manage')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @OpenApi({ upload: 'file' })
   import(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File | undefined,
@@ -227,8 +247,10 @@ export class ListsController {
     });
   }
 
+  /** Exporte un référentiel (CSV ou XLSX). */
   @Get('lists/:id/export')
   @Can('list:read')
+  @OpenApi({ produces: Object.values(MIME) })
   async export(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(new ZodValidationPipe(exportSchema)) query: z.infer<typeof exportSchema>,

@@ -15,12 +15,14 @@ const listSchema = paginationSchema.extend({
 export class EmailsController {
   constructor(private readonly emails: EmailsService) {}
 
+  /** E-mails envoyés par les automatisations, avec leur statut. */
   @Get()
   @Can('automation:manage')
   list(@Query(new ZodValidationPipe(listSchema)) query: z.infer<typeof listSchema>) {
     return this.emails.list(query);
   }
 
+  /** Renvoie un e-mail en échec. */
   @Post(':id/retry')
   @Audit('email.retry')
   @Can('automation:manage')

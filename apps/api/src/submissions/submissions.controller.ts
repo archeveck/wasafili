@@ -20,6 +20,8 @@ import { type Instance } from '../generated/prisma/client';
 import { parseFilters } from './query';
 import { SubmissionsService } from './submissions.service';
 import { Audit } from '../audit/audit.interceptor';
+import { OpenApi, SUBMISSION_FILTERS } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const mutationId = z.string().trim().min(1).max(100);
 const createSchema = z.object({
@@ -55,10 +57,11 @@ const listSchema = paginationSchema.extend({
   created_from: z.coerce.date().optional(),
   created_to: z.coerce.date().optional(),
 });
+const selectionSchema = listSchema.omit({ page: true, per_page: true });
 const deleteSchema = z.object({ client_mutation_id: mutationId.optional() });
 const resolveSchema = z.object({ resolution: z.enum(['kept', 'restored']) });
 
-const exportSchema = listSchema.omit({ page: true, per_page: true }).extend({
+const exportSchema = selectionSchema.extend({
   format: z.enum(['csv', 'xlsx']).default('xlsx'),
 });
 
@@ -75,27 +78,30 @@ const MIME = {
 export class SubmissionsController {
   constructor(private readonly submissions: SubmissionsService) {}
 
-  /** `?filter[cle]=v`, `?filter[cle][gte]=v`, `?sort=-cle`, pagination. */
+  /**
+   * Fiches d'un formulaire, paginées. Filtres `filter[cle]=v` ou `filter[cle][op]=v`, tri
+   * `sort=cle` ou `sort=-cle` (décroissant), période de création, état, auteur.
+   */
   @Get('structures/:structureId/submissions')
+  @OpenApi({ page: resources.submission, parameters: [SUBMISSION_FILTERS] })
   list(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
+    @Query(new ZodValidationPipe(listSchema)) params: z.infer<typeof listSchema>,
     @Query() query: Record<string, unknown>,
   ) {
-    const params = new ZodValidationPipe(listSchema).transform(query);
     return this.submissions.list(structureId, actor, { ...params, filters: parseFilters(query) });
   }
 
   /** Nombre de fiches par état de workflow, avec les mêmes filtres que la liste (P4.3). */
   @Get('structures/:structureId/submissions/states')
+  @OpenApi({ list: resources.stateCount, parameters: [SUBMISSION_FILTERS] })
   async states(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
+    @Query(new ZodValidationPipe(selectionSchema)) params: z.infer<typeof selectionSchema>,
     @Query() query: Record<string, unknown>,
   ) {
-    const params = new ZodValidationPipe(listSchema.omit({ page: true, per_page: true })).transform(
-      query,
-    );
     return {
       data: await this.submissions.stateCounts(structureId, actor, {
         ...params,
@@ -106,27 +112,27 @@ export class SubmissionsController {
 
   /** Fiches localisées en GeoJSON, avec les mêmes filtres que la liste (P6.1.1). */
   @Get('structures/:structureId/submissions/map')
+  @OpenApi({ parameters: [SUBMISSION_FILTERS] })
   map(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
+    @Query(new ZodValidationPipe(selectionSchema)) params: z.infer<typeof selectionSchema>,
     @Query() query: Record<string, unknown>,
   ) {
-    const params = new ZodValidationPipe(listSchema.omit({ page: true, per_page: true })).transform(
-      query,
-    );
     return this.submissions.map(structureId, actor, { ...params, filters: parseFilters(query) });
   }
 
   /** Export CSV/XLSX avec les mêmes filtres que la liste. */
   @Get('structures/:structureId/submissions/export')
   @Audit('submission.export', { type: 'structure', param: 'structureId', query: true })
+  @OpenApi({ produces: Object.values(MIME), parameters: [SUBMISSION_FILTERS] })
   async export(
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
+    @Query(new ZodValidationPipe(exportSchema)) params: z.infer<typeof exportSchema>,
     @Query() query: Record<string, unknown>,
     @Res() res: Response,
   ) {
-    const params = new ZodValidationPipe(exportSchema).transform(query);
     const content = await this.submissions.export(
       structureId,
       actor,
@@ -136,7 +142,12 @@ export class SubmissionsController {
     res.status(200).type(MIME[params.format]).attachment(`fiches.${params.format}`).send(content);
   }
 
+  /**
+   * Crée une fiche dans la version publiée du formulaire. Avec `clientMutationId`, un rejeu renvoie
+   * la fiche existante (200) sans doublon.
+   */
   @Post('structures/:structureId/submissions')
+  @OpenApi({ response: resources.submission })
   async create(
     @CurrentInstance() instance: Instance,
     @Param('structureId', ParseUUIDPipe) structureId: string,
@@ -150,12 +161,19 @@ export class SubmissionsController {
     return result.submission;
   }
 
+  /** Détail d'une fiche. */
   @Get('submissions/:id')
+  @OpenApi({ response: resources.submission })
   get(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return this.submissions.get(id, actor);
   }
 
+  /**
+   * Modifie les champs d'une fiche. Seuls les champs envoyés changent ; avec `baseRevision`, un
+   * champ modifié entre-temps est enregistré comme conflit.
+   */
   @Patch('submissions/:id')
+  @OpenApi({ response: resources.submission })
   async update(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -165,8 +183,10 @@ export class SubmissionsController {
     return (await this.submissions.update(instance, id, actor, body)).submission;
   }
 
+  /** Applique une transition de workflow, avec éventuellement des champs à enregistrer. */
   @Post('submissions/:id/transition')
   @HttpCode(200)
+  @OpenApi({ response: resources.submission })
   async transition(
     @CurrentInstance() instance: Instance,
     @Param('id', ParseUUIDPipe) id: string,
@@ -176,6 +196,7 @@ export class SubmissionsController {
     return (await this.submissions.transition(instance, id, actor, body)).submission;
   }
 
+  /** Supprime une fiche. */
   @Delete('submissions/:id')
   @HttpCode(204)
   remove(
@@ -187,11 +208,13 @@ export class SubmissionsController {
     return this.submissions.remove(instance, id, actor, query.client_mutation_id);
   }
 
+  /** Conflits de modification d'une fiche. */
   @Get('submissions/:id/conflicts')
   async conflicts(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return { data: await this.submissions.conflicts(id, actor) };
   }
 
+  /** Résout un conflit : garder la valeur appliquée ou restaurer la valeur écrasée. */
   @Post('submissions/:id/conflicts/:conflictId/resolve')
   @HttpCode(200)
   resolveConflict(
@@ -204,12 +227,15 @@ export class SubmissionsController {
     return this.submissions.resolveConflict(instance, id, conflictId, actor, body.resolution);
   }
 
+  /** Automatisations exécutées sur une fiche. */
   @Get('submissions/:id/automation-runs')
   async automationRuns(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return { data: await this.submissions.automationRuns(id, actor) };
   }
 
+  /** Historique des révisions d'une fiche (champ par champ). */
   @Get('submissions/:id/revisions')
+  @OpenApi({ page: resources.revision })
   revisions(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentActor() actor: Actor,

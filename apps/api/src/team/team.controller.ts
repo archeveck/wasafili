@@ -7,6 +7,7 @@ import { TeamService } from './team.service';
 export class TeamController {
   constructor(private readonly team: TeamService) {}
 
+  /** Dernière position connue de chaque membre (fiches et tâches lisibles par l'appelant). */
   @Get('positions')
   @Can('user:read')
   positions(@CurrentActor() actor: Actor) {

@@ -42,6 +42,7 @@ export class RolesController {
     private readonly iam: IamService,
   ) {}
 
+  /** Rôles de l'instance. */
   @Get()
   @Can('role:read')
   async list(@Query(new ZodValidationPipe(paginationSchema)) pagination: Pagination) {
@@ -60,6 +61,7 @@ export class RolesController {
     return { data: PERMISSIONS };
   }
 
+  /** Crée un rôle. */
   @Post()
   @Audit('role.create')
   @Can('role:manage')
@@ -70,6 +72,7 @@ export class RolesController {
     return this.iam.createRole(instance.id, body);
   }
 
+  /** Modifie un rôle (nom, permissions). */
   @Patch(':id')
   @Audit('role.update')
   @Can('role:manage')
@@ -80,6 +83,7 @@ export class RolesController {
     return this.iam.updateRole(id, body);
   }
 
+  /** Supprime un rôle sans membre. */
   @Delete(':id')
   @Audit('role.delete')
   @HttpCode(204)

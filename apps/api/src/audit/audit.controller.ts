@@ -19,12 +19,17 @@ const listSchema = paginationSchema.extend({
 export class AuditController {
   constructor(private readonly audit: AuditService) {}
 
+  /**
+   * Journal d'audit de l'instance, du plus récent au plus ancien. Filtre `action` : action exacte
+   * ou famille (`role`, `auth`…).
+   */
   @Get()
   @Can('audit:read')
   list(@Query(new ZodValidationPipe(listSchema)) query: z.infer<typeof listSchema>) {
     return this.audit.list(query);
   }
 
+  /** Actions journalisées (catalogue des valeurs de `action`). */
   @Get('actions')
   @Can('audit:read')
   actions() {

@@ -6,6 +6,8 @@ import { OAuthError } from '../common/errors';
 import { AuthService } from './auth.service';
 import { Public } from './decorators';
 import { type TokenResponse, TokensService } from './tokens.service';
+import { OpenApi } from '../openapi/openapi.decorator';
+import { tokenResponse } from '../openapi/resources';
 
 const tokenRequestSchema = z.discriminatedUnion('grant_type', [
   z.object({
@@ -20,6 +22,8 @@ const tokenRequestSchema = z.discriminatedUnion('grant_type', [
     client_secret: z.string().min(1).optional(),
   }),
 ]);
+
+const revokeSchema = z.object({ token: z.string().min(1) });
 
 const GRANT_TYPES = new Set(['password', 'refresh_token', 'client_credentials']);
 
@@ -48,6 +52,11 @@ export class OAuthController {
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   @UseGuards(ThrottlerGuard)
+  @OpenApi({
+    body: tokenRequestSchema,
+    consumes: ['application/x-www-form-urlencoded', 'application/json'],
+    response: tokenResponse,
+  })
   async token(
     @Body() body: unknown,
     @Req() req: Request,
@@ -82,6 +91,10 @@ export class OAuthController {
   /** Révocation d'un refresh token (RFC 7009) : déconnexion de la session. Toujours 200. */
   @Post('revoke')
   @HttpCode(200)
+  @OpenApi({
+    body: revokeSchema,
+    consumes: ['application/x-www-form-urlencoded', 'application/json'],
+  })
   async revoke(@Body() body: unknown): Promise<Record<string, never>> {
     const token = (body as { token?: unknown } | undefined)?.token;
     if (typeof token === 'string' && token.length > 0) await this.tokens.revoke(token);

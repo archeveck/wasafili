@@ -39,6 +39,7 @@ export class GroupsController {
     private readonly iam: IamService,
   ) {}
 
+  /** Groupes de l'instance. */
   @Get()
   @Can('group:read')
   async list(@Query(new ZodValidationPipe(paginationSchema)) pagination: Pagination) {
@@ -50,6 +51,7 @@ export class GroupsController {
     return toPage(groups, total, pagination);
   }
 
+  /** Détail d'un groupe et de ses membres. */
   @Get(':id')
   @Can('group:read')
   async get(@Param('id', ParseUUIDPipe) id: string) {
@@ -58,6 +60,7 @@ export class GroupsController {
     return { ...group, members: await this.iam.groupMembers(id) };
   }
 
+  /** Renomme un groupe. */
   @Patch(':id')
   @Audit('group.update')
   @Can('group:manage')
@@ -68,6 +71,7 @@ export class GroupsController {
     return this.iam.renameGroup(id, body.name);
   }
 
+  /** Supprime un groupe. */
   @Delete(':id')
   @Audit('group.delete')
   @HttpCode(204)
@@ -76,6 +80,7 @@ export class GroupsController {
     return this.iam.deleteGroup(id);
   }
 
+  /** Remplace la liste des membres d'un groupe. */
   @Put(':id/members')
   @Audit('group.members', { type: 'group' })
   @Can('group:manage')
@@ -87,6 +92,7 @@ export class GroupsController {
     return { data: await this.iam.setGroupMembers(instance.id, id, body.userIds) };
   }
 
+  /** Crée un groupe. */
   @Post()
   @Audit('group.create')
   @Can('group:manage')

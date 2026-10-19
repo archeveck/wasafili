@@ -18,6 +18,8 @@ import { type Instance } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { IamService, memberDto } from './iam.service';
 import { Audit } from '../audit/audit.interceptor';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const attributes = z.record(
   z.string().regex(/^[a-z][a-z0-9_]*$/),
@@ -45,6 +47,7 @@ export class UsersController {
   /** Membres de l'instance (la RLS limite les adhésions à l'instance courante). */
   @Get()
   @Can('user:read')
+  @OpenApi({ page: resources.member })
   async list(@Query(new ZodValidationPipe(paginationSchema)) pagination: Pagination) {
     const db = this.prisma.db;
     const [memberships, total] = await Promise.all([
@@ -71,15 +74,19 @@ export class UsersController {
     );
   }
 
+  /** Détail d'un membre. */
   @Get(':userId')
   @Can('user:read')
+  @OpenApi({ response: resources.member })
   get(@Param('userId', ParseUUIDPipe) userId: string) {
     return this.iam.getMember(userId);
   }
 
+  /** Ajoute un membre ; un compte est créé avec un mot de passe temporaire s'il n'existe pas. */
   @Post()
   @Audit('user.create')
   @Can('user:manage')
+  @OpenApi({ response: resources.member })
   invite(
     @CurrentInstance() instance: Instance,
     @Body(new ZodValidationPipe(inviteSchema)) body: z.infer<typeof inviteSchema>,
@@ -87,9 +94,11 @@ export class UsersController {
     return this.iam.invite(instance.id, body);
   }
 
+  /** Modifie un membre (rôle, attributs, activation). */
   @Patch(':userId')
   @Audit('user.update', { param: 'userId' })
   @Can('user:manage')
+  @OpenApi({ response: resources.member })
   update(
     @CurrentActor() actor: Actor,
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -98,6 +107,7 @@ export class UsersController {
     return this.iam.updateMember(actor.userId, userId, body);
   }
 
+  /** Retire un membre de l'instance. */
   @Delete(':userId')
   @Audit('user.remove', { param: 'userId' })
   @HttpCode(204)

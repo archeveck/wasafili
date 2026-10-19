@@ -3,6 +3,8 @@ import { type Actor, CurrentActor } from '../auth/decorators';
 import { CurrentPrincipal } from '../auth/decorators';
 import { type Principal } from '../auth/principal';
 import { PrismaService } from '../prisma/prisma.service';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const instanceSelect = { id: true, short: true, name: true, timeZone: true, locale: true } as const;
 
@@ -12,6 +14,7 @@ export class MeController {
 
   /** Profil de l'appelant. */
   @Get('me')
+  @OpenApi({ response: resources.me })
   async me(@CurrentPrincipal() principal: Principal) {
     if (principal.kind === 'client') {
       return { kind: 'client', id: principal.clientId, permissions: principal.permissions };
@@ -25,6 +28,7 @@ export class MeController {
 
   /** Rôle et permissions de l'appelant dans l'instance (affichage des actions possibles). */
   @Get(':app/me')
+  @OpenApi({ response: resources.memberProfile })
   async member(@CurrentPrincipal() principal: Principal, @CurrentActor() actor: Actor) {
     const profile = await this.me(principal);
     return { ...profile, roles: actor.roles, permissions: [...actor.permissions].sort() };
@@ -32,6 +36,7 @@ export class MeController {
 
   /** Instances (« apps ») accessibles à l'appelant : sert à la sélection d'instance. */
   @Get('apps')
+  @OpenApi({ list: resources.app })
   async apps(@CurrentPrincipal() principal: Principal) {
     const db = this.prisma.db;
     if (principal.kind === 'client') {

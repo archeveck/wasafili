@@ -4,6 +4,8 @@ import { type Actor, CurrentActor, CurrentInstance } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
 import { FilesService } from './files.service';
+import { OpenApi } from '../openapi/openapi.decorator';
+import * as resources from '../openapi/resources';
 
 const uploadSchema = z.object({
   /** UUID généré par le client : la fiche peut le référencer avant la fin du dépôt. */
@@ -18,7 +20,12 @@ const uploadSchema = z.object({
 export class FilesController {
   constructor(private readonly files: FilesService) {}
 
+  /**
+   * Demande le dépôt d'un fichier : renvoie une URL signée de dépôt direct. Rejouer avec le même
+   * `id` reprend un dépôt interrompu sans doublon.
+   */
   @Post('upload')
+  @OpenApi({ response: resources.uploadTicket })
   requestUpload(
     @CurrentInstance() instance: Instance,
     @CurrentActor() actor: Actor,
@@ -27,13 +34,17 @@ export class FilesController {
     return this.files.requestUpload(instance.id, actor, body);
   }
 
+  /** Confirme le dépôt : l'objet doit exister avec la taille annoncée. */
   @Post(':id/complete')
   @HttpCode(200)
+  @OpenApi({ response: resources.file })
   complete(@Param('id', ParseUUIDPipe) id: string) {
     return this.files.complete(id);
   }
 
+  /** Métadonnées d'un fichier et URL signée de lecture (fichier déposé). */
   @Get(':id')
+  @OpenApi({ response: resources.file })
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.files.get(id);
   }

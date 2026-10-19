@@ -58,11 +58,13 @@ function settingsDto(instance: Instance) {
 export class SettingsController {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Paramètres de l'instance : nom, fuseau, langue, image de marque, menu mobile. */
   @Get()
   get(@CurrentInstance() instance: Instance) {
     return settingsDto(instance);
   }
 
+  /** Modifie les paramètres de l'instance. */
   @Patch()
   @Audit('settings.update', { type: 'instance' })
   @Can('instance:manage')

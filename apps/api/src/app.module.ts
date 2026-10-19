@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { IamModule } from './iam/iam.module';
 import { ListsModule } from './lists/lists.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { OpenApiModule } from './openapi/openapi.module';
 import { PhotoExportsModule } from './photo-exports/photo-exports.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
@@ -48,6 +49,7 @@ import { PermissionGuard } from './tenancy/permission.guard';
     PrismaModule,
     RedisModule,
     HealthModule,
+    OpenApiModule,
     AuditModule,
     AuthModule,
     IamModule,

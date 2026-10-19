@@ -35,6 +35,10 @@ const createSchema = z.object({
 export class PhotoExportsController {
   constructor(private readonly exports: PhotoExportsService) {}
 
+  /**
+   * Prépare une archive ZIP des photos d'une sélection de fiches (mêmes filtres que la liste).
+   * L'archive est assemblée en arrière-plan.
+   */
   @Post('structures/:structureId/photo-exports')
   @Audit('submission.photos_export', { type: 'structure', param: 'structureId' })
   create(
@@ -46,6 +50,7 @@ export class PhotoExportsController {
     return this.exports.create(instance, structureId, actor, body);
   }
 
+  /** Exports ZIP de photos demandés par l'appelant. */
   @Get('photo-exports')
   list(
     @CurrentActor() actor: Actor,
@@ -54,6 +59,7 @@ export class PhotoExportsController {
     return this.exports.list(actor, query);
   }
 
+  /** État d'un export ZIP de photos. */
   @Get('photo-exports/:id')
   get(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() actor: Actor) {
     return this.exports.get(id, actor);

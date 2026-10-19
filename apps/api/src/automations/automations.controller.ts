@@ -31,12 +31,14 @@ const runsSchema = paginationSchema.extend({
 export class AutomationsController {
   constructor(private readonly automations: AutomationsService) {}
 
+  /** Automatisations de l'instance. */
   @Get('automations')
   @Can('automation:manage')
   list(@Query(new ZodValidationPipe(listSchema)) query: z.infer<typeof listSchema>) {
     return this.automations.list(query.structure_id);
   }
 
+  /** Crée une automatisation (déclencheur, conditions json-logic, actions). */
   @Post('automations')
   @Audit('automation.create')
   @Can('automation:manage')
@@ -48,12 +50,14 @@ export class AutomationsController {
     return this.automations.create(instance, actor, body);
   }
 
+  /** Détail d'une automatisation. */
   @Get('automations/:id')
   @Can('automation:manage')
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.automations.get(id);
   }
 
+  /** Remplace la configuration d'une automatisation. */
   @Put('automations/:id')
   @Audit('automation.update')
   @Can('automation:manage')
@@ -65,6 +69,7 @@ export class AutomationsController {
     return this.automations.update(instance, id, body);
   }
 
+  /** Supprime une automatisation (son journal d'exécution est conservé). */
   @Delete('automations/:id')
   @Audit('automation.delete')
   @Can('automation:manage')
@@ -73,12 +78,14 @@ export class AutomationsController {
     return this.automations.remove(id);
   }
 
+  /** Exécutions des automatisations (journal), filtrables par automatisation, fiche et statut. */
   @Get('automation-runs')
   @Can('automation:manage')
   runs(@Query(new ZodValidationPipe(runsSchema)) query: z.infer<typeof runsSchema>) {
     return this.automations.runs(query);
   }
 
+  /** Relance une exécution en échec. */
   @Post('automation-runs/:id/retry')
   @Audit('automation_run.retry')
   @Can('automation:manage')

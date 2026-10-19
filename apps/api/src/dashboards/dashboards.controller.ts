@@ -25,6 +25,7 @@ import { dashboardSchema, widgetSchema } from './widgets';
 export class DashboardsController {
   constructor(private readonly dashboards: DashboardsService) {}
 
+  /** Tableaux de bord de l'instance. */
   @Get()
   list() {
     return this.dashboards.list();
@@ -41,11 +42,13 @@ export class DashboardsController {
     return this.dashboards.data(instance, actor, widget);
   }
 
+  /** Détail d'un tableau de bord et de ses widgets. */
   @Get(':id')
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.dashboards.get(id);
   }
 
+  /** Crée un tableau de bord. */
   @Post()
   @Audit('dashboard.create')
   @Can('dashboard:manage')
@@ -57,6 +60,7 @@ export class DashboardsController {
     return this.dashboards.create(instance.id, actor, body);
   }
 
+  /** Remplace un tableau de bord (nom, widgets). */
   @Put(':id')
   @Audit('dashboard.update')
   @Can('dashboard:manage')
@@ -67,6 +71,7 @@ export class DashboardsController {
     return this.dashboards.update(id, body);
   }
 
+  /** Supprime un tableau de bord. */
   @Delete(':id')
   @Audit('dashboard.delete')
   @Can('dashboard:manage')
