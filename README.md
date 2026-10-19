@@ -126,6 +126,29 @@ Webhooks : chaque requête porte `X-Tesserax-Signature: sha256=<hex>`, HMAC-SHA2
 `<X-Tesserax-Timestamp>.<corps>`. En production, `WEBHOOK_ALLOW_PRIVATE=false` interdit les
 adresses du réseau interne (sauf intégration locale assumée, ex. n8n).
 
+## Pilotage (Phase 6)
+
+- **Carte** : onglet « Carte » du tableau des fiches (mêmes filtres), points regroupés et
+  colorés par état ; page « Équipes terrain » (dernière position de chaque membre) ; sur le
+  mobile, bascule « Liste / Carte » de « Mes fiches », hors ligne.
+- **Tableaux de bord** : indicateurs, histogrammes et courbes calculés sur les fiches que
+  chacun peut lire ; vue tableau de chaque graphique. Le seed installe « Suivi des inspections ».
+- **Journal d'audit** : connexions, administration, droits, exports, clés API (permission
+  `audit:read`). L'historique d'une fiche regroupe révisions, conflits et automatisations.
+- **Photos (ZIP)** depuis le tableau des fiches : nommage configurable (`{date}_{fiche}/{champ}_{n}`
+  par défaut), archive préparée par le worker, lien signé valable 15 minutes, export
+  téléchargeable 7 jours.
+
+```bash
+infra/maps/fetch-basemap.sh                      # fond de carte OSM auto-hébergé (≈ 100 Mo, facultatif)
+node infra/demo/fiches-terrain.mjs               # inspections localisées sur l'instance de démo
+pnpm --filter @tesserax/web test:e2e             # dont e2e/pilotage.spec.ts
+maestro test apps/mobile/e2e/carte-fiches.yaml   # carte mobile
+```
+
+Sans fond de carte installé, les cartes web s'affichent sur un fond neutre. Variables :
+`BASEMAP_BBOX` (zone, défaut Côte d'Ivoire), `BASEMAP_MAXZOOM` (défaut 14).
+
 ## Démo (Phase 0)
 
 Comptes de démonstration de l'instance `demo` (mot de passe `Tesserax2026!`) :
@@ -206,5 +229,8 @@ docs/adr/   décisions d'architecture
 - [ADR 0005 — Import / export tableurs](docs/adr/0005-import-export-tableurs.md)
 - [ADR 0006 — Stockage des fichiers](docs/adr/0006-stockage-fichiers.md)
 - [ADR 0007 — Stockage local et synchronisation hors ligne](docs/adr/0007-stockage-local-synchronisation.md)
+- [ADR 0008 — Workflow, tâches et notifications](docs/adr/0008-workflow-taches-notifications.md)
+- [ADR 0009 — Rapports, automatisations et webhooks](docs/adr/0009-rapports-automatisations.md)
+- [ADR 0010 — Pilotage : cartes, tableaux de bord, audit, export ZIP](docs/adr/0010-pilotage.md)
 
 Conventions de code et commandes détaillées : [CLAUDE.md](CLAUDE.md).

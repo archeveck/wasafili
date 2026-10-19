@@ -273,20 +273,22 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 ## Phase 6 — Pilotage
 
-**P6.1 Cartes**
-- [ ] P6.1.1 Vue carte des fiches (MapLibre + PMTiles auto-hébergé, clustering, filtres partagés avec le tableau)
-- [ ] P6.1.2 Suivi des équipes terrain (dernières positions issues des fiches/tâches)
-- [ ] P6.1.3 Carte des fiches sur mobile
+**P6.1 Cartes** (ADR 0010)
+- [x] P6.1.1 Vue carte des fiches (MapLibre + PMTiles auto-hébergé, clustering, filtres partagés avec le tableau)
+- [x] P6.1.2 Suivi des équipes terrain (dernières positions issues des fiches/tâches)
+- [x] P6.1.3 Carte des fiches sur mobile
 
 **P6.2 Tableaux de bord configurables**
-- [ ] P6.2.1 Modèle de widget (KPI, graphique, compteur par état/période/utilisateur) + requêtes d'agrégation sécurisées (RLS + droits)
-- [ ] P6.2.2 Éditeur de tableau de bord (grille, ajout/configuration de widgets)
+- [x] P6.2.1 Modèle de widget (KPI, graphique, compteur par état/période/utilisateur) + requêtes d'agrégation sécurisées (RLS + droits)
+- [x] P6.2.2 Éditeur de tableau de bord (grille, ajout/configuration de widgets)
 
 **P6.3 Audit trail complet**
-- [ ] P6.3.1 Journal d'audit global (connexions, admin, droits, exports, clés API)
-- [ ] P6.3.2 UI de consultation/filtrage, historique fiche enrichi (transitions, conflits, automatisations)
+- [x] P6.3.1 Journal d'audit global (connexions, admin, droits, exports, clés API)
+- [x] P6.3.2 UI de consultation/filtrage, historique fiche enrichi (transitions, conflits, automatisations)
 
-**P6.4 Export ZIP des photos** : job worker, nommage configurable, lien signé à durée limitée.
+**P6.4 Export ZIP des photos** ✅ : job worker, nommage configurable, lien signé à durée limitée.
+
+- Fini quand : parcours Playwright `e2e/pilotage.spec.ts` (carte, équipes, tableau de bord, export ZIP téléchargé, journal d'audit) et Maestro `carte-fiches.yaml` verts ; données de démo par `node infra/demo/fiches-terrain.mjs`.
 
 ---
 

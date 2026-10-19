@@ -75,6 +75,11 @@ docker compose -f infra/docker-compose.yml --profile full up -d --build   # stac
   Les automatisations s'exécutent dans l'API (file `tesserax-automations`), via les services
   métier et `SYSTEM_ACTOR` ; le worker ne fait que les relais (SMTP, webhooks, push). Jamais de
   XML brut issu d'une saisie dans un rapport. Acceptation : `infra/acceptance/rapport-par-email.mjs`.
+- **Pilotage (ADR 0010)** : carte, widgets et export ZIP partent de `SubmissionsService.query()`
+  (jamais un filtre ou un droit recodé). Toute action d'administration, de droits ou d'export
+  porte `@Audit('famille.action')` (liste `AUDIT_ACTIONS`, libellés `audit.actions` dans
+  `packages/i18n`) ; `audit_logs` est en ajout seul. Fond de carte : `infra/maps/fetch-basemap.sh`
+  (servi sous `/tiles/`).
 - **Migrations Prisma** : `migrate dev --create-only`, retirer les `DROP INDEX "*_sync"` générés
   (index `xid8` écrits à la main), puis `pnpm db:deploy`.
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger
