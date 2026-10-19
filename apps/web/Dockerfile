@@ -14,5 +14,10 @@ COPY apps/web apps/web
 RUN pnpm --filter @tesserax/web... build
 
 FROM nginx:1.29-alpine
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# Gabarits substitués au démarrage (envsubst de l'image officielle) : la CSP vise l'origine
+# publique du stockage (S3_PUBLIC_ORIGIN, déduite de S3_PUBLIC_ENDPOINT par docker compose).
+ENV NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+ENV S3_PUBLIC_ORIGIN=http://localhost:9000
+COPY apps/web/nginx/default.conf.template /etc/nginx/templates/conf.d/default.conf.template
+COPY apps/web/nginx/security-headers.conf /etc/nginx/templates/snippets/security-headers.conf.template
 COPY --from=build /repo/apps/web/dist /usr/share/nginx/html

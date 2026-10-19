@@ -1,7 +1,12 @@
+# Gabarit nginx (variables substituées au démarrage par l'image officielle) :
+#   S3_PUBLIC_ORIGIN — origine publique du stockage (photos, dépôts par URL signée).
 server {
   listen 80;
   root /usr/share/nginx/html;
   client_max_body_size 12m;
+  server_tokens off;
+
+  include /etc/nginx/snippets/security-headers.conf;
 
   # API servie sous la même origine que le back-office : ni CORS ni cookie tiers.
   location /v1/ {
@@ -9,6 +14,8 @@ server {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    # Corrélation des journaux nginx et API.
+    proxy_set_header X-Request-Id $request_id;
   }
 
   location = /health {
@@ -18,21 +25,26 @@ server {
   # Fond de carte PMTiles (infra/maps), lu par plages d'octets par le client de carte.
   location /tiles/ {
     alias /srv/tiles/;
+    include /etc/nginx/snippets/security-headers.conf;
     add_header Cache-Control "public, max-age=86400";
   }
 
   # Polices de la carte : un glyphe absent doit répondre 404, pas l'application.
   location /maps/ {
     try_files $uri =404;
+    include /etc/nginx/snippets/security-headers.conf;
     add_header Cache-Control "public, max-age=604800";
   }
 
   location /assets/ {
+    include /etc/nginx/snippets/security-headers.conf;
     add_header Cache-Control "public, max-age=31536000, immutable";
   }
 
-  # Application monopage : toute autre route sert index.html.
+  # Application monopage : toute autre route sert index.html, jamais mise en cache.
   location / {
     try_files $uri /index.html;
+    include /etc/nginx/snippets/security-headers.conf;
+    add_header Cache-Control "no-cache";
   }
 }

@@ -122,7 +122,7 @@ export function SettingsPage() {
             <Upload className="size-4" /> Choisir une image
             <input
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               className="sr-only"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
