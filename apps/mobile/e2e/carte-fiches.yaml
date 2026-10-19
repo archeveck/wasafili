@@ -1,0 +1,25 @@
+# Carte des fiches de l'appareil (P6.1.3), lue dans la base locale : bascule Liste / Carte de
+# « Mes fiches », filtres partagés. Prérequis : des fiches localisées synchronisées
+# (ex. node infra/demo/fiches-terrain.mjs, compte technicien).
+appId: host.exp.Exponent
+env:
+  APP_URL: exp://127.0.0.1:8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 90000
+- openLink: ${APP_URL}/--/submissions
+- tapOn: Carte
+- extendedWaitUntil:
+    visible: '[1-9][0-9]* fiche\(s\) localisée\(s\) sur [0-9]+'
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: carte-fiches
+# Filtre de statut partagé avec la liste : les brouillons ne sont pas localisés ici.
+- tapOn: Brouillon
+- assertVisible: '[0-9]+ fiche\(s\) localisée\(s\) sur [0-9]+'
+- tapOn: Liste
+- assertVisible: Rechercher
