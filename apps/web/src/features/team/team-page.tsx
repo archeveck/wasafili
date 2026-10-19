@@ -71,7 +71,7 @@ export function TeamPage() {
             />
           </Suspense>
           <div>
-            <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
+            <ul className="divide-y divide-border rounded-lg border border-border bg-surface shadow-xs">
               {data.map((p) => {
                 const fresh = recency(p.at);
                 return (

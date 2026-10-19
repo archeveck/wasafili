@@ -13,9 +13,14 @@ export default function Sync() {
     <View
       accessible
       accessibilityLabel={`${label} : ${value}`}
-      style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.xs }}
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: space.md,
+        paddingVertical: space.sm,
+      }}
     >
-      <Text>{label}</Text>
+      <Text style={{ flexShrink: 1, color: colors.textMuted }}>{label}</Text>
       <Text style={{ fontWeight: '600', color }}>{value}</Text>
     </View>
   );
@@ -55,6 +60,7 @@ export default function Sync() {
       </Card>
       <Button
         title={busy ? 'Synchronisation…' : 'Synchroniser maintenant'}
+        icon="refresh-cw"
         loading={busy}
         onPress={() => void synchronize()}
       />
@@ -115,6 +121,7 @@ export default function Sync() {
           <Button
             title="Tout renvoyer"
             variant="outline"
+            icon="rotate-cw"
             onPress={() => {
               store.retryFailed();
               changed();
@@ -125,6 +132,8 @@ export default function Sync() {
       <Button
         title="Se déconnecter"
         variant="ghost"
+        icon="log-out"
+        color={colors.danger}
         style={{ marginTop: space.xl }}
         onPress={() => {
           const waiting = stats.pending + stats.uploadsPending + stats.drafts;

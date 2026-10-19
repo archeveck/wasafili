@@ -83,6 +83,7 @@ export default function Scan() {
           {targets(item).map(({ structure, prefill }) => (
             <Button
               key={structure.id}
+              icon="plus"
               title={`Nouvelle fiche : ${structure.name}`}
               onPress={() =>
                 router.replace({
@@ -94,7 +95,12 @@ export default function Scan() {
           ))}
         </Card>
       ))}
-      <Button title="Scanner un autre code" variant="outline" onPress={() => setScanning(true)} />
+      <Button
+        title="Scanner un autre code"
+        variant="outline"
+        icon="maximize"
+        onPress={() => setScanning(true)}
+      />
     </ScrollView>
   );
 }

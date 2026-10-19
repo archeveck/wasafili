@@ -25,6 +25,8 @@ export default function RootLayout() {
         screenOptions={{
           headerTintColor: colors.primary,
           headerStyle: { backgroundColor: colors.surface },
+          headerTitleStyle: { color: colors.text, fontWeight: '600' },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.background },
           headerBackTitle: 'Retour',
         }}

@@ -29,6 +29,7 @@ import {
   GitBranch,
   GitCompare,
   LayoutList,
+  MousePointerClick,
   Rocket,
   Save,
   SlidersHorizontal,
@@ -297,16 +298,16 @@ export function DesignerPage() {
   const fieldCount = [...walkFields(definition.fields)].length;
 
   return (
-    <div className="-m-6 flex h-screen flex-col lg:-m-8">
-      <header className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-3">
+    <div className="-m-4 flex h-[calc(100dvh-3.5rem)] flex-col sm:-m-6 lg:-m-8 lg:h-screen">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-3 shadow-xs">
         <Button asChild size="icon" variant="ghost" aria-label="Retour aux formulaires">
           <Link to="/$app/structures" params={{ app: short }}>
             <ArrowLeft />
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-semibold">{structure.data.name}</h1>
-          <p className="text-xs text-muted">
+          <h1 className="truncate text-base font-semibold tracking-tight">{structure.data.name}</h1>
+          <p className="flex flex-wrap items-center text-xs text-muted">
             {status}
             {structure.data.currentVersion &&
               ` · publiée : v${structure.data.currentVersion}`} · {fieldCount} champ(s)
@@ -374,12 +375,15 @@ export function DesignerPage() {
         >
           <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_380px]">
             <aside
-              className="overflow-y-auto border-r border-border bg-surface p-3"
+              className="overflow-y-auto border-r border-border bg-surface px-3 py-4"
               aria-label="Types de champs"
             >
               <Palette onAdd={(type) => add(type)} />
             </aside>
-            <section className="overflow-y-auto p-6" aria-label="Formulaire">
+            <section
+              className="overflow-y-auto bg-background bg-[radial-gradient(circle,var(--color-border)_1px,transparent_1px)] bg-size-[18px_18px] p-6 lg:p-8"
+              aria-label="Formulaire"
+            >
               <div className="mx-auto max-w-2xl">
                 <Canvas
                   fields={definition.fields}
@@ -432,7 +436,14 @@ export function DesignerPage() {
                       }
                     />
                   ) : (
-                    <p className="text-sm text-muted">Sélectionnez un champ pour le configurer.</p>
+                    <div className="flex flex-col items-center rounded-lg border border-dashed border-foreground/15 px-6 py-12 text-center">
+                      <span className="mb-3 flex size-10 items-center justify-center rounded-full bg-subtle text-muted">
+                        <MousePointerClick className="size-5" aria-hidden />
+                      </span>
+                      <p className="text-sm text-muted">
+                        Sélectionnez un champ pour le configurer.
+                      </p>
+                    </div>
                   )}
                 </TabsContent>
                 <TabsContent value="preview">
@@ -443,7 +454,7 @@ export function DesignerPage() {
           </div>
           <DragOverlay>
             {draggedLabel ? (
-              <div className="rounded-md border border-primary bg-surface px-3 py-2 text-sm shadow-lg">
+              <div className="rounded-lg border border-accent bg-surface px-3 py-2 text-sm font-medium shadow-lg ring-3 ring-accent/15">
                 {draggedLabel}
               </div>
             ) : null}

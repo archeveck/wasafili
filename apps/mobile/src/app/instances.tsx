@@ -1,12 +1,12 @@
 import { type InstanceSummary } from '@tesserax/sdk';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text } from 'react-native';
-import { Card, Empty, styles } from '@/components/ui';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Card, Empty, Icon, styles } from '@/components/ui';
 import { store, synchronize } from '@/lib/offline';
 import { saveProfile } from '@/lib/profile';
 import { client, currentInstance, setCurrentInstance } from '@/lib/session';
-import { space } from '@/lib/theme';
+import { colors, radius, space } from '@/lib/theme';
 
 /** Choix de l'instance ; changer d'instance efface les données locales de la précédente. */
 export default function Instances() {
@@ -39,15 +39,38 @@ export default function Instances() {
   }, []);
 
   if (error) return <Empty title="Impossible de charger vos espaces">{error}</Empty>;
-  if (!apps) return <ActivityIndicator style={{ marginTop: space.xxl }} />;
+  if (!apps) return <ActivityIndicator color={colors.accent} style={{ marginTop: space.xxl }} />;
   return (
     <ScrollView contentContainerStyle={styles.content}>
       {apps.length === 0 && <Empty title="Aucun espace accessible" />}
       {apps.map((app) => (
-        <Pressable key={app.id} onPress={() => void choose(app)} accessibilityRole="button">
-          <Card>
-            <Text style={{ fontSize: 17, fontWeight: '600' }}>{app.name}</Text>
-            <Text style={styles.muted}>{app.short}</Text>
+        <Pressable
+          key={app.id}
+          onPress={() => void choose(app)}
+          accessibilityRole="button"
+          accessibilityLabel={app.name}
+          style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+        >
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: radius.md + 2,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: `${colors.primary}14`,
+              }}
+            >
+              <Icon name="briefcase" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 17, fontWeight: '600', color: colors.text }}>
+                {app.name}
+              </Text>
+              <Text style={styles.muted}>{app.short}</Text>
+            </View>
+            <Icon name="chevron-right" size={18} color={colors.textMuted} />
           </Card>
         </Pressable>
       ))}

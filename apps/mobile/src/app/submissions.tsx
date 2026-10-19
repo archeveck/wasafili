@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { SubmissionsMap } from '@/components/submissions-map';
 import { SyncBar } from '@/components/sync-bar';
-import { Empty, Input, STATUS } from '@/components/ui';
+import { Empty, Input, shadow, STATUS } from '@/components/ui';
 import { useOffline } from '@/lib/offline';
 import { colors, radius, space } from '@/lib/theme';
 import { SubmissionRow } from './structure/[id]';
@@ -32,22 +32,37 @@ export default function Submissions() {
               onPress={() => setStatus(status === key ? undefined : key)}
               style={{
                 borderWidth: 1,
-                borderColor: STATUS[key]!.color,
-                borderRadius: radius.md,
+                borderColor: status === key ? STATUS[key]!.color : colors.border,
+                borderRadius: 999,
                 paddingHorizontal: space.md,
-                paddingVertical: space.xs,
+                paddingVertical: space.xs + 2,
                 backgroundColor: status === key ? STATUS[key]!.color : colors.surface,
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: status === key }}
             >
-              <Text style={{ color: status === key ? '#fff' : STATUS[key]!.color }}>
+              <Text
+                style={{
+                  color: status === key ? '#fff' : colors.text,
+                  fontSize: 13,
+                  fontWeight: '600',
+                }}
+              >
                 {STATUS[key]!.label}
               </Text>
             </Pressable>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', gap: space.xs }} accessibilityRole="tablist">
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 2,
+            padding: 3,
+            borderRadius: radius.md + 2,
+            backgroundColor: colors.subtle,
+          }}
+          accessibilityRole="tablist"
+        >
           {(
             [
               ['list', 'Liste'],
@@ -59,17 +74,23 @@ export default function Submissions() {
               onPress={() => setView(key)}
               accessibilityRole="tab"
               accessibilityState={{ selected: view === key }}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                paddingVertical: space.sm,
-                borderRadius: radius.md,
-                backgroundColor: view === key ? colors.primary : colors.surface,
-                borderWidth: 1,
-                borderColor: view === key ? colors.primary : colors.border,
-              }}
+              style={[
+                {
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: space.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: view === key ? colors.surface : 'transparent',
+                },
+                view === key && shadow.xs,
+              ]}
             >
-              <Text style={{ color: view === key ? '#fff' : colors.text, fontWeight: '600' }}>
+              <Text
+                style={{
+                  color: view === key ? colors.primary : colors.textMuted,
+                  fontWeight: '600',
+                }}
+              >
                 {label}
               </Text>
             </Pressable>
@@ -83,7 +104,7 @@ export default function Submissions() {
           data={submissions}
           keyExtractor={(s) => s.id}
           renderItem={({ item }) => <SubmissionRow submission={item} />}
-          ListEmptyComponent={<Empty title="Aucune fiche" />}
+          ListEmptyComponent={<Empty title="Aucune fiche" icon="search" />}
         />
       )}
     </View>

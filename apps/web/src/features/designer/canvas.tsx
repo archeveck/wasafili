@@ -2,9 +2,10 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { type Field } from '@tesserax/form-schema';
-import { Calculator, Copy, Eye, GripVertical, Trash2 } from 'lucide-react';
+import { Calculator, Copy, Eye, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/display';
 import { cn } from '@/lib/utils';
+import { FIELD_ICONS } from './field-icons';
 import { ROOT, typeLabel } from './model';
 
 interface CanvasProps {
@@ -25,11 +26,22 @@ function DropZone({ container, empty }: { container: string; empty: boolean }) {
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-md border border-dashed text-center text-xs text-muted transition-colors',
-        empty ? 'py-6' : 'py-2',
-        isOver ? 'border-primary bg-primary/5 text-primary' : 'border-border',
+        'flex items-center justify-center gap-2 rounded-lg border border-dashed text-center text-xs text-muted transition-colors',
+        empty ? 'flex-col py-10' : 'py-2',
+        isOver ? 'border-accent bg-accent/5 text-accent' : 'border-foreground/15',
       )}
     >
+      {empty && (
+        <span
+          className={cn(
+            'flex size-9 items-center justify-center rounded-full',
+            isOver ? 'bg-accent/10' : 'bg-subtle',
+          )}
+          aria-hidden
+        >
+          <Plus className="size-4" />
+        </span>
+      )}
       {empty ? 'Glissez des champs ici' : 'Déposer ici'}
     </div>
   );
@@ -52,35 +64,53 @@ function FieldCard({
   });
   const nested = field.type === 'section' || field.type === 'table';
   const active = props.selected === field.id;
+  const invalid = props.invalid.has(field.key);
+  const Icon = FIELD_ICONS[field.type];
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn(
-        'rounded-md border bg-surface',
-        active ? 'border-primary ring-2 ring-primary/20' : 'border-border',
-        props.invalid.has(field.key) && 'border-danger',
+        'group/field rounded-lg border bg-surface shadow-xs transition-[border-color,box-shadow]',
+        active
+          ? 'border-accent ring-3 ring-accent/15'
+          : 'border-border hover:border-foreground/20 hover:shadow-sm',
+        invalid && 'border-danger ring-danger/15',
         isDragging && 'opacity-40',
-        field.type === 'section' && 'bg-subtle/60',
       )}
       data-testid={`field-${field.key}`}
     >
-      <div className="flex items-center gap-2 px-2 py-2">
+      <div
+        className={cn('flex items-center gap-2 px-2 py-2', nested && 'rounded-t-lg bg-subtle/60')}
+      >
         <button
           type="button"
-          className="cursor-grab rounded p-1 text-muted hover:bg-subtle"
+          className="cursor-grab rounded-md p-1 text-muted transition-colors hover:bg-subtle hover:text-foreground"
           aria-label={`Déplacer ${field.label}`}
           {...attributes}
           {...listeners}
         >
           <GripVertical className="size-4" />
         </button>
+        <span
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
+            invalid
+              ? 'bg-danger/10 text-danger'
+              : active
+                ? 'bg-accent/10 text-accent'
+                : 'bg-subtle text-muted group-hover/field:text-foreground',
+          )}
+          aria-hidden
+        >
+          <Icon className="size-4" />
+        </span>
         <button
           type="button"
-          className="min-w-0 flex-1 text-left"
+          className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-accent/35"
           onClick={() => props.onSelect(field.id)}
         >
-          <span className="block truncate font-medium">
+          <span className={cn('block truncate font-medium', nested && 'font-semibold')}>
             {field.label}
             {field.required && <span className="ml-0.5 text-danger">*</span>}
           </span>
@@ -101,7 +131,7 @@ function FieldCard({
           )}
           <button
             type="button"
-            className="rounded p-1 text-muted hover:bg-subtle"
+            className="rounded-md p-1 text-muted transition-colors hover:bg-subtle hover:text-foreground"
             aria-label={`Dupliquer ${field.label}`}
             onClick={() => props.onDuplicate(field.id)}
           >
@@ -109,7 +139,7 @@ function FieldCard({
           </button>
           <button
             type="button"
-            className="rounded p-1 text-muted hover:bg-subtle hover:text-danger"
+            className="rounded-md p-1 text-muted transition-colors hover:bg-subtle hover:text-danger"
             aria-label={`Supprimer ${field.label}`}
             onClick={() => props.onRemove(field.id)}
           >
@@ -118,7 +148,7 @@ function FieldCard({
         </div>
       </div>
       {nested && (
-        <div className="border-t border-border p-2 pl-6">
+        <div className="border-t border-border p-3 pl-6">
           <FieldList fields={field.fields as Field[]} container={field.id} props={props} />
         </div>
       )}

@@ -3,10 +3,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Field, Input, styles } from '@/components/ui';
+import { Button, Field, Icon, Input, styles } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { client, serverUrl, setServerUrl } from '@/lib/session';
-import { colors, space } from '@/lib/theme';
+import { colors, font, radius, space } from '@/lib/theme';
 
 export default function Login() {
   const { expired } = useLocalSearchParams<{ expired?: string }>();
@@ -45,14 +45,48 @@ export default function Login() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, justifyContent: 'center', padding: space.xl }}
       >
-        <Text style={[styles.title, { color: colors.primary, fontSize: 32 }]}>{t('app.name')}</Text>
-        <Text style={[styles.muted, { marginBottom: space.xl }]}>
+        <View
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: radius.lg + 4,
+            backgroundColor: colors.night,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: space.lg,
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>
+            {t('app.name').charAt(0)}
+          </Text>
+        </View>
+        <Text style={[styles.title, { color: colors.primary, fontSize: 30 }]}>{t('app.name')}</Text>
+        <Text
+          style={[
+            styles.muted,
+            { fontSize: font.md, marginTop: space.xs, marginBottom: space.xxl },
+          ]}
+        >
           Collecte terrain, même sans réseau
         </Text>
         {expired ? (
-          <Text style={[styles.error, { marginBottom: space.md }]}>
-            Session expirée : reconnectez-vous. Vos fiches locales sont conservées.
-          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: space.sm,
+              padding: space.md,
+              marginBottom: space.lg,
+              borderRadius: radius.md,
+              backgroundColor: `${colors.warning}14`,
+              borderWidth: 1,
+              borderColor: `${colors.warning}40`,
+            }}
+          >
+            <Icon name="clock" size={16} color={colors.warning} />
+            <Text style={{ flex: 1, color: colors.text, fontSize: font.sm }}>
+              Session expirée : reconnectez-vous. Vos fiches locales sont conservées.
+            </Text>
+          </View>
         ) : null}
         <Field label={t('auth.email')}>
           <Input
@@ -86,9 +120,12 @@ export default function Login() {
             hitSlop={8}
             style={{ alignSelf: 'flex-end', paddingTop: space.xs }}
           >
-            <Text style={{ color: colors.primary, fontWeight: '600' }}>
-              {revealed ? 'Masquer' : 'Afficher'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+              <Icon name={revealed ? 'eye-off' : 'eye'} size={15} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontWeight: '600' }}>
+                {revealed ? 'Masquer' : 'Afficher'}
+              </Text>
+            </View>
           </Pressable>
         </Field>
         <Button
@@ -109,7 +146,13 @@ export default function Login() {
               />
             </Field>
           ) : (
-            <Button title="Serveur…" variant="ghost" onPress={() => setShowServer(true)} />
+            <Button
+              title="Serveur…"
+              variant="ghost"
+              icon="server"
+              color={colors.textMuted}
+              onPress={() => setShowServer(true)}
+            />
           )}
         </View>
       </KeyboardAvoidingView>

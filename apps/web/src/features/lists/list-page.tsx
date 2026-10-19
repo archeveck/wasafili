@@ -89,7 +89,7 @@ function Node({
         ) : (
           <button
             type="button"
-            className="rounded p-1 hover:bg-border/50"
+            className="rounded-md p-1 text-muted transition-colors hover:bg-subtle hover:text-foreground"
             aria-label={open ? 'Replier' : 'Déplier'}
             onClick={() => setOpen(!open)}
           >

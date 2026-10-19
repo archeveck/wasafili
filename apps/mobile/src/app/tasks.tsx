@@ -3,7 +3,7 @@ import { type LocalTask } from '@tesserax/sync';
 import { router } from 'expo-router';
 import { Alert, Pressable, SectionList, Text, View } from 'react-native';
 import { SyncBar } from '@/components/sync-bar';
-import { Badge, Empty, styles } from '@/components/ui';
+import { Badge, Empty, Icon, styles } from '@/components/ui';
 import { useOffline } from '@/lib/offline';
 import { colors, font, radius, space } from '@/lib/theme';
 
@@ -59,25 +59,32 @@ function TaskRow({
         marginHorizontal: space.lg,
         marginBottom: space.sm,
         padding: space.md,
-        borderRadius: radius.md,
+        borderRadius: radius.lg,
         backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: colors.border,
         borderLeftWidth: 4,
         borderLeftColor: STATUS[task.status].color,
-        opacity: pressed ? 0.8 : task.status === 'cancelled' ? 0.5 : 1,
+        opacity: task.status === 'cancelled' ? 0.5 : 1,
+        transform: [{ scale: pressed ? 0.985 : 1 }],
+        boxShadow: '0px 1px 2px rgba(14, 26, 46, 0.06)',
         gap: space.xs,
       })}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }}>
-        <Text style={{ fontWeight: '700', fontSize: font.md, flexShrink: 1 }}>
+        <Text style={{ fontWeight: '700', fontSize: font.md, flexShrink: 1, color: colors.text }}>
           {time.format(new Date(task.startAt))} · {task.title}
         </Text>
         <Badge label={STATUS[task.status].label} color={STATUS[task.status].color} />
       </View>
       {structure ? <Text style={styles.muted}>{structure}</Text> : null}
-      {task.locationLabel ? <Text style={styles.muted}>📍 {task.locationLabel}</Text> : null}
-      {task.description ? <Text>{task.description}</Text> : null}
+      {task.locationLabel ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+          <Icon name="map-pin" size={13} color={colors.textMuted} />
+          <Text style={styles.muted}>{task.locationLabel}</Text>
+        </View>
+      ) : null}
+      {task.description ? <Text style={{ color: colors.text }}>{task.description}</Text> : null}
     </Pressable>
   );
 }
@@ -120,8 +127,11 @@ export default function Tasks() {
           <Text
             style={{
               paddingHorizontal: space.lg,
-              paddingVertical: space.sm,
+              paddingTop: space.md,
+              paddingBottom: space.sm,
+              fontSize: font.sm,
               fontWeight: '700',
+              letterSpacing: 0.3,
               color: section.title === 'En retard' ? colors.danger : colors.textMuted,
               textTransform: 'capitalize',
             }}
@@ -134,7 +144,9 @@ export default function Tasks() {
           return <TaskRow task={item} timeZone={timeZone} {...(structure ? { structure } : {})} />;
         }}
         ListEmptyComponent={
-          <Empty title="Aucune tâche">Les tâches planifiées pour vous apparaîtront ici.</Empty>
+          <Empty title="Aucune tâche" icon="calendar">
+            Les tâches planifiées pour vous apparaîtront ici.
+          </Empty>
         }
       />
     </View>

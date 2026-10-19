@@ -243,7 +243,7 @@ export function LineChart({
       )}
       {hovered && (
         <div
-          className="pointer-events-none absolute top-0 z-10 rounded-md border border-border bg-surface px-2 py-1 text-xs shadow"
+          className="pointer-events-none absolute top-0 z-10 rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-lg"
           style={{
             left: Math.min(x(hover!) + 8, Math.max(width - 120, 0)),
           }}

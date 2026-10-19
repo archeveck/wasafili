@@ -17,7 +17,7 @@
     "android": {
       "package": "com.tesserax.app",
       "adaptiveIcon": {
-        "backgroundColor": "#1F6F5C",
+        "backgroundColor": "#14284B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -51,7 +51,7 @@
         "expo-notifications",
         {
           "enableRemoteNotifications": true,
-          "color": "#1F6F5C"
+          "color": "#14284B"
         }
       ],
       "expo-web-browser"

@@ -35,6 +35,7 @@ export default function Notifications() {
           <Button
             title="Tout marquer comme lu"
             variant="outline"
+            icon="check"
             onPress={() => {
               store.markNotificationsRead();
               changed();
@@ -52,21 +53,34 @@ export default function Notifications() {
             accessibilityRole="button"
             accessibilityLabel={`${item.read ? '' : 'Non lue, '}${item.title}`}
             style={({ pressed }) => ({
+              flexDirection: 'row',
+              gap: space.md,
               padding: space.md,
-              borderRadius: radius.md,
-              backgroundColor: item.read ? colors.surface : `${colors.primary}12`,
+              borderRadius: radius.lg,
+              backgroundColor: pressed ? colors.subtle : colors.surface,
               borderWidth: 1,
-              borderColor: item.read ? colors.border : colors.primary,
-              opacity: pressed ? 0.8 : 1,
-              gap: 2,
+              borderColor: item.read ? colors.border : `${colors.accent}55`,
             })}
           >
-            <Text style={{ fontWeight: item.read ? '400' : '700' }}>{item.title}</Text>
-            {item.body ? <Text>{item.body}</Text> : null}
-            <Text style={styles.muted}>{when.format(new Date(item.createdAt))}</Text>
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                marginTop: 6,
+                backgroundColor: item.read ? 'transparent' : colors.accent,
+              }}
+            />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontWeight: item.read ? '500' : '700', color: colors.text }}>
+                {item.title}
+              </Text>
+              {item.body ? <Text style={{ color: colors.text }}>{item.body}</Text> : null}
+              <Text style={styles.muted}>{when.format(new Date(item.createdAt))}</Text>
+            </View>
           </Pressable>
         )}
-        ListEmptyComponent={<Empty title="Aucune notification" />}
+        ListEmptyComponent={<Empty title="Aucune notification" icon="bell" />}
       />
     </View>
   );

@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { SyncBar } from '@/components/sync-bar';
-import { Badge, Button, Empty, STATUS, styles } from '@/components/ui';
+import { Badge, Button, Empty, Icon, STATUS, styles } from '@/components/ui';
 import { type LocalSubmission } from '@tesserax/sync';
 import { useOffline } from '@/lib/offline';
 import { colors, space } from '@/lib/theme';
@@ -35,23 +35,29 @@ export function SubmissionRow({ submission }: { submission: LocalSubmission }) {
           params: { structureId: submission.structureId, id: submission.id },
         })
       }
-      style={{
-        backgroundColor: colors.surface,
-        padding: space.lg,
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space.md,
+        backgroundColor: pressed ? colors.subtle : colors.surface,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md + 2,
         borderBottomWidth: 1,
         borderColor: colors.border,
-        gap: space.xs,
-      }}
+      })}
       accessibilityRole="button"
     >
-      <Text style={{ fontSize: 16, fontWeight: '600' }} numberOfLines={1}>
-        {summary(store, submission)}
-      </Text>
-      <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-        <Badge label={status.label} color={status.color} />
-        <Text style={styles.muted}>{new Date(submission.updatedAt).toLocaleString('fr-FR')}</Text>
+      <View style={{ flex: 1, gap: space.xs + 2 }}>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+          {summary(store, submission)}
+        </Text>
+        <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
+          <Badge label={status.label} color={status.color} />
+          <Text style={styles.muted}>{new Date(submission.updatedAt).toLocaleString('fr-FR')}</Text>
+        </View>
+        {submission.error ? <Text style={styles.error}>{submission.error}</Text> : null}
       </View>
-      {submission.error ? <Text style={styles.error}>{submission.error}</Text> : null}
+      <Icon name="chevron-right" size={18} color={colors.textMuted} />
     </Pressable>
   );
 }
@@ -70,12 +76,20 @@ export default function StructureScreen() {
         data={submissions}
         keyExtractor={(s) => s.id}
         renderItem={({ item }) => <SubmissionRow submission={item} />}
-        ListEmptyComponent={<Empty title="Aucune fiche sur l’appareil" />}
+        ListEmptyComponent={<Empty title="Aucune fiche sur l’appareil" icon="file-text" />}
       />
       {canCreate && (
-        <View style={{ padding: space.lg }}>
+        <View
+          style={{
+            padding: space.lg,
+            backgroundColor: colors.surface,
+            borderTopWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
           <Button
             title="Nouvelle fiche"
+            icon="plus"
             onPress={() =>
               router.push({ pathname: '/form/[structureId]', params: { structureId: id } })
             }

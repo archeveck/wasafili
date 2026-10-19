@@ -81,8 +81,10 @@ function SimpleRow({
     return (
       <View
         style={{
-          backgroundColor: colors.surface,
+          backgroundColor: `${colors.accent}0f`,
           borderRadius: radius.md,
+          borderLeftWidth: 3,
+          borderLeftColor: colors.accent,
           padding: space.md,
           marginBottom: space.lg,
         }}
@@ -129,9 +131,10 @@ function TableBlock({
           style={{
             borderWidth: 1,
             borderColor: colors.border,
-            borderRadius: radius.md,
+            borderRadius: radius.lg,
             padding: space.md,
             backgroundColor: colors.surface,
+            boxShadow: '0px 1px 2px rgba(14, 26, 46, 0.06)',
           }}
         >
           <View
@@ -142,11 +145,13 @@ function TableBlock({
               marginBottom: space.sm,
             }}
           >
-            <Text style={styles.muted}>Ligne {index + 1}</Text>
+            <Text style={[styles.muted, { fontWeight: '600' }]}>Ligne {index + 1}</Text>
             {!state.readOnly && (
               <Button
                 title="Supprimer"
                 variant="ghost"
+                icon="trash-2"
+                color={colors.danger}
                 onPress={() => form.removeRow(table.key, index)}
                 style={{ minHeight: 32 }}
               />
@@ -174,6 +179,7 @@ function TableBlock({
         <Button
           title="Ajouter une ligne"
           variant="outline"
+          icon="plus"
           onPress={() => form.addRow(table.key)}
         />
       )}
@@ -195,20 +201,34 @@ function Block({
   if (field.type === 'section') {
     if (!form.state.fields[field.key]?.visible) return null;
     return (
-      <View style={{ marginBottom: space.md }}>
-        <Text
+      <View
+        style={{
+          marginBottom: space.lg,
+          padding: space.lg,
+          paddingBottom: space.xs,
+          borderRadius: radius.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          boxShadow: '0px 1px 2px rgba(14, 26, 46, 0.06)',
+        }}
+      >
+        <View
           style={{
-            fontSize: font.lg,
-            fontWeight: '700',
-            color: colors.primary,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: space.sm,
+            paddingBottom: space.md,
+            marginBottom: space.lg,
             borderBottomWidth: 1,
             borderColor: colors.border,
-            paddingBottom: space.xs,
-            marginBottom: space.md,
           }}
         >
-          {field.label}
-        </Text>
+          <View style={{ width: 3, height: 18, borderRadius: 2, backgroundColor: colors.accent }} />
+          <Text style={{ fontSize: font.lg, fontWeight: '700', color: colors.primary, flex: 1 }}>
+            {field.label}
+          </Text>
+        </View>
         {field.fields.map((child) => (
           <Block key={child.id} field={child} form={form} submissionId={submissionId} />
         ))}
@@ -402,6 +422,7 @@ function Editor({
           backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderColor: colors.border,
+          boxShadow: '0px -4px 14px rgba(14, 26, 46, 0.06)',
         }}
       >
         {transitions.length > 0 && (
@@ -422,6 +443,7 @@ function Editor({
             <Button
               title="Brouillon"
               variant="outline"
+              icon="save"
               style={{ flex: 1 }}
               onPress={() => {
                 draft(form.values);
@@ -432,6 +454,7 @@ function Editor({
           )}
           <Button
             title={isDraft ? 'Envoyer' : 'Enregistrer'}
+            icon={isDraft ? 'send' : 'check'}
             style={{ flex: 2 }}
             loading={saving}
             onPress={send}

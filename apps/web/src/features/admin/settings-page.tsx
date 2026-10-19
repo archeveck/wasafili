@@ -149,7 +149,7 @@ export function SettingsPage() {
                   type="color"
                   id={`settings-${key}`}
                   className="h-9 w-12 rounded border border-border"
-                  value={draft.branding[key] ?? (key === 'primaryColor' ? '#1f6f5c' : '#e3a72f')}
+                  value={draft.branding[key] ?? (key === 'primaryColor' ? '#14284b' : '#2e6be6')}
                   onChange={(e) =>
                     setDraft({
                       ...draft,

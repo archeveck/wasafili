@@ -1,9 +1,14 @@
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Inbox, Loader2 } from 'lucide-react';
 import { type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('rounded-lg border border-border bg-surface', className)} {...props} />;
+  return (
+    <div
+      className={cn('rounded-lg border border-border bg-surface shadow-xs', className)}
+      {...props}
+    />
+  );
 }
 
 export function Badge({
@@ -35,7 +40,7 @@ export function Spinner({ className }: { className?: string }) {
 export function Loading() {
   return (
     <div className="flex justify-center py-16">
-      <Spinner />
+      <Spinner className="size-6 text-accent" />
     </div>
   );
 }
@@ -45,7 +50,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="flex items-center gap-2 rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger"
+      className="flex items-center gap-2.5 rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger"
     >
       <AlertTriangle className="size-4 shrink-0" />
       {message}
@@ -55,9 +60,12 @@ export function ErrorMessage({ error }: { error: unknown }) {
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
-      <p className="font-medium">{title}</p>
-      {children && <div className="mt-2 text-sm text-muted">{children}</div>}
+    <div className="flex flex-col items-center rounded-lg border border-dashed border-foreground/15 bg-surface/60 px-6 py-12 text-center">
+      <span className="mb-3 flex size-10 items-center justify-center rounded-full bg-subtle text-muted">
+        <Inbox className="size-5" aria-hidden />
+      </span>
+      <p className="font-medium text-foreground">{title}</p>
+      {children && <div className="mt-1.5 max-w-md text-sm text-muted">{children}</div>}
     </div>
   );
 }
@@ -72,20 +80,26 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
 
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-      <table className={cn('w-full text-left text-sm', className)} {...props} />
+    <div className="overflow-x-auto rounded-lg border border-border bg-surface shadow-xs">
+      <table
+        className={cn(
+          'w-full text-left text-sm [&_tbody_tr:last-child>td]:border-b-0 [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-subtle/60',
+          className,
+        )}
+        {...props}
+      />
     </div>
   );
 }
@@ -93,7 +107,7 @@ export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>)
 export const Th = ({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
   <th
     className={cn(
-      'whitespace-nowrap border-b border-border bg-subtle px-3 py-2 font-medium',
+      'whitespace-nowrap border-b border-border bg-subtle/70 px-3 py-2.5 text-xs font-semibold text-muted',
       className,
     )}
     {...props}
@@ -101,5 +115,5 @@ export const Th = ({ className, ...props }: HTMLAttributes<HTMLTableCellElement>
 );
 
 export const Td = ({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
-  <td className={cn('border-b border-border px-3 py-2 align-top', className)} {...props} />
+  <td className={cn('border-b border-border px-3 py-2.5 align-top', className)} {...props} />
 );

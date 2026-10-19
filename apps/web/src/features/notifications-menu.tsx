@@ -46,12 +46,12 @@ export function NotificationsMenu() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className="relative text-sidebar-muted hover:bg-white/10 hover:text-white active:bg-white/15"
           aria-label={unread ? `Notifications (${unread} non lues)` : 'Notifications'}
         >
           <Bell />
           {unread > 0 && (
-            <span className="absolute right-1 top-1 min-w-4 rounded-full bg-danger px-1 text-[10px] font-semibold leading-4 text-white">
+            <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-danger px-1 text-[10px] font-semibold leading-4 text-white ring-2 ring-sidebar">
               {unread > 99 ? '99+' : unread}
             </span>
           )}
@@ -59,11 +59,11 @@ export function NotificationsMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-80">
         <div className="flex items-center justify-between px-2 py-1.5">
-          <p className="text-sm font-medium">Notifications</p>
+          <p className="text-sm font-semibold">Notifications</p>
           {unread > 0 && (
             <button
               type="button"
-              className="text-xs text-primary"
+              className="rounded text-xs font-medium text-accent hover:underline"
               onClick={() => read.mutate(undefined)}
             >
               Tout marquer comme lu
@@ -78,7 +78,7 @@ export function NotificationsMenu() {
             <span
               className={cn(
                 'mt-1.5 size-2 shrink-0 rounded-full',
-                n.readAt ? 'bg-transparent' : 'bg-primary',
+                n.readAt ? 'bg-transparent' : 'bg-accent',
               )}
             />
             <span className="min-w-0">

@@ -65,7 +65,7 @@ export function DashboardsPage() {
             key={dashboard.id}
             to="/$app/dashboards/$dashboardId"
             params={{ app: short, dashboardId: dashboard.id }}
-            className="rounded-lg border border-border bg-surface p-4 hover:border-primary"
+            className="rounded-lg border border-border bg-surface p-4 shadow-xs transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
           >
             <p className="flex items-center gap-2 font-medium">
               <LayoutDashboard className="size-4 text-primary" /> {dashboard.name}

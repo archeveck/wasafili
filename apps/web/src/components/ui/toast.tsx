@@ -21,7 +21,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={notify}>
       {children}
       <div
-        className="fixed bottom-4 right-4 z-[60] flex w-80 flex-col gap-2"
+        className="fixed bottom-4 right-4 z-[60] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
         role="status"
         aria-live="polite"
       >
@@ -29,18 +29,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             className={cn(
-              'flex items-start gap-2 rounded-md border bg-surface p-3 text-sm shadow-lg',
-              toast.kind === 'error' ? 'border-danger/40' : 'border-success/40',
+              'flex animate-overlay-in items-start gap-2.5 rounded-lg border border-border border-l-4 bg-surface p-3 text-sm text-foreground shadow-lg',
+              toast.kind === 'error' ? 'border-l-danger' : 'border-l-success',
             )}
           >
             {toast.kind === 'error' ? (
-              <XCircle className="size-4 shrink-0 text-danger" />
+              <XCircle className="mt-px size-4 shrink-0 text-danger" />
             ) : (
-              <CheckCircle2 className="size-4 shrink-0 text-success" />
+              <CheckCircle2 className="mt-px size-4 shrink-0 text-success" />
             )}
             <span className="flex-1">{toast.message}</span>
             <button
               type="button"
+              className="rounded p-0.5 text-muted transition-colors hover:bg-subtle hover:text-foreground"
               aria-label="Fermer"
               onClick={() => setToasts((current) => current.filter((t) => t.id !== toast.id))}
             >

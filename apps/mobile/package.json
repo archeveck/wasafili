@@ -16,6 +16,7 @@
     "e2e": "maestro test e2e/saisie-fiche.yaml"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-community/netinfo": "12.0.1",
     "@shopify/react-native-skia": "2.14.0",

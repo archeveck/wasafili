@@ -1,21 +1,48 @@
 @import 'tailwindcss';
 
-/* Tokens Tesserax (packages/ui) exposés au thème Tailwind ; la couleur primaire suit l'instance. */
+/*
+ * Tokens Tesserax (packages/ui) exposés au thème Tailwind : bleu nuit, blanc et gris neutres,
+ * un bleu d'accent employé avec parcimonie. Couleurs principale et d'accent : celles de l'instance.
+ */
 @theme {
-  --color-primary: var(--brand-primary, #1f6f5c);
+  --color-primary: var(--brand-primary, #14284b);
   --color-primary-foreground: #ffffff;
-  --color-accent: var(--brand-accent, #e3a72f);
+  --color-accent: var(--brand-accent, #2e6be6);
   --color-danger: #c4372d;
   --color-warning: #d98a1b;
   --color-success: #2e8b57;
-  --color-foreground: #1b1f23;
-  --color-muted: #5b6470;
+  --color-foreground: #0e1a2e;
+  --color-muted: #5a6579;
   --color-surface: #ffffff;
-  --color-background: #f5f6f4;
-  --color-border: #d9ddd8;
-  --color-subtle: #eef0ec;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-background: #f4f6fa;
+  --color-border: #dfe4ec;
+  --color-subtle: #eef2f7;
+  /* Barre de navigation : identité fixe, indépendante de la couleur de l'instance. */
+  --color-sidebar: #0b1a33;
+  --color-sidebar-foreground: #f2f5fa;
+  --color-sidebar-muted: #a3b0c5;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-xs: 0 1px 2px 0 rgb(14 26 46 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(14 26 46 / 0.08), 0 1px 2px -1px rgb(14 26 46 / 0.06);
+  --shadow-lg: 0 12px 32px -8px rgb(14 26 46 / 0.18), 0 4px 8px -4px rgb(14 26 46 / 0.08);
+  --shadow-xl: 0 24px 48px -12px rgb(14 26 46 / 0.28);
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-pop-in: pop-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      /* `transform` se compose avec la propriété `translate` des utilitaires de centrage. */
+      transform: translateY(4px) scale(0.98);
+    }
+  }
 }
 
 html,
@@ -27,9 +54,23 @@ body,
 body {
   @apply bg-background text-foreground font-sans antialiased;
   font-size: 14px;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }

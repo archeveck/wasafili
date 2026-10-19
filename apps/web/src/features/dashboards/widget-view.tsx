@@ -43,7 +43,7 @@ export function WidgetView({ widget, structureName }: { widget: Widget; structur
         {hasSeries && (
           <button
             type="button"
-            className="rounded p-1 text-muted hover:bg-subtle"
+            className="rounded-md p-1 text-muted transition-colors hover:bg-subtle hover:text-foreground"
             aria-pressed={asTable}
             aria-label={asTable ? 'Afficher le graphique' : 'Afficher les données'}
             title={asTable ? 'Afficher le graphique' : 'Afficher les données'}
