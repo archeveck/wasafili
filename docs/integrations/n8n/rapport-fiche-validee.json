@@ -1,0 +1,219 @@
+{
+  "name": "Tesserax — rapport PDF des fiches validées",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tesserax-fiches",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5d1b3c4e-0001-4a6f-9c1a-000000000001",
+      "name": "Webhook Tesserax",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "5d1b3c4e-0001-4a6f-9c1a-0000000000aa"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "baseUrl",
+              "value": "https://tesserax.exemple.ci",
+              "type": "string"
+            },
+            { "id": "c2", "name": "app", "value": "demo", "type": "string" },
+            {
+              "id": "c3",
+              "name": "reportId",
+              "value": "COLLER_ICI_L_IDENTIFIANT_DU_MODELE_DE_RAPPORT",
+              "type": "string"
+            },
+            { "id": "c4", "name": "validatedState", "value": "valide", "type": "string" },
+            {
+              "id": "c5",
+              "name": "webhookSecret",
+              "value": "COLLER_ICI_LE_SECRET_DU_WEBHOOK",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5d1b3c4e-0002-4a6f-9c1a-000000000002",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.headers['x-tesserax-timestamp'] }}.{{ JSON.stringify($json.body) }}",
+        "dataPropertyName": "computedSignature",
+        "secret": "={{ $json.webhookSecret }}"
+      },
+      "id": "5d1b3c4e-0003-4a6f-9c1a-000000000003",
+      "name": "Calculer la signature",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "s1",
+              "leftValue": "={{ 'sha256=' + $json.computedSignature === $json.headers['x-tesserax-signature'] && Math.abs($now.toSeconds() - Number($json.headers['x-tesserax-timestamp'])) < 300 }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5d1b3c4e-0004-4a6f-9c1a-000000000004",
+      "name": "Signature valide ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"invalid_signature\" } }}",
+        "options": { "responseCode": 401 }
+      },
+      "id": "5d1b3c4e-0005-4a6f-9c1a-000000000005",
+      "name": "Refuser (401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "v1",
+              "leftValue": "={{ $json.body.event === 'submission.state_changed' && $json.body.data.submission.state === $json.validatedState }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5d1b3c4e-0006-4a6f-9c1a-000000000006",
+      "name": "Fiche validée ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ignored\": true } }}",
+        "options": {}
+      },
+      "id": "5d1b3c4e-0007-4a6f-9c1a-000000000007",
+      "name": "Ignorer (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl }}/v1/{{ $json.app }}/reports/{{ $json.reportId }}/render",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"submissionId\": $json.body.data.submission.id } }}",
+        "options": {}
+      },
+      "id": "5d1b3c4e-0008-4a6f-9c1a-000000000008",
+      "name": "Générer le rapport PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 100],
+      "credentials": { "oAuth2Api": { "id": "tesseraxApiKey", "name": "Tesserax (clé API)" } }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": { "response": { "responseFormat": "file", "outputPropertyName": "rapport" } }
+        }
+      },
+      "id": "5d1b3c4e-0009-4a6f-9c1a-000000000009",
+      "name": "Télécharger le PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {},
+      "id": "5d1b3c4e-0010-4a6f-9c1a-000000000010",
+      "name": "À brancher : e-mail, GED, tableur…",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"report\": $('Générer le rapport PDF').item.json.filename } }}",
+        "options": {}
+      },
+      "id": "5d1b3c4e-0011-4a6f-9c1a-000000000011",
+      "name": "Accuser réception (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1760, 100]
+    }
+  ],
+  "connections": {
+    "Webhook Tesserax": { "main": [[{ "node": "Configuration", "type": "main", "index": 0 }]] },
+    "Configuration": {
+      "main": [[{ "node": "Calculer la signature", "type": "main", "index": 0 }]]
+    },
+    "Calculer la signature": {
+      "main": [[{ "node": "Signature valide ?", "type": "main", "index": 0 }]]
+    },
+    "Signature valide ?": {
+      "main": [
+        [{ "node": "Fiche validée ?", "type": "main", "index": 0 }],
+        [{ "node": "Refuser (401)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fiche validée ?": {
+      "main": [
+        [{ "node": "Générer le rapport PDF", "type": "main", "index": 0 }],
+        [{ "node": "Ignorer (200)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Générer le rapport PDF": {
+      "main": [[{ "node": "Télécharger le PDF", "type": "main", "index": 0 }]]
+    },
+    "Télécharger le PDF": {
+      "main": [[{ "node": "À brancher : e-mail, GED, tableur…", "type": "main", "index": 0 }]]
+    },
+    "À brancher : e-mail, GED, tableur…": {
+      "main": [[{ "node": "Accuser réception (200)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

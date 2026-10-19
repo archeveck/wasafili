@@ -1,0 +1,129 @@
+{
+  "name": "Tesserax — export horaire des fiches validées",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "6e2c4d5f-0001-4b7a-8d2b-000000000001",
+      "name": "Lancer à la main",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 200]
+    },
+    {
+      "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 1 }] } },
+      "id": "6e2c4d5f-0002-4b7a-8d2b-000000000002",
+      "name": "Toutes les heures",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "baseUrl",
+              "value": "https://tesserax.exemple.ci",
+              "type": "string"
+            },
+            { "id": "c2", "name": "app", "value": "demo", "type": "string" },
+            {
+              "id": "c3",
+              "name": "structureId",
+              "value": "COLLER_ICI_L_IDENTIFIANT_DU_FORMULAIRE",
+              "type": "string"
+            },
+            { "id": "c4", "name": "state", "value": "valide", "type": "string" },
+            {
+              "id": "c5",
+              "name": "since",
+              "value": "={{ $now.minus({ hours: 24 }).toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6e2c4d5f-0003-4b7a-8d2b-000000000003",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl }}/v1/{{ $json.app }}/structures/{{ $json.structureId }}/submissions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "state", "value": "={{ $json.state }}" },
+            { "name": "created_from", "value": "={{ $json.since }}" },
+            { "name": "per_page", "value": "100" },
+            { "name": "sort", "value": "createdAt" }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [{ "name": "page", "value": "={{ $pageCount + 1 }}" }]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.meta.page >= $response.body.meta.totalPages }}",
+              "limitPagesFetched": true,
+              "maxRequests": 50
+            }
+          }
+        }
+      },
+      "id": "6e2c4d5f-0004-4b7a-8d2b-000000000004",
+      "name": "Lire les fiches (toutes les pages)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "credentials": { "oAuth2Api": { "id": "tesseraxApiKey", "name": "Tesserax (clé API)" } }
+    },
+    {
+      "parameters": { "fieldToSplitOut": "data", "options": {} },
+      "id": "6e2c4d5f-0005-4b7a-8d2b-000000000005",
+      "name": "Une ligne par fiche",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {},
+      "id": "6e2c4d5f-0006-4b7a-8d2b-000000000006",
+      "name": "À brancher : tableur, ERP, entrepôt de données…",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Lancer à la main": { "main": [[{ "node": "Configuration", "type": "main", "index": 0 }]] },
+    "Toutes les heures": { "main": [[{ "node": "Configuration", "type": "main", "index": 0 }]] },
+    "Configuration": {
+      "main": [[{ "node": "Lire les fiches (toutes les pages)", "type": "main", "index": 0 }]]
+    },
+    "Lire les fiches (toutes les pages)": {
+      "main": [[{ "node": "Une ligne par fiche", "type": "main", "index": 0 }]]
+    },
+    "Une ligne par fiche": {
+      "main": [
+        [
+          {
+            "node": "À brancher : tableur, ERP, entrepôt de données…",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
