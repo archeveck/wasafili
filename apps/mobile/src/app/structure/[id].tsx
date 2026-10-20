@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { SyncBar } from '@/components/sync-bar';
 import { Badge, Button, Empty, Icon, STATUS, styles } from '@/components/ui';
-import { type LocalSubmission } from '@tesserax/sync';
+import { type LocalSubmission } from '@wasafili/sync';
 import { useOffline } from '@/lib/offline';
 import { colors, space } from '@/lib/theme';
 

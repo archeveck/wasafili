@@ -6,7 +6,7 @@ import {
   type StructureDefinition,
   type TableField,
   walkFields,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { slugify } from '@/lib/utils';
 
 /** Conteneur d'un champ : racine, section ou tableau (identifiés par l'`id` du champ). */

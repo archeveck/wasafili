@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { type Dashboard, type Widget } from '@tesserax/sdk';
+import { type Dashboard, type Widget } from '@wasafili/sdk';
 import { ArrowLeft, ArrowRight, LayoutDashboard, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
-import { createClient, type TokenStore, type Tokens } from '@tesserax/sdk';
+import { createClient, type TokenStore, type Tokens } from '@wasafili/sdk';
 
-const KEY = 'tesserax.tokens';
+const KEY = 'wasafili.tokens';
 
 /** Jetons en localStorage : la session survit au rechargement de la page. */
 const tokenStore: TokenStore = {

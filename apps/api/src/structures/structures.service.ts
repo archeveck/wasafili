@@ -4,8 +4,8 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { analyzeDefinition } from '@tesserax/form-engine';
-import { emptyDefinition, type StructureDefinition } from '@tesserax/form-schema';
+import { analyzeDefinition } from '@wasafili/form-engine';
+import { emptyDefinition, type StructureDefinition } from '@wasafili/form-schema';
 import { pageArgs, type Pagination, toPage } from '../common/pagination';
 import { type Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';

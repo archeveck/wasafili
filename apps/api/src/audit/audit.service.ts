@@ -4,7 +4,7 @@ import { runWithContext } from '../common/request-context';
 import { type Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-/** Actions tracées (P6.3.1). Le libellé affiché vit dans `@tesserax/i18n` (`audit.actions`). */
+/** Actions tracées (P6.3.1). Le libellé affiché vit dans `@wasafili/i18n` (`audit.actions`). */
 export const AUDIT_ACTIONS = [
   'auth.login',
   'auth.login_failed',

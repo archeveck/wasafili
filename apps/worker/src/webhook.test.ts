@@ -25,7 +25,7 @@ describe('processWebhook', () => {
     payload: { submissionId: 's1' },
     status: 'pending',
     created_at: new Date('2026-10-18T10:00:00Z'),
-    url: 'https://hooks.example.ci/tesserax',
+    url: 'https://hooks.example.ci/wasafili',
     secret: 'secret-de-test',
     disabled_at: null,
     deleted_at: null,
@@ -49,10 +49,10 @@ describe('processWebhook', () => {
       .update(`1792317605.${init.body}`)
       .digest('hex');
     expect(init.headers).toMatchObject({
-      'x-tesserax-event': 'submission.created',
-      'x-tesserax-delivery': 'd1',
-      'x-tesserax-timestamp': '1792317605',
-      'x-tesserax-signature': `sha256=${expected}`,
+      'x-wasafili-event': 'submission.created',
+      'x-wasafili-delivery': 'd1',
+      'x-wasafili-timestamp': '1792317605',
+      'x-wasafili-signature': `sha256=${expected}`,
     });
     expect(JSON.parse(init.body)).toEqual({
       id: 'd1',

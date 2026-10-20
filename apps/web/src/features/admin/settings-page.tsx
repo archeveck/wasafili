@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type MobileTile, type Settings } from '@tesserax/sdk';
+import { type MobileTile, type Settings } from '@wasafili/sdk';
 import { ArrowDown, ArrowUp, Plus, Trash2, Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';

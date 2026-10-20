@@ -6,7 +6,7 @@ import {
   type WorkflowState,
   type WorkflowTransition,
   hasValue,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import {
   Background,
   type Connection,

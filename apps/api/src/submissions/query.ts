@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { type Field, rootValueFields, type StructureDefinition } from '@tesserax/form-schema';
+import { type Field, rootValueFields, type StructureDefinition } from '@wasafili/form-schema';
 import { Prisma } from '../generated/prisma/client';
 
 export const FILTER_OPERATORS = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'contains'] as const;

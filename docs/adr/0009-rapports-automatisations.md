@@ -59,7 +59,7 @@ boucler.
    automatisation) enregistre dans sa transaction les exécutions à lancer et les livraisons de
    webhooks ; elles sont publiées dans les files après validation. Une panne de Redis entre
    les deux laisse des lignes `queued`/`pending` visibles, jamais un événement perdu en silence.
-10. **Exécution dans l'API**, sur une file BullMQ dédiée (`tesserax-automations`) : les actions
+10. **Exécution dans l'API**, sur une file BullMQ dédiée (`wasafili-automations`) : les actions
     passent par les services métier (droits, validation `form-engine`, historique,
     notifications), ce que le worker, sans ces services, ne pourrait faire qu'en les
     dupliquant. Le worker garde les relais d'entrée-sortie : SMTP, webhooks, push. Avec
@@ -78,8 +78,8 @@ boucler.
 
 13. Abonnements par événement (`submission.created`, `.updated`, `.state_changed`,
     `.deleted`), éventuellement limités à une structure, ou appel par une automatisation.
-14. **Signature** : `X-Tesserax-Signature: sha256=<HMAC-SHA256(secret, "<horodatage>.<corps>")>`
-    et `X-Tesserax-Timestamp`. Le secret est montré une seule fois (création, rotation) ; il est
+14. **Signature** : `X-Wasafili-Signature: sha256=<HMAC-SHA256(secret, "<horodatage>.<corps>")>`
+    et `X-Wasafili-Timestamp`. Le secret est montré une seule fois (création, rotation) ; il est
     stocké en clair dans la base, sous RLS, car il sert à signer.
 15. **Retentatives** exponentielles (8 essais, ≈ 40 min) ; après 5 livraisons échouées d'affilée,
     le webhook est désactivé et la raison affichée. Pas de suivi de redirection, délai de 10 s.

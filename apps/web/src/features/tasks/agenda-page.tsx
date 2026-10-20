@@ -9,8 +9,8 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { dayIn } from '@tesserax/form-engine';
-import { type Task } from '@tesserax/sdk';
+import { dayIn } from '@wasafili/form-engine';
+import { type Task } from '@wasafili/sdk';
 import { ChevronLeft, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';

@@ -14,14 +14,14 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { analyzeDefinition } from '@tesserax/form-engine';
+import { analyzeDefinition } from '@wasafili/form-engine';
 import {
   type Field,
   type FieldType,
   type StructureDefinition,
   walkFields,
-} from '@tesserax/form-schema';
-import { ApiError } from '@tesserax/sdk';
+} from '@wasafili/form-schema';
+import { ApiError } from '@wasafili/sdk';
 import {
   AlertTriangle,
   ArrowLeft,

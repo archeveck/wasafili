@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { type DefinitionIssue, FORMULA_FUNCTIONS } from '@tesserax/form-engine';
+import { type DefinitionIssue, FORMULA_FUNCTIONS } from '@wasafili/form-engine';
 import {
   COMPUTED_TYPES,
   type Field,
@@ -7,7 +7,7 @@ import {
   NON_VALUE_TYPES,
   type StructureDefinition,
   walkFields,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { Lock, Plus, Trash2 } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';

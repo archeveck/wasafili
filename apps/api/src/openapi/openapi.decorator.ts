@@ -1,7 +1,7 @@
 import { SetMetadata } from '@nestjs/common';
 import { type z } from 'zod';
 
-export const OPENAPI = 'tesserax:openapi';
+export const OPENAPI = 'wasafili:openapi';
 
 /** Paramètre OpenAPI écrit à la main (ex. filtres `filter[cle][op]`, hors schéma Zod). */
 export interface ParameterObject {

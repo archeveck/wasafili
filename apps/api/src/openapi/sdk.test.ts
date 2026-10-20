@@ -1,4 +1,4 @@
-import { createClient } from '@tesserax/sdk';
+import { createClient } from '@wasafili/sdk';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { OPENAPI_FILE } from './openapi-file';

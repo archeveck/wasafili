@@ -12,7 +12,7 @@ import { type Request, type Response } from 'express';
 import { ENV, type Env } from '../config/env';
 import { type Quota, RateLimitService } from './rate-limit.service';
 
-const BY_IP = 'tesserax:rate-limit-ip';
+const BY_IP = 'wasafili:rate-limit-ip';
 
 /** Route publique sensible (endpoint de jeton) : limitée par adresse IP. */
 export const RateLimitByIp = () => SetMetadata(BY_IP, true);

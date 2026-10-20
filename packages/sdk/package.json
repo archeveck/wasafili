@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/sdk",
+  "name": "@wasafili/sdk",
   "version": "0.0.0",
   "private": true,
   "description": "Client API typé partagé par le web et le mobile, vérifié contre l'OpenAPI de l'API",
@@ -20,7 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tesserax/form-schema": "workspace:*",
-    "@tesserax/sync": "workspace:*"
+    "@wasafili/form-schema": "workspace:*",
+    "@wasafili/sync": "workspace:*"
   }
 }

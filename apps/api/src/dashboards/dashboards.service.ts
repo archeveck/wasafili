@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { type Field, rootValueFields, type StructureDefinition } from '@tesserax/form-schema';
+import { type Field, rootValueFields, type StructureDefinition } from '@wasafili/form-schema';
 import { type Actor } from '../auth/decorators';
 import { type Dashboard, type Instance, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';

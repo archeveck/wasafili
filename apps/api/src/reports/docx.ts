@@ -189,7 +189,7 @@ export function renderTemplate(
         return textParagraph('[image illisible]');
       }
       const rId = `rIdTx${media.length + 1}`;
-      media.push({ rId, path: `media/tesserax_${media.length + 1}.${ext}`, data: image.data, ext });
+      media.push({ rId, path: `media/wasafili_${media.length + 1}.${ext}`, data: image.data, ext });
       entry = { rId, width: size.width ?? 4, height: size.height ?? 3 };
       byFile.set(fileId, entry);
     }

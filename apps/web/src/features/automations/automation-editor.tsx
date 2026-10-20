@@ -6,14 +6,14 @@ import {
   type JsonLogic,
   rootValueFields,
   type StructureDefinition,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import {
   ApiError,
   type AutomationAction,
   type AutomationInput,
   type AutomationTrigger,
   type Recipient,
-} from '@tesserax/sdk';
+} from '@wasafili/sdk';
 import { ArrowDown, ArrowUp, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';

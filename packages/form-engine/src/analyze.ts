@@ -3,7 +3,7 @@ import {
   hasValue,
   type StructureDefinition,
   structureDefinitionSchema,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { inspectLogic } from './logic.js';
 import { buildModel, type Entry, type Model } from './model.js';
 

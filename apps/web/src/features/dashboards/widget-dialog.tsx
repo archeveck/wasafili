@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { rootValueFields } from '@tesserax/form-schema';
-import { type Widget, type WidgetGroupBy, type WidgetMetric } from '@tesserax/sdk';
+import { rootValueFields } from '@wasafili/form-schema';
+import { type Widget, type WidgetGroupBy, type WidgetMetric } from '@wasafili/sdk';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/display';

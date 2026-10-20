@@ -1,4 +1,4 @@
-import { tokens } from '@tesserax/ui';
+import { tokens } from '@wasafili/ui';
 
 /** Thème mobile issu des tokens partagés ; la couleur primaire suit l'instance. */
 export const colors = { ...tokens.color };

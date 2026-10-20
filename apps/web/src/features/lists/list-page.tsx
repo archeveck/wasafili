@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { type ImportReport, type LevelMapping, type List, type ListItem } from '@tesserax/sdk';
+import { type ImportReport, type LevelMapping, type List, type ListItem } from '@wasafili/sdk';
 import {
   ArrowLeft,
   Archive,

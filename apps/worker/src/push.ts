@@ -1,4 +1,4 @@
-import { type PushJob } from '@tesserax/jobs';
+import { type PushJob } from '@wasafili/jobs';
 import { type Pool } from 'pg';
 import { inInstance } from './db.js';
 

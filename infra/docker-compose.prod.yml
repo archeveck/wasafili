@@ -1,24 +1,24 @@
 # Production (P7.2.3) : Traefik termine TLS (Let's Encrypt), seuls les ports 80 et 443 sont
 # publiés. Deux noms d'hôte pointant vers le serveur :
-#   APP_DOMAIN    back-office et API (/v1)        ex. tesserax.exemple.ci
-#   FILES_DOMAIN  stockage (URL signées)          ex. fichiers.tesserax.exemple.ci
+#   APP_DOMAIN    back-office et API (/v1)        ex. wasafili.exemple.ci
+#   FILES_DOMAIN  stockage (URL signées)          ex. fichiers.wasafili.exemple.ci
 #
 #   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d --build
 #
 # Variables obligatoires (infra/.env) : APP_DOMAIN, FILES_DOMAIN, ACME_EMAIL, JWT_SECRET,
-# POSTGRES_PASSWORD, TESSERAX_OWNER_PASSWORD, TESSERAX_APP_PASSWORD, MINIO_ROOT_USER,
+# POSTGRES_PASSWORD, WASAFILI_OWNER_PASSWORD, WASAFILI_APP_PASSWORD, MINIO_ROOT_USER,
 # MINIO_ROOT_PASSWORD, SMTP_URL, MAIL_FROM. Procédure complète : docs/exploitation.md.
 
 x-prod-env: &prod-env
   NODE_ENV: production
   LOG_LEVEL: ${LOG_LEVEL:-info}
-  DATABASE_URL: postgresql://tesserax_app:${TESSERAX_APP_PASSWORD:?requis}@postgres:5432/tesserax
+  DATABASE_URL: postgresql://wasafili_app:${WASAFILI_APP_PASSWORD:?requis}@postgres:5432/wasafili
   REDIS_URL: redis://redis:6379
   JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (32 caractères au moins)}
   TRUST_PROXY: 2
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: https://${FILES_DOMAIN:?requis}
-  S3_BUCKET: ${S3_BUCKET:-tesserax}
+  S3_BUCKET: ${S3_BUCKET:-wasafili}
   S3_ACCESS_KEY: ${MINIO_ROOT_USER:?requis}
   S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?requis}
   GOTENBERG_URL: http://gotenberg:3000
@@ -92,13 +92,13 @@ services:
   migrate:
     environment:
       <<: *prod-env
-      DATABASE_URL: postgresql://tesserax_owner:${TESSERAX_OWNER_PASSWORD:?requis}@postgres:5432/tesserax
+      DATABASE_URL: postgresql://wasafili_owner:${WASAFILI_OWNER_PASSWORD:?requis}@postgres:5432/wasafili
 
   postgres:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?requis}
-      TESSERAX_OWNER_PASSWORD: ${TESSERAX_OWNER_PASSWORD:?requis}
-      TESSERAX_APP_PASSWORD: ${TESSERAX_APP_PASSWORD:?requis}
+      WASAFILI_OWNER_PASSWORD: ${WASAFILI_OWNER_PASSWORD:?requis}
+      WASAFILI_APP_PASSWORD: ${WASAFILI_APP_PASSWORD:?requis}
     ports: !reset []
     restart: unless-stopped
   redis:

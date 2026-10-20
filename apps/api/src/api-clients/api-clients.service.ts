@@ -14,7 +14,7 @@ import { type Permission } from '../tenancy/permissions';
 const NOT_FOUND = { error: 'not_found', message: 'Clé API introuvable' };
 
 /** Préfixe des secrets : un secret divulgué se reconnaît (détection de secrets en CI). */
-export const SECRET_PREFIX = 'tsxsk_';
+export const SECRET_PREFIX = 'wsfsk_';
 
 export interface ApiClientInput {
   name: string;
@@ -49,7 +49,7 @@ export class ApiClientsService {
     const client = await this.prisma.db.oAuthClient.create({
       data: {
         instanceId,
-        clientId: `tsx_${randomBytes(12).toString('hex')}`,
+        clientId: `wsf_${randomBytes(12).toString('hex')}`,
         secretHash: sha256(secret),
         name: input.name,
         scopes: [...new Set(input.scopes)].sort(),

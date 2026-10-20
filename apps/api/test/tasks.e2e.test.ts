@@ -1,5 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
-import { inspectionWorkflow } from '@tesserax/form-schema';
+import { inspectionWorkflow } from '@wasafili/form-schema';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { api, createTenant, createTestApp, login, resetDatabase } from './helpers';

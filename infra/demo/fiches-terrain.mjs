@@ -14,7 +14,7 @@
  */
 const API = process.env.API_URL ?? 'http://localhost:3000';
 const HOST = process.env.API_HOST;
-const PASSWORD = 'Tesserax2026!';
+const PASSWORD = 'Wasafili2026!';
 const args = process.argv.slice(2);
 const ONLY_IF_EMPTY = args.includes('--si-vide');
 const COUNT = Number(args.find((arg) => /^\d+$/.test(arg)) ?? 24);
@@ -77,8 +77,8 @@ const ETATS = ['bon', 'bon', 'bon', 'degrade', 'hors_service'];
 const pick = (list, i) => list[i % list.length];
 const jitter = (value, i, scale) => value + Math.sin(i * 12.9898) * scale;
 
-const technicien = await login('technicien@tesserax.local');
-const superviseur = await login('superviseur@tesserax.local');
+const technicien = await login('technicien@wasafili.local');
+const superviseur = await login('superviseur@wasafili.local');
 const structure = (await call(technicien, 'GET', '/demo/structures?per_page=100')).data.find(
   (s) => s.name === 'Inspection équipement',
 );

@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/worker",
+  "name": "@wasafili/worker",
   "version": "0.0.0",
   "private": true,
   "description": "Traitements asynchrones BullMQ : rapports PDF, e-mails, automatisations, webhooks",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
     "@aws-sdk/lib-storage": "^3.1152.0",
-    "@tesserax/jobs": "workspace:*",
+    "@wasafili/jobs": "workspace:*",
     "bullmq": "^6.3.16",
     "ioredis": "^6.0.0",
     "nodemailer": "^10.1.7",

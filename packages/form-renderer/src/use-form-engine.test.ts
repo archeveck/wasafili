@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { inspectionEquipement } from '@tesserax/form-schema';
+import { inspectionEquipement } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { errorsAt, validationMessage } from './messages.js';
 import { useFormEngine } from './use-form-engine.js';

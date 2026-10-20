@@ -1,5 +1,5 @@
-import { type GeoPoint, rootValueFields } from '@tesserax/form-schema';
-import { type LocalSubmission } from '@tesserax/sync';
+import { type GeoPoint, rootValueFields } from '@wasafili/form-schema';
+import { type LocalSubmission } from '@wasafili/sync';
 import { router } from 'expo-router';
 import { useMemo, useRef } from 'react';
 import { Text, View } from 'react-native';

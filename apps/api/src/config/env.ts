@@ -7,7 +7,7 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
   /** Préfixe Redis des files de jobs (isole les environnements qui partagent un Redis). */
-  QUEUE_PREFIX: z.string().min(1).default('tesserax'),
+  QUEUE_PREFIX: z.string().min(1).default('wasafili'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET doit contenir au moins 32 caractères'),
   ACCESS_TOKEN_TTL: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL: z.coerce
@@ -33,13 +33,13 @@ const envSchema = z.object({
   /** … et par instance, tous appelants confondus. */
   RATE_LIMIT_INSTANCE_PER_MINUTE: z.coerce.number().int().positive().default(3000),
   /** Préfixe Redis des compteurs. */
-  RATE_LIMIT_PREFIX: z.string().min(1).default('tesserax:rate-limit'),
+  RATE_LIMIT_PREFIX: z.string().min(1).default('wasafili:rate-limit'),
   /** Stockage S3 (MinIO) des fichiers. Absent : endpoints fichiers indisponibles (503). */
   S3_ENDPOINT: z.url().optional(),
   /** Adresse du stockage vue des clients (URL signées) ; par défaut S3_ENDPOINT. */
   S3_PUBLIC_ENDPOINT: z.url().optional(),
   S3_REGION: z.string().default('us-east-1'),
-  S3_BUCKET: z.string().default('tesserax'),
+  S3_BUCKET: z.string().default('wasafili'),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
   /** Taille maximale d'un fichier téléversé (octets). */

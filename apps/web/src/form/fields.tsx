@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { type FieldProps, type FieldServices } from '@tesserax/form-renderer';
+import { type FieldProps, type FieldServices } from '@wasafili/form-renderer';
 import {
   type FieldOfType,
   type FileRef,
   type GeoPoint,
   type SimpleField,
   type SubmissionData,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { LocateFixed, Star, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

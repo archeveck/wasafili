@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/i18n",
+  "name": "@wasafili/i18n",
   "version": "0.0.0",
   "private": true,
   "description": "Ressources de traduction partagées web + mobile (fr par défaut, en prêt)",

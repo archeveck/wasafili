@@ -11,8 +11,8 @@ const shot = async (page: Page, name: string) => {
  */
 test('clé API : création, usage par une intégration, révocation immédiate', async ({ page }) => {
   await page.goto('/');
-  await page.getByLabel('Adresse e-mail').fill('admin@tesserax.local');
-  await page.getByLabel('Mot de passe').fill('Tesserax2026!');
+  await page.getByLabel('Adresse e-mail').fill('admin@wasafili.local');
+  await page.getByLabel('Mot de passe').fill('Wasafili2026!');
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page).toHaveURL(/\/demo\/structures/);
 
@@ -28,8 +28,8 @@ test('clé API : création, usage par une intégration, révocation immédiate',
   const secretDialog = page.getByRole('dialog', { name: `Clé « ${name} »` });
   const clientId = await secretDialog.getByLabel('Identifiant (client_id)').inputValue();
   const clientSecret = await secretDialog.getByLabel('Secret (client_secret)').inputValue();
-  expect(clientId).toMatch(/^tsx_/);
-  expect(clientSecret).toMatch(/^tsxsk_/);
+  expect(clientId).toMatch(/^wsf_/);
+  expect(clientSecret).toMatch(/^wsfsk_/);
   await shot(page, 'cle-api-secret');
   await page.keyboard.press('Escape');
 

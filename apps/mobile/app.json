@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "Tesserax",
-    "slug": "tesserax",
-    "scheme": "tesserax",
+    "name": "Wasafili",
+    "slug": "wasafili",
+    "scheme": "wasafili",
     "version": "0.1.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tesserax.app",
+      "bundleIdentifier": "com.wasafili.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "La position est enregistrée avec les fiches saisies sur le terrain."
       }
     },
     "android": {
-      "package": "com.tesserax.app",
+      "package": "com.wasafili.app",
       "adaptiveIcon": {
         "backgroundColor": "#14284B",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -71,13 +71,13 @@ jobs:
           --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s
           --health-retries 20
     env:
-      TEST_DATABASE_URL: postgresql://tesserax_app:tesserax_app@localhost:5432/tesserax_test
-      TEST_DATABASE_OWNER_URL: postgresql://tesserax_owner:tesserax_owner@localhost:5432/tesserax_test
+      TEST_DATABASE_URL: postgresql://wasafili_app:wasafili_app@localhost:5432/wasafili_test
+      TEST_DATABASE_OWNER_URL: postgresql://wasafili_owner:wasafili_owner@localhost:5432/wasafili_test
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-only-secret-ci-only-secret-ci-only
       S3_ENDPOINT: http://localhost:9000
-      S3_ACCESS_KEY: tesserax
-      S3_SECRET_KEY: tesserax-minio-secret
+      S3_ACCESS_KEY: wasafili
+      S3_SECRET_KEY: wasafili-minio-secret
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -91,16 +91,16 @@ jobs:
           PGHOST: localhost
           PGPASSWORD: postgres
           POSTGRES_USER: postgres
-          TESSERAX_OWNER_PASSWORD: tesserax_owner
-          TESSERAX_APP_PASSWORD: tesserax_app
+          WASAFILI_OWNER_PASSWORD: wasafili_owner
+          WASAFILI_APP_PASSWORD: wasafili_app
       - name: MinIO (même image que docker compose) et bucket
         run: |
           docker run -d --name minio -p 9000:9000 \
-            -e MINIO_ROOT_USER=tesserax -e MINIO_ROOT_PASSWORD=tesserax-minio-secret \
+            -e MINIO_ROOT_USER=wasafili -e MINIO_ROOT_PASSWORD=wasafili-minio-secret \
             pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
           until curl -fsS http://localhost:9000/minio/health/live; do sleep 1; done
           docker run --rm --network host --entrypoint sh pgsty/mc:RELEASE.2026-09-16T00-00-00Z -c \
-            'mc alias set local http://localhost:9000 tesserax tesserax-minio-secret && mc mb local/tesserax'
+            'mc alias set local http://localhost:9000 wasafili wasafili-minio-secret && mc mb local/wasafili'
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:integration
 
@@ -133,14 +133,14 @@ jobs:
           PGPORT: 5440
           PGPASSWORD: postgres
           POSTGRES_USER: postgres
-          TESSERAX_OWNER_PASSWORD: tesserax_owner
-          TESSERAX_APP_PASSWORD: tesserax_app
+          WASAFILI_OWNER_PASSWORD: wasafili_owner
+          WASAFILI_APP_PASSWORD: wasafili_app
       - run: cp .env.example .env
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm db:deploy && pnpm db:seed
-      - run: pnpm --filter @tesserax/web exec playwright install --with-deps chromium
-      - run: pnpm --filter @tesserax/web test:e2e
+      - run: pnpm --filter @wasafili/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @wasafili/web test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -158,9 +158,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter "@tesserax/mobile^..." build
-      - run: pnpm --filter @tesserax/mobile exec expo export --platform ios --output-dir dist-check
-      - run: pnpm --filter @tesserax/mobile exec expo export --platform android --output-dir dist-check
+      - run: pnpm --filter "@wasafili/mobile^..." build
+      - run: pnpm --filter @wasafili/mobile exec expo export --platform ios --output-dir dist-check
+      - run: pnpm --filter @wasafili/mobile exec expo export --platform android --output-dir dist-check
 
   # Builds natifs sans compte Expo (D2, P7.3) : expo prebuild puis outils natifs. Longs : sur
   # la branche principale seulement. Les builds signés passent par EAS (eas.json).
@@ -183,13 +183,13 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter "@tesserax/mobile^..." build
-      - run: pnpm --filter @tesserax/mobile exec expo prebuild --platform android --no-install
+      - run: pnpm --filter "@wasafili/mobile^..." build
+      - run: pnpm --filter @wasafili/mobile exec expo prebuild --platform android --no-install
       - run: ./gradlew assembleRelease --no-daemon
         working-directory: apps/mobile/android
       - uses: actions/upload-artifact@v4
         with:
-          name: tesserax-android-preview
+          name: wasafili-android-preview
           path: apps/mobile/android/app/build/outputs/apk/release/*.apk
 
   ios:
@@ -206,8 +206,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter "@tesserax/mobile^..." build
-      - run: pnpm --filter @tesserax/mobile exec expo prebuild --platform ios
+      - run: pnpm --filter "@wasafili/mobile^..." build
+      - run: pnpm --filter @wasafili/mobile exec expo prebuild --platform ios
       - name: Compilation pour le simulateur (sans signature)
         working-directory: apps/mobile/ios
         run: >-

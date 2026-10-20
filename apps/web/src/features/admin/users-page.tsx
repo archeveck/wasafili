@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Member } from '@tesserax/sdk';
+import { type Member } from '@wasafili/sdk';
 import { KeyRound, Pencil, Plus, UserMinus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';

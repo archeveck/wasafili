@@ -10,20 +10,20 @@ export function workerMetrics(queues: Queue[]) {
   registry.setDefaultLabels({ service: 'worker' });
   collectDefaultMetrics({ register: registry });
   const jobs = new Counter({
-    name: 'tesserax_jobs_total',
+    name: 'wasafili_jobs_total',
     help: 'Jobs traités, par type et issue (completed, failed).',
     labelNames: ['name', 'status'] as const,
     registers: [registry],
   });
   const duration = new Histogram({
-    name: 'tesserax_job_duration_seconds',
+    name: 'wasafili_job_duration_seconds',
     help: 'Durée de traitement des jobs, par type.',
     labelNames: ['name'] as const,
     buckets: [0.05, 0.1, 0.5, 1, 2, 5, 10, 30, 60, 300],
     registers: [registry],
   });
   new Gauge({
-    name: 'tesserax_queue_jobs',
+    name: 'wasafili_queue_jobs',
     help: 'Jobs en file, par file et état.',
     labelNames: ['queue', 'state'] as const,
     registers: [registry],

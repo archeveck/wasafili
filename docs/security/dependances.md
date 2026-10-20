@@ -9,8 +9,8 @@
 | Dependabot (npm, Docker, Actions)      | `.github/dependabot.yml`, hebdo  | non : pull requests groupées                 |
 | Lockfile figé                          | `pnpm install --frozen-lockfile` | oui                                          |
 
-La règle gitleaks `tesserax-api-key-secret` reconnaît les secrets de clés API Tesserax par
-leur préfixe `tsxsk_` : une clé publiée par erreur (dépôt, ticket, capture) est détectée.
+La règle gitleaks `wasafili-api-key-secret` reconnaît les secrets de clés API Wasafili par
+leur préfixe `wsfsk_` : une clé publiée par erreur (dépôt, ticket, capture) est détectée.
 
 ## Exceptions en vigueur
 

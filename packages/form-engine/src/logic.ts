@@ -1,4 +1,4 @@
-import { type JsonLogic } from '@tesserax/form-schema';
+import { type JsonLogic } from '@wasafili/form-schema';
 import jsonLogic from 'json-logic-js';
 import { dayNumber, formatDay } from './dates.js';
 

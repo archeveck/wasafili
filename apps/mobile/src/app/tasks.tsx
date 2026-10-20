@@ -1,5 +1,5 @@
-import { dayIn } from '@tesserax/form-engine';
-import { type LocalTask } from '@tesserax/sync';
+import { dayIn } from '@wasafili/form-engine';
+import { type LocalTask } from '@wasafili/sync';
 import { router } from 'expo-router';
 import { Alert, Pressable, SectionList, Text, View } from 'react-native';
 import { SyncBar } from '@/components/sync-bar';

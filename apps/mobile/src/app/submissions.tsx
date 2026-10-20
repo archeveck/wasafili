@@ -1,4 +1,4 @@
-import { type SubmissionStatus } from '@tesserax/sync';
+import { type SubmissionStatus } from '@wasafili/sync';
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { SubmissionsMap } from '@/components/submissions-map';

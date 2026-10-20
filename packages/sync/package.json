@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/sync",
+  "name": "@wasafili/sync",
   "version": "0.0.0",
   "private": true,
   "description": "Base locale et moteur de synchronisation hors ligne (indépendant de la plateforme)",
@@ -20,6 +20,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tesserax/form-schema": "workspace:*"
+    "@wasafili/form-schema": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Group } from '@tesserax/sdk';
+import { type Group } from '@wasafili/sdk';
 import { Plus, Trash2, Users } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';

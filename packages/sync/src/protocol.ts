@@ -1,4 +1,4 @@
-import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { type StructureDefinition, type SubmissionData } from '@wasafili/form-schema';
 
 /** Contrat du protocole `/v1/{app}/sync` (ADR 0007), côté client. */
 

@@ -10,7 +10,7 @@ import { type Request } from 'express';
 import { concatMap, from, map, type Observable } from 'rxjs';
 import { type AuditAction, AuditService, sanitizeMetadata } from './audit.service';
 
-export const AUDIT = 'tesserax:audit';
+export const AUDIT = 'wasafili:audit';
 
 export interface AuditOptions {
   /** Type de l'objet concerné (défaut : la partie de l'action avant le point). */

@@ -1,4 +1,4 @@
-import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { type StructureDefinition, type SubmissionData } from '@wasafili/form-schema';
 import {
   type MutationPayload,
   type MutationResult,
@@ -6,7 +6,7 @@ import {
   type PullResponse,
   type TaskDto,
   type TaskStatus,
-} from '@tesserax/sync';
+} from '@wasafili/sync';
 import {
   type AccessRule,
   type ApiClient,
@@ -640,5 +640,5 @@ export function createClient(options: ClientOptions) {
   };
 }
 
-export type TesseraxClient = ReturnType<typeof createClient>;
-export type AppClient = ReturnType<TesseraxClient['app']>;
+export type WasafiliClient = ReturnType<typeof createClient>;
+export type AppClient = ReturnType<WasafiliClient['app']>;

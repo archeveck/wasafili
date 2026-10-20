@@ -1,6 +1,6 @@
-import { type EvaluationContext } from '@tesserax/form-engine';
-import { useFormEngine } from '@tesserax/form-renderer';
-import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { type EvaluationContext } from '@wasafili/form-engine';
+import { useFormEngine } from '@wasafili/form-renderer';
+import { type StructureDefinition, type SubmissionData } from '@wasafili/form-schema';
 import { useMemo } from 'react';
 import { useApp } from '@/lib/use-app';
 

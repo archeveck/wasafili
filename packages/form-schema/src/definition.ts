@@ -8,7 +8,7 @@ export const STRUCTURE_SCHEMA_VERSION = 1;
 /**
  * Définition d'une structure (formulaire), stockée en JSON dans chaque version.
  * Contrôles structurels ici ; les contrôles sémantiques (formules, références des conditions,
- * cycles) sont faits par `analyzeDefinition` de `@tesserax/form-engine`.
+ * cycles) sont faits par `analyzeDefinition` de `@wasafili/form-engine`.
  */
 export const structureDefinitionSchema = z
   .object({

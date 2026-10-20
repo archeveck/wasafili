@@ -14,7 +14,7 @@ describe('loadEnv', () => {
     expect(loadEnv(valid)).toMatchObject({
       NODE_ENV: 'development',
       LOG_LEVEL: 'info',
-      S3_BUCKET: 'tesserax',
+      S3_BUCKET: 'wasafili',
     });
   });
 

@@ -5,7 +5,7 @@ import {
   type StructureDefinition,
   type SubmissionData,
   type TableRow,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { dayIn, dayNumber, timeIn } from './dates.js';
 import { type Data, evaluate, roundTo, toNumber, truthy } from './logic.js';
 import { buildModel, type CalcNode, type CalculatedField, type Model } from './model.js';

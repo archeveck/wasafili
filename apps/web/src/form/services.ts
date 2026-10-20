@@ -1,5 +1,5 @@
-import { type FieldServices } from '@tesserax/form-renderer';
-import { type AppClient } from '@tesserax/sdk';
+import { type FieldServices } from '@wasafili/form-renderer';
+import { type AppClient } from '@wasafili/sdk';
 
 /** Services des champs (référentiels, fichiers, utilisateurs) branchés sur l'API de l'instance. */
 export function fieldServices(api: AppClient): FieldServices {

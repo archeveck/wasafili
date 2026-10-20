@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { type StructureDefinition, type SubmissionData, walkFields } from '@tesserax/form-schema';
+import { type StructureDefinition, type SubmissionData, walkFields } from '@wasafili/form-schema';
 import { type Actor } from '../auth/decorators';
 import { type Instance, Prisma, type ReportTemplate } from '../generated/prisma/client';
 import { StorageService } from '../files/storage.service';

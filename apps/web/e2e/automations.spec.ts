@@ -6,8 +6,8 @@ import { expect, type Page, test } from '@playwright/test';
  */
 async function login(page: Page) {
   await page.goto('/');
-  await page.getByLabel('Adresse e-mail').fill('admin@tesserax.local');
-  await page.getByLabel('Mot de passe').fill('Tesserax2026!');
+  await page.getByLabel('Adresse e-mail').fill('admin@wasafili.local');
+  await page.getByLabel('Mot de passe').fill('Wasafili2026!');
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page).toHaveURL(/\/demo\/structures/);
 }
@@ -88,7 +88,7 @@ test('webhook : secret affiché une fois, test de livraison journalisé', async 
   await page.goto('/demo/automations?tab=webhooks');
   await page.getByRole('button', { name: 'Nouveau webhook' }).click();
   await page.getByLabel('Nom').fill(name);
-  await page.getByLabel('URL').fill('https://hooks.invalid/tesserax');
+  await page.getByLabel('URL').fill('https://hooks.invalid/wasafili');
   await page.getByRole('button', { name: 'Créer' }).click();
   await expect(page.getByRole('textbox', { name: 'Secret' })).toHaveValue(/^whsec_/);
   await page.keyboard.press('Escape');

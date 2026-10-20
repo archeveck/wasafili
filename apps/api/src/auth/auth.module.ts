@@ -6,7 +6,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { OAuthController } from './oauth.controller';
 import { TokensService } from './tokens.service';
 
-export const JWT_ISSUER = 'tesserax';
+export const JWT_ISSUER = 'wasafili';
 
 @Module({
   imports: [

@@ -1,5 +1,5 @@
 import { useFormRenderer } from '@/form/use-form';
-import { type StructureDefinition } from '@tesserax/form-schema';
+import { type StructureDefinition } from '@wasafili/form-schema';
 import { FormRenderer } from '@/form/form-renderer';
 import { fieldServices } from '@/form/services';
 import { useApp } from '@/lib/use-app';

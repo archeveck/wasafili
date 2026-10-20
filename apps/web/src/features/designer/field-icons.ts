@@ -1,4 +1,4 @@
-import { type FieldType } from '@tesserax/form-schema';
+import { type FieldType } from '@wasafili/form-schema';
 import {
   AlignLeft,
   AtSign,

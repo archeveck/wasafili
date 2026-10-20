@@ -1,12 +1,12 @@
 import NetInfo from '@react-native-community/netinfo';
-import { ApiError } from '@tesserax/sdk';
+import { ApiError } from '@wasafili/sdk';
 import {
   LocalStore,
   SyncEngine,
   type SyncReport,
   type SyncTransport,
   TransientError,
-} from '@tesserax/sync';
+} from '@wasafili/sync';
 import { randomUUID } from 'expo-crypto';
 import { File } from 'expo-file-system';
 import { AppState } from 'react-native';

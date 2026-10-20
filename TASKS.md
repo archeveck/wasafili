@@ -1,4 +1,4 @@
-# TASKS — Découpage du projet Tesserax
+# TASKS — Découpage du projet Wasafili
 
 Source : [PROMPT_claude_code_clone_daxium.md](prompt/PROMPT_claude_code_clone_daxium.md).
 Convention : `Px.y` = tâche (≈ 1 PR / 1 série de commits atomiques), `Px.y.z` = sous-tâche (≈ 1 commit).
@@ -8,12 +8,12 @@ Chaque tâche a un critère **Fini quand** ; une phase n'est close que si toutes
 
 ## 0. Décisions de cadrage (validées)
 
-### Nom : **Tesserax**
+### Nom : **Wasafili**
 
 Choix du porteur de projet. Évoque la *tessera*, la tesselle d'une mosaïque : chaque fiche terrain est une pièce qui compose la vue d'ensemble dans le back-office.
-- Identifiants techniques : scope npm `@tesserax/*`, base `tesserax`, bundle id `com.tesserax.app` (à remplacer par `ci.tesserax.app` si le domaine `tesserax.ci` est acquis).
+- Identifiants techniques : scope npm `@wasafili/*`, base `wasafili`, bundle id `com.wasafili.app` (à remplacer par `ci.wasafili.app` si le domaine `wasafili.ci` est acquis).
 - Aucune référence à Daxium.
-- Vérifié : scope npm `@tesserax` et paquet `tesserax` libres. Homonyme connu : une petite bibliothèque Elixir (wrapper OCR Tesseract sur Hex), sans risque de confusion avec une plateforme de collecte terrain. Proche phonétiquement de *Tesseract* (OCR) : à garder en tête pour le référencement. **Reste à vérifier avant usage commercial** : nom de domaine et dépôt de marque à l'OAPI.
+- Vérifié : scope npm `@wasafili` et paquet `wasafili` libres. Homonyme connu : une petite bibliothèque Elixir (wrapper OCR Tesseract sur Hex), sans risque de confusion avec une plateforme de collecte terrain. Proche phonétiquement de *Tesseract* (OCR) : à garder en tête pour le référencement. **Reste à vérifier avant usage commercial** : nom de domaine et dépôt de marque à l'OAPI.
 
 ### Choix techniques
 

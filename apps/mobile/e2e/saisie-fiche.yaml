@@ -2,12 +2,12 @@
 # Lancer : maestro test e2e/saisie-fiche.yaml (API locale démarrée, seed de démonstration).
 appId: host.exp.Exponent
 env:
-  EMAIL: technicien@tesserax.local
-  PASSWORD: Tesserax2026!
+  EMAIL: technicien@wasafili.local
+  PASSWORD: Wasafili2026!
   APP_URL: exp://127.0.0.1:8081
 ---
 # Expo Go : (ré)ouverture du projet servi par Metro. Avec un build de l'application, utiliser
-# plutôt `launchApp` et l'appId com.tesserax.app.
+# plutôt `launchApp` et l'appId com.wasafili.app.
 - stopApp
 - openLink: ${APP_URL}
 - extendedWaitUntil:

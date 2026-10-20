@@ -1,12 +1,12 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { type FieldProps } from '@tesserax/form-renderer';
+import { type FieldProps } from '@wasafili/form-renderer';
 import {
   type FieldOfType,
   type FileRef,
   type GeoPoint,
   type SimpleField,
   type SubmissionData,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';

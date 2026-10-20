@@ -12,7 +12,7 @@ describe('point d’exploitation du worker', () => {
 
   const start = (checks: Record<string, () => Promise<unknown>>) => {
     const metrics = workerMetrics([
-      queue('tesserax', { waiting: 3, active: 1, delayed: 0, failed: 2 }),
+      queue('wasafili', { waiting: 3, active: 1, delayed: 0, failed: 2 }),
     ]);
     server = startOpsServer({ port: 0, registry: metrics.registry, checks });
     const { port } = server.address() as AddressInfo;
@@ -44,15 +44,15 @@ describe('point d’exploitation du worker', () => {
     metrics.record({ name: 'webhook' } as Job, 'failed');
     const text = await (await fetch(url('/metrics'))).text();
     expect(text).toContain(
-      'tesserax_jobs_total{name="webhook",status="completed",service="worker"} 1',
+      'wasafili_jobs_total{name="webhook",status="completed",service="worker"} 1',
     );
     expect(text).toContain(
-      'tesserax_jobs_total{name="webhook",status="failed",service="worker"} 1',
+      'wasafili_jobs_total{name="webhook",status="failed",service="worker"} 1',
     );
     expect(text).toContain(
-      'tesserax_queue_jobs{queue="tesserax",state="waiting",service="worker"} 3',
+      'wasafili_queue_jobs{queue="wasafili",state="waiting",service="worker"} 3',
     );
-    expect(text).toMatch(/tesserax_job_duration_seconds_count\{[^}]*name="webhook"[^}]*\} 1/);
+    expect(text).toMatch(/wasafili_job_duration_seconds_count\{[^}]*name="webhook"[^}]*\} 1/);
     expect(text).toContain('process_cpu_user_seconds_total');
     expect((await fetch(url('/autre'))).status).toBe(404);
   });

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { type Workflow } from '@tesserax/form-schema';
-import { type Filter } from '@tesserax/sdk';
+import { type Workflow } from '@wasafili/form-schema';
+import { type Filter } from '@wasafili/sdk';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Card, ErrorMessage, Loading } from '@/components/ui/display';
 import { useApp } from '@/lib/use-app';

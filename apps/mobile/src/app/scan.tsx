@@ -1,5 +1,5 @@
-import { type Field, walkFields } from '@tesserax/form-schema';
-import { type LocalListItem } from '@tesserax/sync';
+import { type Field, walkFields } from '@wasafili/form-schema';
+import { type LocalListItem } from '@wasafili/sync';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';

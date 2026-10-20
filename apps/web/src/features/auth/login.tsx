@@ -1,6 +1,6 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Loader2 } from 'lucide-react';
-import { ApiError } from '@tesserax/sdk';
+import { ApiError } from '@wasafili/sdk';
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

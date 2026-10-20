@@ -1,4 +1,4 @@
-import { type SubmissionData, type Workflow, type WorkflowTransition } from '@tesserax/form-schema';
+import { type SubmissionData, type Workflow, type WorkflowTransition } from '@wasafili/form-schema';
 import { type EvaluationContext, type FormEngine } from './engine.js';
 import { isEmpty } from './logic.js';
 import { type ValidationError } from './validate.js';

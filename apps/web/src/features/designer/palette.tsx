@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { type FieldType } from '@tesserax/form-schema';
+import { type FieldType } from '@wasafili/form-schema';
 import { cn } from '@/lib/utils';
 import { FIELD_ICONS } from './field-icons';
 import { PALETTE } from './model';

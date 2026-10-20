@@ -4,7 +4,7 @@ import {
   type Workflow,
   type WorkflowState,
   type WorkflowTransition,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { uniqueKey } from './model';
 
 /**

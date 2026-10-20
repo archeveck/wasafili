@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Put } from '@nestjs/common';
-import { type StructureDefinition } from '@tesserax/form-schema';
+import { type StructureDefinition } from '@wasafili/form-schema';
 import { z } from 'zod';
 import { Can, CurrentInstance } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';

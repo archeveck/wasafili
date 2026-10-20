@@ -1,4 +1,4 @@
-import { resources } from '@tesserax/i18n';
+import { resources } from '@wasafili/i18n';
 
 /** Traduction à partir des ressources partagées (fr par défaut), interpolation `{{param}}`. */
 export function t(key: string, params: Record<string, unknown> = {}): string {

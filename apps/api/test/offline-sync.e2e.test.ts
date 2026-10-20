@@ -1,5 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
-import { ApiError, createClient, type Tokens } from '@tesserax/sdk';
+import { ApiError, createClient, type Tokens } from '@wasafili/sdk';
 import {
   LocalStore,
   type SqlDatabase,
@@ -7,7 +7,7 @@ import {
   SyncEngine,
   type SyncTransport,
   TransientError,
-} from '@tesserax/sync';
+} from '@wasafili/sync';
 import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -24,7 +24,7 @@ import {
 /**
  * Critère d'acceptation (P3.8.1, au niveau protocole) : un technicien en mode avion remplit
  * 10 fiches avec photos ; au retour du réseau, tout se synchronise sans doublon ni perte.
- * Moteur et base locale réels (@tesserax/sync sur SQLite), API, PostgreSQL et MinIO réels.
+ * Moteur et base locale réels (@wasafili/sync sur SQLite), API, PostgreSQL et MinIO réels.
  */
 let app: INestApplication;
 let baseUrl: string;

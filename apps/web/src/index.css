@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * Tokens Tesserax (packages/ui) exposés au thème Tailwind : bleu nuit, blanc et gris neutres,
+ * Tokens Wasafili (packages/ui) exposés au thème Tailwind : bleu nuit, blanc et gris neutres,
  * un bleu d'accent employé avec parcimonie. Couleurs principale et d'accent : celles de l'instance.
  */
 @theme {

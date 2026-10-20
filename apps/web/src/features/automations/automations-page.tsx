@@ -7,7 +7,7 @@ import {
   type EmailMessage,
   type Webhook,
   type WebhookEvent,
-} from '@tesserax/sdk';
+} from '@wasafili/sdk';
 import { Copy, Pencil, Plus, RefreshCw, RotateCcw, Send, Trash2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -407,9 +407,9 @@ function WebhooksPanel() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted">
-        Chaque requête est signée : en-tête <code>X-Tesserax-Signature: sha256=…</code>, HMAC-SHA256
+        Chaque requête est signée : en-tête <code>X-Wasafili-Signature: sha256=…</code>, HMAC-SHA256
         du secret sur <code>horodatage.corps</code> (horodatage dans{' '}
-        <code>X-Tesserax-Timestamp</code>). Un webhook est désactivé après 5 livraisons échouées
+        <code>X-Wasafili-Timestamp</code>). Un webhook est désactivé après 5 livraisons échouées
         d'affilée.
       </p>
       <Button onClick={() => setCreating(true)}>

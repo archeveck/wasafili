@@ -1,4 +1,4 @@
-import { type StructureDefinition } from '@tesserax/form-schema';
+import { type StructureDefinition } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { filterableFields, filterSql, orderSql, parseFilters } from './query';
 

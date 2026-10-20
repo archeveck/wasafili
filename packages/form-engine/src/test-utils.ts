@@ -1,4 +1,4 @@
-import { type Field, type StructureDefinition } from '@tesserax/form-schema';
+import { type Field, type StructureDefinition } from '@wasafili/form-schema';
 
 /** Champ minimal pour les tests : `id` et `label` dérivés de la clé. */
 export function field<T extends Field['type']>(

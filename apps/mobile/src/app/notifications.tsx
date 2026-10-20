@@ -1,4 +1,4 @@
-import { type LocalNotification } from '@tesserax/sync';
+import { type LocalNotification } from '@wasafili/sync';
 import { router } from 'expo-router';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { Button, Empty, styles } from '@/components/ui';

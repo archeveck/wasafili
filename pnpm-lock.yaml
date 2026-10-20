@@ -80,13 +80,13 @@ importers:
       '@prisma/client':
         specifier: 7.10.1
         version: 7.10.1(prisma@7.10.1(@types/node@24.19.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3))(typescript@6.0.3)
-      '@tesserax/form-engine':
+      '@wasafili/form-engine':
         specifier: workspace:*
         version: link:../../packages/form-engine
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../../packages/form-schema
-      '@tesserax/jobs':
+      '@wasafili/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       bullmq:
@@ -153,10 +153,10 @@ importers:
       '@swc/core':
         specifier: ^1.16.18
         version: 1.16.18
-      '@tesserax/sdk':
+      '@wasafili/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@tesserax/sync':
+      '@wasafili/sync':
         specifier: workspace:*
         version: link:../../packages/sync
       '@types/express':
@@ -204,25 +204,25 @@ importers:
       '@shopify/react-native-skia':
         specifier: 2.14.0
         version: 2.14.0(react-native-reanimated@4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
-      '@tesserax/form-engine':
+      '@wasafili/form-engine':
         specifier: workspace:*
         version: link:../../packages/form-engine
-      '@tesserax/form-renderer':
+      '@wasafili/form-renderer':
         specifier: workspace:*
         version: link:../../packages/form-renderer
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../../packages/form-schema
-      '@tesserax/i18n':
+      '@wasafili/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@tesserax/sdk':
+      '@wasafili/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@tesserax/sync':
+      '@wasafili/sync':
         specifier: workspace:*
         version: link:../../packages/sync
-      '@tesserax/ui':
+      '@wasafili/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       expo:
@@ -325,22 +325,22 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@tesserax/form-engine':
+      '@wasafili/form-engine':
         specifier: workspace:*
         version: link:../../packages/form-engine
-      '@tesserax/form-renderer':
+      '@wasafili/form-renderer':
         specifier: workspace:*
         version: link:../../packages/form-renderer
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../../packages/form-schema
-      '@tesserax/i18n':
+      '@wasafili/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@tesserax/sdk':
+      '@wasafili/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@tesserax/ui':
+      '@wasafili/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@xyflow/react':
@@ -416,7 +416,7 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.1152.0
         version: 3.1152.0(@aws-sdk/client-s3@3.1152.0)
-      '@tesserax/jobs':
+      '@wasafili/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       bullmq:
@@ -465,7 +465,7 @@ importers:
 
   packages/form-engine:
     dependencies:
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../form-schema
       json-logic-js:
@@ -481,10 +481,10 @@ importers:
 
   packages/form-renderer:
     dependencies:
-      '@tesserax/form-engine':
+      '@wasafili/form-engine':
         specifier: workspace:*
         version: link:../form-engine
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../form-schema
     devDependencies:
@@ -519,16 +519,16 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../form-schema
-      '@tesserax/sync':
+      '@wasafili/sync':
         specifier: workspace:*
         version: link:../sync
 
   packages/sync:
     dependencies:
-      '@tesserax/form-schema':
+      '@wasafili/form-schema':
         specifier: workspace:*
         version: link:../form-schema
 

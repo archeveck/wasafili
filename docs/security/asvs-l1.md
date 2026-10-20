@@ -66,7 +66,7 @@ Révocation immédiate d'une clé API (relue à chaque requête) : `api-clients.
 
 | #           | Exigence                                 | Statut | Preuve                                                                                                                           |
 | ----------- | ---------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| 5.1.1–5.1.5 | Validation positive des entrées          | ✅     | schémas Zod sur chaque corps et requête (`ZodValidationPipe`) ; fiches validées par `@tesserax/form-engine`                      |
+| 5.1.1–5.1.5 | Validation positive des entrées          | ✅     | schémas Zod sur chaque corps et requête (`ZodValidationPipe`) ; fiches validées par `@wasafili/form-engine`                      |
 | 5.2.x       | Assainissement (HTML, gabarits, SSRF)    | ✅     | React échappe tout rendu ; jamais de XML brut issu d'une saisie dans un rapport (ADR 0009) ; webhooks : garde SSRF en production |
 | 5.3.1–5.3.4 | Encodage de sortie, requêtes paramétrées | ✅     | Prisma et `Prisma.sql` paramétrés (filtres, agrégations) ; aucune concaténation SQL                                              |
 | 5.3.8       | Injection de commande système            | ✅     | aucun appel au shell depuis l'API                                                                                                |

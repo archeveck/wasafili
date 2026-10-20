@@ -100,7 +100,7 @@ describe('jeton d accès', () => {
   it('refuse un jeton signé avec un autre secret', async () => {
     const forged = new JwtService({ secret: 'y'.repeat(40) }).sign(
       { sub: tenant.users[0]!.id, typ: 'user' },
-      { issuer: 'tesserax' },
+      { issuer: 'wasafili' },
     );
     await api(app, forged).get('/v1/me').expect(401);
   });

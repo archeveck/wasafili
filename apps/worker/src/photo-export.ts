@@ -5,7 +5,7 @@ import {
   type S3Client,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { type PhotoExportJob } from '@tesserax/jobs';
+import { type PhotoExportJob } from '@wasafili/jobs';
 import { type Pool } from 'pg';
 import { PassThrough, type Readable } from 'node:stream';
 import yazl from 'yazl';

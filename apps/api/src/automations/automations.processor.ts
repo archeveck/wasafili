@@ -5,7 +5,7 @@ import {
   type OnModuleDestroy,
   type OnModuleInit,
 } from '@nestjs/common';
-import { AUTOMATION_QUEUE_NAME, type AutomationJob } from '@tesserax/jobs';
+import { AUTOMATION_QUEUE_NAME, type AutomationJob } from '@wasafili/jobs';
 import { type Job, Worker } from 'bullmq';
 import { runWithContext } from '../common/request-context';
 import { ENV, type Env } from '../config/env';

@@ -1,7 +1,7 @@
-import { type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { type StructureDefinition, type SubmissionData } from '@wasafili/form-schema';
 
 /**
- * Types des réponses de l'API `/v1`, écrits à la main et partagés avec `@tesserax/form-schema`.
+ * Types des réponses de l'API `/v1`, écrits à la main et partagés avec `@wasafili/form-schema`.
  * Chaque méthode du client est vérifiée contre `apps/api/openapi.json` (test de l'API).
  */
 
@@ -134,7 +134,7 @@ export interface Submission {
   updatedAt: string;
 }
 
-export type { NotificationDto as Notification, TaskDto as Task, TaskStatus } from '@tesserax/sync';
+export type { NotificationDto as Notification, TaskDto as Task, TaskStatus } from '@wasafili/sync';
 
 export interface StateCount {
   state: string | null;

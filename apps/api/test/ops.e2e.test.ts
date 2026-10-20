@@ -40,7 +40,7 @@ describe('exploitation (P7.2.2)', () => {
       .set('Authorization', 'Bearer jeton-metriques-de-test')
       .expect(200);
     expect(res.text).toMatch(
-      /tesserax_http_requests_total\{method="GET",route="\/v1\/:app\/structures",status="200",service="api"\} 1/,
+      /wasafili_http_requests_total\{method="GET",route="\/v1\/:app\/structures",status="200",service="api"\} 1/,
     );
     expect(res.text).toContain('route="/v1/:app/structures/:id",status="404"');
     expect(res.text).toContain('nodejs_eventloop_lag_seconds');

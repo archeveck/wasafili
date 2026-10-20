@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { createFormEngine, type FormEngine } from '@tesserax/form-engine';
-import { type StructureDefinition } from '@tesserax/form-schema';
+import { createFormEngine, type FormEngine } from '@wasafili/form-engine';
+import { type StructureDefinition } from '@wasafili/form-schema';
 
 const MAX_ENTRIES = 500;
 

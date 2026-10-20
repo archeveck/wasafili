@@ -7,8 +7,8 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { type Field, rootValueFields } from '@tesserax/form-schema';
-import { type Filter, type FilterOperator, type Submission } from '@tesserax/sdk';
+import { type Field, rootValueFields } from '@wasafili/form-schema';
+import { type Filter, type FilterOperator, type Submission } from '@wasafili/sdk';
 import { ArrowDown, ArrowUp, Download, Filter as FilterIcon, Images, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';

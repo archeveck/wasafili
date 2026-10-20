@@ -1,4 +1,4 @@
-import { type Field, inspectionEquipement } from '@tesserax/form-schema';
+import { type Field, inspectionEquipement } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { exportColumns, formatCell, referencedIds } from './export';
 

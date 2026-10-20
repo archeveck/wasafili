@@ -10,12 +10,12 @@ WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc* ./
 COPY apps/api/package.json apps/api/
 COPY packages packages
-RUN pnpm install --frozen-lockfile --filter @tesserax/api...
+RUN pnpm install --frozen-lockfile --filter @wasafili/api...
 
 COPY tsconfig.base.json ./
 COPY apps/api apps/api
 # Construit les paquets partagés puis l'API (ordre topologique).
-RUN pnpm --filter @tesserax/api... build
+RUN pnpm --filter @wasafili/api... build
 
 # Dépendances de dev conservées : CLI Prisma et tsx servent au service `migrate`.
 # Image dédiée à l'exécution (sans dev deps) : P7.2.

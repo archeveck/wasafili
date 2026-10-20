@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/form-renderer",
+  "name": "@wasafili/form-renderer",
   "version": "0.0.0",
   "private": true,
   "description": "Contrat et composants de champs partagés web/mobile",
@@ -20,8 +20,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tesserax/form-engine": "workspace:*",
-    "@tesserax/form-schema": "workspace:*"
+    "@wasafili/form-engine": "workspace:*",
+    "@wasafili/form-schema": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

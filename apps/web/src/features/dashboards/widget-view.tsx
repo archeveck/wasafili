@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { type Widget } from '@tesserax/sdk';
+import { type Widget } from '@wasafili/sdk';
 import { Table2 } from 'lucide-react';
 import { useState } from 'react';
 import { ErrorMessage, Spinner } from '@/components/ui/display';

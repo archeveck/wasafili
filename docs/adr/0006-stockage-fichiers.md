@@ -15,7 +15,7 @@
 - **Deux points d'accès S3** : `S3_ENDPOINT` (réseau interne, conteneurs) et
   `S3_PUBLIC_ENDPOINT` (adresse vue des navigateurs et du mobile, utilisée pour signer).
 - **Miniatures** : à la confirmation d'une image, l'API publie un job `thumbnail` (contrat
-  partagé `@tesserax/jobs`, identifiant de job déterministe donc idempotent). Le worker génère un
+  partagé `@wasafili/jobs`, identifiant de job déterministe donc idempotent). Le worker génère un
   JPEG de 320 px avec **sharp**, l'écrit dans `{instance}/thumbs/{id}.jpg`, puis renseigne
   `files.thumbnail_key` en posant le contexte RLS de l'instance (rôle applicatif, ADR 0001).
 - **Dépendances** : `@aws-sdk/client-s3` et `@aws-sdk/s3-request-presigner`, le SDK de référence,

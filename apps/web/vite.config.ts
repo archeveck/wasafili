@@ -50,7 +50,7 @@ function tiles(): Plugin {
       createReadStream(path, { start, end }).pipe(res);
     });
   };
-  return { name: 'tesserax-tiles', configureServer: serve, configurePreviewServer: serve as never };
+  return { name: 'wasafili-tiles', configureServer: serve, configurePreviewServer: serve as never };
 }
 
 export default defineConfig({

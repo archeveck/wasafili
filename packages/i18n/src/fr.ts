@@ -1,5 +1,5 @@
 export const fr = {
-  app: { name: 'Tesserax' },
+  app: { name: 'Wasafili' },
   auth: {
     login: 'Se connecter',
     logout: 'Se déconnecter',

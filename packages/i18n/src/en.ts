@@ -1,7 +1,7 @@
 import { type MessageTree } from './fr.js';
 
 export const en: MessageTree = {
-  app: { name: 'Tesserax' },
+  app: { name: 'Wasafili' },
   auth: {
     login: 'Sign in',
     logout: 'Sign out',

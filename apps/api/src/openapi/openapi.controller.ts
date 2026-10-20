@@ -21,7 +21,7 @@ const DOCS_HTML = `<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>API Tesserax</title>
+    <title>API Wasafili</title>
     <link rel="stylesheet" href="docs/assets/swagger-ui.css" />
   </head>
   <body>

@@ -1,4 +1,4 @@
-import { type LocalSubmission } from '@tesserax/sync';
+import { type LocalSubmission } from '@wasafili/sync';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Alert } from 'react-native';

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
-import { type ReportTemplate } from '@tesserax/sdk';
+import { type ReportTemplate } from '@wasafili/sdk';
 import { AlertTriangle, Copy, Download, Eye, FileUp, Plus, Trash2 } from 'lucide-react';
 import { type FormEvent, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';

@@ -3,12 +3,12 @@ import {
   type EvaluationContext,
   type FormState,
   type ValidationError,
-} from '@tesserax/form-engine';
+} from '@wasafili/form-engine';
 import {
   type StructureDefinition,
   type SubmissionData,
   type TableRow,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { useCallback, useMemo, useState } from 'react';
 
 export interface UseFormEngineOptions {
@@ -38,7 +38,7 @@ export interface FormController {
 }
 
 /**
- * État d'un formulaire piloté par @tesserax/form-engine (P2.2.3). Sans dépendance DOM :
+ * État d'un formulaire piloté par @wasafili/form-engine (P2.2.3). Sans dépendance DOM :
  * utilisable tel quel par l'application mobile.
  */
 export function useFormEngine(

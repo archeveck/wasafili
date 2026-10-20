@@ -1,4 +1,4 @@
-import { type InstanceSummary } from '@tesserax/sdk';
+import { type InstanceSummary } from '@wasafili/sdk';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';

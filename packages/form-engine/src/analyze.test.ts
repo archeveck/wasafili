@@ -1,4 +1,4 @@
-import { inspectionEquipement, inspectionWorkflow } from '@tesserax/form-schema';
+import { inspectionEquipement, inspectionWorkflow } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { analyzeDefinition } from './analyze.js';
 import { createResolver, buildModel } from './model.js';

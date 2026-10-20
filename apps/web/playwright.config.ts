@@ -17,7 +17,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'pnpm --filter @tesserax/api build && pnpm --filter @tesserax/api start',
+      command: 'pnpm --filter @wasafili/api build && pnpm --filter @wasafili/api start',
       url: 'http://localhost:3000/health',
       reuseExistingServer: true,
       timeout: 180_000,

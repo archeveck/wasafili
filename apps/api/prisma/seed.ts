@@ -6,7 +6,7 @@ import { seedDemoReports } from '../src/seed/seed-reports';
 import { type SeedUser, seedInstance } from '../src/seed/seed-instance';
 
 /** Mot de passe des comptes de démonstration — développement et démo uniquement. */
-export const DEMO_PASSWORD = 'Tesserax2026!';
+export const DEMO_PASSWORD = 'Wasafili2026!';
 
 async function main(): Promise<void> {
   loadDotEnv();
@@ -20,15 +20,15 @@ async function main(): Promise<void> {
       name: 'Démo BTP Abidjan',
       users: (
         [
-          { email: 'admin@tesserax.local', firstName: 'Awa', lastName: 'Koné', role: 'admin' },
+          { email: 'admin@wasafili.local', firstName: 'Awa', lastName: 'Koné', role: 'admin' },
           {
-            email: 'superviseur@tesserax.local',
+            email: 'superviseur@wasafili.local',
             firstName: 'Yao',
             lastName: 'Kouassi',
             role: 'superviseur',
           },
           {
-            email: 'technicien@tesserax.local',
+            email: 'technicien@wasafili.local',
             firstName: 'Mamadou',
             lastName: 'Traoré',
             role: 'technicien',
@@ -51,11 +51,11 @@ async function main(): Promise<void> {
       const { report, automation } = await seedDemoReports(client, {
         instanceId: instance.id,
         structureId: structure.id,
-        supervisorId: users.find((u) => u.email === 'superviseur@tesserax.local')!.id,
+        supervisorId: users.find((u) => u.email === 'superviseur@wasafili.local')!.id,
         s3: {
           endpoint: env['S3_ENDPOINT'],
           region: env['S3_REGION'] ?? 'us-east-1',
-          bucket: env['S3_BUCKET'] ?? 'tesserax',
+          bucket: env['S3_BUCKET'] ?? 'wasafili',
           accessKeyId: env['S3_ACCESS_KEY'],
           secretAccessKey: env['S3_SECRET_KEY'],
         },

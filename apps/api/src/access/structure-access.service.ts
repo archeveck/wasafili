@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { type StructureDefinition } from '@tesserax/form-schema';
+import { type StructureDefinition } from '@wasafili/form-schema';
 import { type Actor } from '../auth/decorators';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';

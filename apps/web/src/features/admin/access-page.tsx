@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { rootValueFields } from '@tesserax/form-schema';
-import { type AccessRule, type StructurePermission } from '@tesserax/sdk';
+import { rootValueFields } from '@wasafili/form-schema';
+import { type AccessRule, type StructurePermission } from '@wasafili/sdk';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';

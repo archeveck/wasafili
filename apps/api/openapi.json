@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "API Tesserax",
+    "title": "API Wasafili",
     "version": "0.0.0",
-    "description": "API REST de Tesserax : formulaires, fiches, référentiels, tâches, rapports, webhooks.\n\n- **Authentification** : OAuth2 (`POST /v1/oauth/token`). Les intégrations utilisent `client_credentials` avec une clé API créée dans l’administration ; ses permissions sont les `scope` du jeton.\n- **Instance** : toutes les routes métier commencent par `/v1/{app}`, où `app` est le nom court de l’instance.\n- **Pagination** : `page` et `per_page` (100 au plus) ; réponse `{ data, meta }`.\n- **Attributs** : `fields=a,b` limite les attributs renvoyés.\n- **Erreurs** : `{ statusCode, error, message, details? }`, `error` en snake_case.\n- **Limitation de débit** : en-têtes `RateLimit-*` ; `429` avec `Retry-After`."
+    "description": "API REST de Wasafili : formulaires, fiches, référentiels, tâches, rapports, webhooks.\n\n- **Authentification** : OAuth2 (`POST /v1/oauth/token`). Les intégrations utilisent `client_credentials` avec une clé API créée dans l’administration ; ses permissions sont les `scope` du jeton.\n- **Instance** : toutes les routes métier commencent par `/v1/{app}`, où `app` est le nom court de l’instance.\n- **Pagination** : `page` et `per_page` (100 au plus) ; réponse `{ data, meta }`.\n- **Attributs** : `fields=a,b` limite les attributs renvoyés.\n- **Erreurs** : `{ statusCode, error, message, details? }`, `error` en snake_case.\n- **Limitation de débit** : en-têtes `RateLimit-*` ; `429` avec `Retry-After`."
   },
   "servers": [
     {

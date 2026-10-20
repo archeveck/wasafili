@@ -136,7 +136,7 @@ export class WebhooksService {
   async ping(instanceId: string, id: string) {
     const webhook = await this.find(id);
     const [deliveryId] = await this.prisma.transaction((tx) =>
-      this.deliver(tx, instanceId, webhook.id, 'ping', { message: 'Test de webhook Tesserax' }),
+      this.deliver(tx, instanceId, webhook.id, 'ping', { message: 'Test de webhook Wasafili' }),
     );
     await this.dispatch(instanceId, [deliveryId!]);
     return { deliveryId };

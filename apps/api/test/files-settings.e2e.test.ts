@@ -1,5 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
-import { QUEUE_NAME } from '@tesserax/jobs';
+import { QUEUE_NAME } from '@wasafili/jobs';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

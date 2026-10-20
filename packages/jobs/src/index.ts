@@ -1,17 +1,17 @@
 /** File des relais du worker ; les jobs se distinguent par leur nom. */
-export const QUEUE_NAME = 'tesserax';
+export const QUEUE_NAME = 'wasafili';
 
 /**
  * File des exécutions d'automatisations, consommée par l'API : les actions (mise à jour de
  * champ, tâche, notification) passent par ses services métier (ADR 0009).
  */
-export const AUTOMATION_QUEUE_NAME = 'tesserax-automations';
+export const AUTOMATION_QUEUE_NAME = 'wasafili-automations';
 
 /**
  * Préfixe des clés Redis par défaut. Un environnement (tests, préproduction) qui partage un
  * Redis doit utiliser son propre préfixe (`QUEUE_PREFIX`) pour ne pas consommer les jobs des autres.
  */
-export const DEFAULT_QUEUE_PREFIX = 'tesserax';
+export const DEFAULT_QUEUE_PREFIX = 'wasafili';
 
 /** Miniature d'une image téléversée (P2.8). */
 export interface ThumbnailJob {
@@ -75,12 +75,12 @@ export type AutomationJob =
   | { kind: 'schedule'; instanceId: string; automationId: string };
 
 /**
- * Signature d'un webhook : `X-Tesserax-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
- * `<horodatage>.<corps>` (horodatage en secondes, `X-Tesserax-Timestamp`). Le destinataire
+ * Signature d'un webhook : `X-Wasafili-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
+ * `<horodatage>.<corps>` (horodatage en secondes, `X-Wasafili-Timestamp`). Le destinataire
  * recalcule la signature et refuse un horodatage trop ancien (rejeu).
  */
-export const WEBHOOK_SIGNATURE_HEADER = 'x-tesserax-signature';
-export const WEBHOOK_TIMESTAMP_HEADER = 'x-tesserax-timestamp';
+export const WEBHOOK_SIGNATURE_HEADER = 'x-wasafili-signature';
+export const WEBHOOK_TIMESTAMP_HEADER = 'x-wasafili-timestamp';
 
 export type JobName = keyof JobPayloads;
 

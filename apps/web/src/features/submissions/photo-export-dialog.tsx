@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { type Filter, type PhotoExport } from '@tesserax/sdk';
+import { type Filter, type PhotoExport } from '@wasafili/sdk';
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

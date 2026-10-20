@@ -7,8 +7,8 @@ import { expect, type Page, test } from '@playwright/test';
  */
 async function login(page: Page) {
   await page.goto('/');
-  await page.getByLabel('Adresse e-mail').fill('admin@tesserax.local');
-  await page.getByLabel('Mot de passe').fill('Tesserax2026!');
+  await page.getByLabel('Adresse e-mail').fill('admin@wasafili.local');
+  await page.getByLabel('Mot de passe').fill('Wasafili2026!');
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page).toHaveURL(/\/demo\/structures/);
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { type FieldServices } from '@tesserax/form-renderer';
-import { type FileRef } from '@tesserax/form-schema';
+import { type FieldServices } from '@wasafili/form-renderer';
+import { type FileRef } from '@wasafili/form-schema';
 import { FileText, Trash2 } from 'lucide-react';
 
 /** Aperçu d'un fichier déposé (miniature si disponible). */

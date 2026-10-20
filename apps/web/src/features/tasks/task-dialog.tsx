@@ -4,8 +4,8 @@ import {
   type StructureDefinition,
   type SubmissionData,
   walkFields,
-} from '@tesserax/form-schema';
-import { type Task, type TaskStatus } from '@tesserax/sdk';
+} from '@wasafili/form-schema';
+import { type Task, type TaskStatus } from '@wasafili/sdk';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';

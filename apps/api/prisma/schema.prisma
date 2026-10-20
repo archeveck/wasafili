@@ -1,4 +1,4 @@
-// Schéma Tesserax — Phase 0 (identité, tenants, RBAC).
+// Schéma Wasafili — Phase 0 (identité, tenants, RBAC).
 //
 // Multi-tenant (ADR 0001) : toute table métier porte `instance_id` et est protégée par une
 // policy RLS (voir la migration `init`). Les tables `instances`, `users` et `refresh_tokens`

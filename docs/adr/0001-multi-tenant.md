@@ -22,7 +22,7 @@ une fuite : l'isolation doit reposer sur la base, pas sur la discipline des dév
    puis instance résolue depuis `/v1/{app}/…`). `PrismaService.transaction()` couvre les
    transactions interactives.
 4. **Deux rôles PostgreSQL** ([01-roles.sh](../../infra/postgres/01-roles.sh)) :
-   `tesserax_owner` possède le schéma et exécute les migrations ; `tesserax_app` (API, worker)
+   `wasafili_owner` possède le schéma et exécute les migrations ; `wasafili_app` (API, worker)
    n'a pas `BYPASSRLS` et ne possède aucune table. `FORCE ROW LEVEL SECURITY` soumet aussi le
    propriétaire aux policies (seed et fixtures doivent poser un contexte).
 5. **Clés étrangères composites** `(id, instance_id)` entre tables d'une même instance : les

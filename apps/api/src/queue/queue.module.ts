@@ -9,7 +9,7 @@ import {
   QUEUE_NAME,
   WEBHOOK_ATTEMPTS,
   WEBHOOK_BACKOFF_MS,
-} from '@tesserax/jobs';
+} from '@wasafili/jobs';
 import { Queue } from 'bullmq';
 import { ENV, type Env } from '../config/env';
 

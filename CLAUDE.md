@@ -1,4 +1,4 @@
-# Tesserax — conventions du dépôt
+# Wasafili — conventions du dépôt
 
 Plateforme no-code de collecte de données terrain (back-office web + mobile hors ligne).
 Spécification : [PROMPT_claude_code_clone_daxium.md](prompt/PROMPT_claude_code_clone_daxium.md).
@@ -15,7 +15,7 @@ pnpm db:migrate              # migrations Prisma (rôle propriétaire) — dev
 pnpm db:seed                 # instance « demo » + 3 utilisateurs
 pnpm dev                     # api (:3000), web (:5173), worker
 pnpm lint && pnpm typecheck && pnpm test   # vérifications rapides (sans base)
-pnpm test:integration        # tests API contre la base tesserax_test (infra requise)
+pnpm test:integration        # tests API contre la base wasafili_test (infra requise)
 cd infra && docker compose up -d --build   # stack complète
 ```
 
@@ -27,13 +27,13 @@ cd infra && docker compose up -d --build   # stack complète
 - `apps/web` — back-office : React 19, TanStack Router (routes déclarées dans `src/router.tsx`)
   / Query / Table v8, Tailwind 4 + composants Radix façon shadcn (`src/components/ui`), dnd-kit
   (designer). Fonctionnalités dans `src/features/*`, rendu des champs dans `src/form`. API via
-  `@tesserax/sdk` sous la même origine (`/v1` : proxy Vite en dev, nginx en conteneur).
+  `@wasafili/sdk` sous la même origine (`/v1` : proxy Vite en dev, nginx en conteneur).
   e2e : `pnpm test:e2e` (Playwright, `apps/web/e2e`).
-- `apps/worker` — BullMQ ; jobs typés par `@tesserax/jobs` (contrat partagé avec l'API).
+- `apps/worker` — BullMQ ; jobs typés par `@wasafili/jobs` (contrat partagé avec l'API).
 - `apps/mobile` — Expo SDK 58 (Expo Router, `src/app`). **Ne pas se fier à la mémoire pour les
   API Expo** : consulter https://docs.expo.dev/versions/v58.0.0/ ; ajouter un module avec
   `npx expo install`. React est épinglé à la même version exacte dans tout le monorepo (un seul
-  exemplaire, sinon « invalid hook call »). Données : `@tesserax/sync` (base SQLite locale, file
+  exemplaire, sinon « invalid hook call »). Données : `@wasafili/sync` (base SQLite locale, file
   d'envoi, moteur) ; jamais d'appel API direct pour lire ou écrire des fiches.
   e2e : Maestro (`apps/mobile/e2e`, simulateur iOS + Expo Go : `pnpm start` = `expo start --go`).
   Builds : `eas.json` (profils, `APP_VARIANT`) ou `expo prebuild` + Gradle/Xcode (D2).
@@ -61,9 +61,9 @@ cd infra && docker compose up -d --build   # stack complète
   Dates stockées en UTC (`timestamptz`), affichées en `Africa/Abidjan` par défaut (D14).
 - Commits conventionnels (commitlint), petits et atomiques ; tests verts avant de clore une tâche.
 - **Formulaires** : toute évaluation (conditions, calculs, validation, défauts) passe par
-  `@tesserax/form-engine`, jamais par du code ad hoc côté API, web ou mobile. Le paquet reste
-  sans dépendance Node/DOM et à 100 % de couverture (`pnpm --filter @tesserax/form-engine test`).
-  Fixtures partagées : `inspectionEquipement()` dans `@tesserax/form-schema`.
+  `@wasafili/form-engine`, jamais par du code ad hoc côté API, web ou mobile. Le paquet reste
+  sans dépendance Node/DOM et à 100 % de couverture (`pnpm --filter @wasafili/form-engine test`).
+  Fixtures partagées : `inspectionEquipement()` dans `@wasafili/form-schema`.
 - **Droits sur les fiches** : évalués par structure dans `StructureAccessService` (règles par
   rôle/groupe + filtres de visibilité, repli sur les permissions d'instance) — jamais par `@Can`
   sur les routes de fiches.
@@ -73,7 +73,7 @@ cd infra && docker compose up -d --build   # stack complète
   (`NotificationsService.notify`), le push n'est qu'un relais (`dispatch` après validation).
 - **Rapports, automatisations, webhooks (ADR 0009)** : une écriture de fiche passe par
   `EventsService.record` dans sa transaction (exécutions + livraisons, outbox) puis `dispatch`.
-  Les automatisations s'exécutent dans l'API (file `tesserax-automations`), via les services
+  Les automatisations s'exécutent dans l'API (file `wasafili-automations`), via les services
   métier et `SYSTEM_ACTOR` ; le worker ne fait que les relais (SMTP, webhooks, push). Jamais de
   XML brut issu d'une saisie dans un rapport. Acceptation : `infra/acceptance/rapport-par-email.mjs`.
 - **Pilotage (ADR 0010)** : carte, widgets et export ZIP partent de `SubmissionsService.query()`
@@ -84,7 +84,7 @@ cd infra && docker compose up -d --build   # stack complète
 - **API publique et exploitation (ADR 0011)** : une route se résume en JSDoc (résumé de
   l'OpenAPI), trouve sa section dans `TAGS` (`openapi/document.ts`) ; une ressource publique
   déclare sa réponse (`@OpenApi`, schéma dans `openapi/resources.ts`, vérifié en intégration) ;
-  le SDK la couvre (test). Puis `pnpm --filter @tesserax/api openapi` (fichier versionné).
+  le SDK la couvre (test). Puis `pnpm --filter @wasafili/api openapi` (fichier versionné).
   Fichiers : types actifs refusés, signature vérifiée (`files/content-types.ts`). Pile Docker :
   `cd infra && docker compose up` (pas de compose à la racine : le `.env` de dev s'y
   appliquerait) ; production : `docker-compose.prod.yml`, procédure `docs/exploitation.md`.

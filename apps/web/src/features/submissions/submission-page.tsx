@@ -6,8 +6,8 @@ import {
   type SubmissionData,
   walkFields,
   type WorkflowTransition,
-} from '@tesserax/form-schema';
-import { ApiError, type AutomationRunStatus, type Revision, type Submission } from '@tesserax/sdk';
+} from '@wasafili/form-schema';
+import { ApiError, type AutomationRunStatus, type Revision, type Submission } from '@wasafili/sdk';
 import { ArrowLeft, FileText, Pencil, Trash2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

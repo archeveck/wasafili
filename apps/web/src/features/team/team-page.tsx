@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { type TeamPosition } from '@tesserax/sdk';
+import { type TeamPosition } from '@wasafili/sdk';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { EmptyState, ErrorMessage, Loading, PageHeader } from '@/components/ui/display';
 import { useApp } from '@/lib/use-app';

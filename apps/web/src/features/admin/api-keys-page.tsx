@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ApiClient, type ApiClientWithSecret } from '@tesserax/sdk';
+import { type ApiClient, type ApiClientWithSecret } from '@wasafili/sdk';
 import { Copy, KeyRound, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

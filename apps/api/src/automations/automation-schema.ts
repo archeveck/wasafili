@@ -4,8 +4,8 @@ import {
   rootValueFields,
   type StructureDefinition,
   COMPUTED_TYPES,
-} from '@tesserax/form-schema';
-import { inspectLogic } from '@tesserax/form-engine';
+} from '@wasafili/form-schema';
+import { inspectLogic } from '@wasafili/form-engine';
 import { z } from 'zod';
 
 /**

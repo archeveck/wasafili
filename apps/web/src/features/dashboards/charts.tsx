@@ -1,4 +1,4 @@
-import { type WidgetPoint } from '@tesserax/sdk';
+import { type WidgetPoint } from '@wasafili/sdk';
 import { useEffect, useRef, useState } from 'react';
 
 /** Une seule série par graphique : la couleur primaire de l'instance (pas de légende). */

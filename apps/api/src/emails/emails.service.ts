@@ -38,7 +38,7 @@ export function emailHtml(
   const button = link
     ? `<p style="margin:20px 0"><a href="${escapeHtml(link.url)}" style="background:#1F4E79;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">${escapeHtml(link.label)}</a></p>`
     : '';
-  return `<!doctype html><html lang="fr"><body style="font-family:Arial,sans-serif;color:#1f2933;line-height:1.5;max-width:600px;margin:0 auto;padding:24px">${paragraphs}${button}<p style="margin-top:32px;color:#8a94a3;font-size:12px">${escapeHtml(instanceName)} — envoyé par Tesserax</p></body></html>`;
+  return `<!doctype html><html lang="fr"><body style="font-family:Arial,sans-serif;color:#1f2933;line-height:1.5;max-width:600px;margin:0 auto;padding:24px">${paragraphs}${button}<p style="margin-top:32px;color:#8a94a3;font-size:12px">${escapeHtml(instanceName)} — envoyé par Wasafili</p></body></html>`;
 }
 
 /**

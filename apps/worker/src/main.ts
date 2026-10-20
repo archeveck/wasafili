@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { AUTOMATION_QUEUE_NAME, type JobName, type JobPayloads, QUEUE_NAME } from '@tesserax/jobs';
+import { AUTOMATION_QUEUE_NAME, type JobName, type JobPayloads, QUEUE_NAME } from '@wasafili/jobs';
 import { type Job, Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import nodemailer from 'nodemailer';

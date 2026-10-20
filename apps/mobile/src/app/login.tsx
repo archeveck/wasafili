@@ -1,4 +1,4 @@
-import { ApiError } from '@tesserax/sdk';
+import { ApiError } from '@wasafili/sdk';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';

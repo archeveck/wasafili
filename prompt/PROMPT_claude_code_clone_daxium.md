@@ -1,6 +1,6 @@
 # Mission
 
-Tu vas construire **Tesserax**, une plateforme no-code de collecte de données terrain, fonctionnellement équivalente à Daxium-Air (back-office web + application mobile hors ligne). Ne réutilise ni le nom, ni le logo, ni les visuels, ni le code de Daxium : on reproduit les **fonctionnalités**, pas la marque.
+Tu vas construire **Wasafili**, une plateforme no-code de collecte de données terrain, fonctionnellement équivalente à Daxium-Air (back-office web + application mobile hors ligne). Ne réutilise ni le nom, ni le logo, ni les visuels, ni le code de Daxium : on reproduit les **fonctionnalités**, pas la marque.
 
 Contexte d'usage : PME BTP/maintenance en Côte d'Ivoire (chantiers, inspections, interventions, QHSE). Réseau mobile instable → **le mode hors ligne est non négociable**. Langue de l'UI : français (i18n prête pour l'anglais). Fuseau par défaut : Africa/Abidjan.
 

@@ -1,10 +1,10 @@
-import { createClient, type TokenStore, type Tokens } from '@tesserax/sdk';
+import { createClient, type TokenStore, type Tokens } from '@wasafili/sdk';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
-const TOKENS = 'tesserax.tokens';
-const INSTANCE = 'tesserax.instance';
-const SERVER = 'tesserax.server';
+const TOKENS = 'wasafili.tokens';
+const INSTANCE = 'wasafili.instance';
+const SERVER = 'wasafili.server';
 
 /** Jetons dans le trousseau / keystore (chiffrés par le système). */
 const tokenStore: TokenStore = {

@@ -5,8 +5,8 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { type FileRef, type StructureDefinition, walkFields } from '@tesserax/form-schema';
-import { PHOTO_EXPORT_TTL_MS } from '@tesserax/jobs';
+import { type FileRef, type StructureDefinition, walkFields } from '@wasafili/form-schema';
+import { PHOTO_EXPORT_TTL_MS } from '@wasafili/jobs';
 import { type Actor } from '../auth/decorators';
 import { pageArgs, type Pagination, toPage } from '../common/pagination';
 import { type Instance, type PhotoExport, type Prisma } from '../generated/prisma/client';

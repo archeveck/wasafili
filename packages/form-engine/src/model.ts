@@ -7,7 +7,7 @@ import {
   type StructureDefinition,
   type TableField,
   walkFields,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { type RefResolver, compileFormula } from './formula/compile.js';
 import { FormulaError } from './formula/errors.js';
 

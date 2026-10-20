@@ -394,10 +394,10 @@ export function buildDocument(controllers: Type[], { version, docs }: BuildOptio
   return {
     openapi: '3.1.0',
     info: {
-      title: 'API Tesserax',
+      title: 'API Wasafili',
       version,
       description: [
-        'API REST de Tesserax : formulaires, fiches, référentiels, tâches, rapports, webhooks.',
+        'API REST de Wasafili : formulaires, fiches, référentiels, tâches, rapports, webhooks.',
         '',
         '- **Authentification** : OAuth2 (`POST /v1/oauth/token`). Les intégrations utilisent ' +
           '`client_credentials` avec une clé API créée dans l’administration ; ses permissions ' +

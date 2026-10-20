@@ -1,4 +1,4 @@
-import { inspectionWorkflow, structureDefinitionSchema } from '@tesserax/form-schema';
+import { inspectionWorkflow, structureDefinitionSchema } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import {
   addState,

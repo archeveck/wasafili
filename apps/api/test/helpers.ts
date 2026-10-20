@@ -21,7 +21,7 @@ loadDotEnv();
 export const TEST_DATABASE_URL = process.env['TEST_DATABASE_URL']!;
 export const TEST_DATABASE_OWNER_URL = process.env['TEST_DATABASE_OWNER_URL']!;
 export const PASSWORD = 'Motdepasse#Test1';
-export const TEST_QUEUE_PREFIX = 'tesserax-test';
+export const TEST_QUEUE_PREFIX = 'wasafili-test';
 
 /** Application complète branchée sur la base de test, avec le rôle applicatif (RLS active). */
 export async function createTestApp(env: Record<string, string> = {}): Promise<INestApplication> {
@@ -34,7 +34,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<I
     RATE_LIMIT_CLIENT_PER_MINUTE: '100000',
     RATE_LIMIT_INSTANCE_PER_MINUTE: '100000',
     // Compteurs propres à chaque application de test (Redis partagé entre exécutions).
-    RATE_LIMIT_PREFIX: `tesserax-test:rate-limit:${crypto.randomUUID()}`,
+    RATE_LIMIT_PREFIX: `wasafili-test:rate-limit:${crypto.randomUUID()}`,
     // Files isolées : un worker de développement ne doit pas consommer les jobs des tests.
     QUEUE_PREFIX: TEST_QUEUE_PREFIX,
     ...env,

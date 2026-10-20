@@ -1,4 +1,4 @@
-import { inspectionWorkflow } from '@tesserax/form-schema';
+import { inspectionWorkflow } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { createFormEngine } from './engine.js';
 import { definition, field } from './test-utils.js';

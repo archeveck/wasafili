@@ -7,11 +7,11 @@ WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
 COPY packages packages
-RUN pnpm install --frozen-lockfile --filter @tesserax/web...
+RUN pnpm install --frozen-lockfile --filter @wasafili/web...
 COPY tsconfig.base.json ./
 COPY apps/web apps/web
 # Paquets partagés (form-schema, form-engine, sdk…) puis le back-office.
-RUN pnpm --filter @tesserax/web... build
+RUN pnpm --filter @wasafili/web... build
 
 FROM nginx:1.29-alpine
 # Gabarits substitués au démarrage (envsubst de l'image officielle) : la CSP vise l'origine

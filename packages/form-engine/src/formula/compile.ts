@@ -1,4 +1,4 @@
-import { type JsonLogic } from '@tesserax/form-schema';
+import { type JsonLogic } from '@wasafili/form-schema';
 import { FormulaError } from './errors.js';
 import { type BinaryOperator, type Node, parse } from './parser.js';
 

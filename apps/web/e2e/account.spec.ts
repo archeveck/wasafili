@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
-const EMAIL = 'technicien@tesserax.local';
-const INITIAL = 'Tesserax2026!';
+const EMAIL = 'technicien@wasafili.local';
+const INITIAL = 'Wasafili2026!';
 const NEXT = 'une phrase de passe du terrain';
 
 async function login(page: Page, password: string) {

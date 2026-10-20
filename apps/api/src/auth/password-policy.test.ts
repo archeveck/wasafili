@@ -5,7 +5,7 @@ describe('politique de mot de passe', () => {
   it('exige 12 caractères, sans règle de composition', () => {
     expect(passwordSchema.safeParse('court-11car').success).toBe(false);
     expect(passwordSchema.safeParse('une phrase de passe').success).toBe(true);
-    expect(passwordSchema.safeParse('Tesserax2026!').success).toBe(true);
+    expect(passwordSchema.safeParse('Wasafili2026!').success).toBe(true);
   });
 
   it('refuse les mots de passe répandus et prévisibles', () => {

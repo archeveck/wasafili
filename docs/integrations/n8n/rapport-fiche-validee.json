@@ -1,15 +1,15 @@
 {
-  "name": "Tesserax — rapport PDF des fiches validées",
+  "name": "Wasafili — rapport PDF des fiches validées",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "tesserax-fiches",
+        "path": "wasafili-fiches",
         "responseMode": "responseNode",
         "options": {}
       },
       "id": "5d1b3c4e-0001-4a6f-9c1a-000000000001",
-      "name": "Webhook Tesserax",
+      "name": "Webhook Wasafili",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [0, 300],
@@ -22,7 +22,7 @@
             {
               "id": "c1",
               "name": "baseUrl",
-              "value": "https://tesserax.exemple.ci",
+              "value": "https://wasafili.exemple.ci",
               "type": "string"
             },
             { "id": "c2", "name": "app", "value": "demo", "type": "string" },
@@ -54,7 +54,7 @@
       "parameters": {
         "action": "hmac",
         "type": "SHA256",
-        "value": "={{ $json.headers['x-tesserax-timestamp'] }}.{{ JSON.stringify($json.body) }}",
+        "value": "={{ $json.headers['x-wasafili-timestamp'] }}.{{ JSON.stringify($json.body) }}",
         "dataPropertyName": "computedSignature",
         "secret": "={{ $json.webhookSecret }}"
       },
@@ -71,7 +71,7 @@
           "conditions": [
             {
               "id": "s1",
-              "leftValue": "={{ 'sha256=' + $json.computedSignature === $json.headers['x-tesserax-signature'] && Math.abs($now.toSeconds() - Number($json.headers['x-tesserax-timestamp'])) < 300 }}",
+              "leftValue": "={{ 'sha256=' + $json.computedSignature === $json.headers['x-wasafili-signature'] && Math.abs($now.toSeconds() - Number($json.headers['x-wasafili-timestamp'])) < 300 }}",
               "rightValue": "",
               "operator": { "type": "boolean", "operation": "true", "singleValue": true }
             }
@@ -148,7 +148,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1100, 100],
-      "credentials": { "oAuth2Api": { "id": "tesseraxApiKey", "name": "Tesserax (clé API)" } }
+      "credentials": { "oAuth2Api": { "id": "wasafiliApiKey", "name": "Wasafili (clé API)" } }
     },
     {
       "parameters": {
@@ -185,7 +185,7 @@
     }
   ],
   "connections": {
-    "Webhook Tesserax": { "main": [[{ "node": "Configuration", "type": "main", "index": 0 }]] },
+    "Webhook Wasafili": { "main": [[{ "node": "Configuration", "type": "main", "index": 0 }]] },
     "Configuration": {
       "main": [[{ "node": "Calculer la signature", "type": "main", "index": 0 }]]
     },

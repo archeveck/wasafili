@@ -1,5 +1,5 @@
 import { GetObjectCommand, PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
-import { THUMBNAIL_SIZE, type ThumbnailJob } from '@tesserax/jobs';
+import { THUMBNAIL_SIZE, type ThumbnailJob } from '@wasafili/jobs';
 import { type Pool } from 'pg';
 import sharp from 'sharp';
 import { inInstance } from './db.js';

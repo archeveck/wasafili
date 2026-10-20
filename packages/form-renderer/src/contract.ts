@@ -1,5 +1,5 @@
-import { type FieldState, type ValidationError } from '@tesserax/form-engine';
-import { type SimpleField } from '@tesserax/form-schema';
+import { type FieldState, type ValidationError } from '@wasafili/form-engine';
+import { type SimpleField } from '@wasafili/form-schema';
 
 /**
  * Contrat d'un composant de champ (P2.2.1), identique sur le web et le mobile : chaque

@@ -1,5 +1,5 @@
 /**
- * Design tokens Tesserax : bleu nuit, blanc et gris neutres, un bleu d'accent. Valeurs par
+ * Design tokens Wasafili : bleu nuit, blanc et gris neutres, un bleu d'accent. Valeurs par
  * défaut d'une instance ; chaque instance peut surcharger `color.primary` et `color.accent`
  * (personnalisation, P2.7).
  */

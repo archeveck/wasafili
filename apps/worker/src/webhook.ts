@@ -1,4 +1,4 @@
-import { type WebhookJob } from '@tesserax/jobs';
+import { type WebhookJob } from '@wasafili/jobs';
 import { createHmac } from 'node:crypto';
 import { lookup, type LookupAddress, type LookupAllOptions } from 'node:dns';
 import { BlockList, isIP } from 'node:net';
@@ -165,11 +165,11 @@ export async function processWebhook(
     ({ status } = await deps.send(row.url, {
       headers: {
         'content-type': 'application/json',
-        'user-agent': 'Tesserax-Webhooks/1',
-        'x-tesserax-event': row.event,
-        'x-tesserax-delivery': job.deliveryId,
-        'x-tesserax-timestamp': String(timestamp),
-        'x-tesserax-signature': `sha256=${sign(row.secret, timestamp, body)}`,
+        'user-agent': 'Wasafili-Webhooks/1',
+        'x-wasafili-event': row.event,
+        'x-wasafili-delivery': job.deliveryId,
+        'x-wasafili-timestamp': String(timestamp),
+        'x-wasafili-signature': `sha256=${sign(row.secret, timestamp, body)}`,
       },
       body,
     }));

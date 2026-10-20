@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { type AuditEntry } from '@tesserax/sdk';
+import { type AuditEntry } from '@wasafili/sdk';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

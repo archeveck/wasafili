@@ -5,11 +5,11 @@
 # déposé référencé par la base est présent dans le miroir. Code de sortie non nul en cas d'écart.
 set -eu
 
-: "${PGHOST:=postgres}" "${PGUSER:=postgres}" "${PGDATABASE:=tesserax}"
+: "${PGHOST:=postgres}" "${PGUSER:=postgres}" "${PGDATABASE:=wasafili}"
 export PGHOST PGUSER
 export PGOPTIONS="-c client_min_messages=warning"
-scratch=tesserax_verification
-archive=$(ls -1 /backups/db/tesserax-*.dump 2>/dev/null | sort | tail -n 1)
+scratch=wasafili_verification
+archive=$(ls -1 /backups/db/wasafili-*.dump 2>/dev/null | sort | tail -n 1)
 [ -n "$archive" ] || { echo "vérification: aucune archive"; exit 1; }
 log() { echo "$(date -u +%FT%TZ) vérification: $*"; }
 

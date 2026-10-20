@@ -3,8 +3,8 @@
 # Prérequis : tâche « Contrôle ascenseur » assignée au technicien (voir taches-workflow.sh).
 appId: host.exp.Exponent
 env:
-  EMAIL: technicien@tesserax.local
-  PASSWORD: Tesserax2026!
+  EMAIL: technicien@wasafili.local
+  PASSWORD: Wasafili2026!
   APP_URL: exp://127.0.0.1:8081
 ---
 - stopApp

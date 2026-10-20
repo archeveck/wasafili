@@ -77,8 +77,8 @@ describe('renderTemplate', () => {
     expect(xml).toContain('cx="2160000" cy="1080000"');
     expect(xml).toContain('[image indisponible]');
     const zip = new PizZip(out);
-    expect(zip.file('word/_rels/document.xml.rels')!.asText()).toContain('media/tesserax_1.png');
-    expect(zip.file('word/media/tesserax_1.png')).toBeTruthy();
+    expect(zip.file('word/_rels/document.xml.rels')!.asText()).toContain('media/wasafili_1.png');
+    expect(zip.file('word/media/wasafili_1.png')).toBeTruthy();
     expect(zip.file('[Content_Types].xml')!.asText()).toContain('Extension="png"');
   });
 

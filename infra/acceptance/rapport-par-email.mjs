@@ -13,7 +13,7 @@
 const API = process.env.API_URL ?? 'http://localhost:3000';
 const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
 const HOST = process.env.API_HOST;
-const PASSWORD = 'Tesserax2026!';
+const PASSWORD = 'Wasafili2026!';
 // PNG 1×1 : signature et photo de la fiche.
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -73,8 +73,8 @@ async function until(read, label, timeout = 60_000) {
 }
 
 const started = new Date();
-const technicien = await login('technicien@tesserax.local');
-const superviseur = await login('superviseur@tesserax.local');
+const technicien = await login('technicien@wasafili.local');
+const superviseur = await login('superviseur@wasafili.local');
 
 const structures = await call(technicien, 'GET', '/demo/structures?per_page=100');
 const structure = structures.data.find((s) => s.name === 'Inspection équipement');
@@ -109,7 +109,7 @@ const message = await until(async () => {
   return messages.find(
     (m) =>
       new Date(m.Created) >= new Date(started.getTime() - 1000) &&
-      m.To.some((to) => to.Address === 'technicien@tesserax.local') &&
+      m.To.some((to) => to.Address === 'technicien@wasafili.local') &&
       m.Subject.startsWith('Inspection validée'),
   );
 }, 'e-mail dans Mailpit');
@@ -123,7 +123,7 @@ const bytes = Buffer.from(
 );
 if (bytes.subarray(0, 5).toString() !== '%PDF-')
   throw new Error('La pièce jointe n’est pas un PDF');
-if (!message.To.some((t) => t.Address === 'superviseur@tesserax.local')) {
+if (!message.To.some((t) => t.Address === 'superviseur@wasafili.local')) {
   throw new Error('Le superviseur n’est pas destinataire');
 }
 step(`Rapport joint : ${pdf.FileName} (${bytes.length} octets, PDF valide)`);

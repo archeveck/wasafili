@@ -2,7 +2,7 @@ import {
   inspectionEquipement,
   inspectionWorkflow,
   type StructureDefinition,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { type Prisma, type PrismaClient } from '../generated/prisma/client';
 import { tenantTransaction } from '../prisma/tenant';
 

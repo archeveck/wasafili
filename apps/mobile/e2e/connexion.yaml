@@ -3,8 +3,8 @@
 appId: host.exp.Exponent
 env:
   APP_URL: exp://127.0.0.1:8081
-  EMAIL: technicien@tesserax.local
-  PASSWORD: Tesserax2026!
+  EMAIL: technicien@wasafili.local
+  PASSWORD: Wasafili2026!
 ---
 - stopApp
 - openLink: ${APP_URL}

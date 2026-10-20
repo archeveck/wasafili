@@ -6,7 +6,7 @@ import {
   type StructureDefinition,
   type SubmissionData,
   walkFields,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { type ImageValue, type TemplateTag } from './docx';
 
 /**

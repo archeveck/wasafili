@@ -20,7 +20,7 @@ describe('OpenAPI', () => {
     Object.entries(methods).map(([method, operation]) => ({ path, method, ...operation })),
   );
 
-  it('le document versionné est à jour (`pnpm --filter @tesserax/api openapi`)', () => {
+  it('le document versionné est à jour (`pnpm --filter @wasafili/api openapi`)', () => {
     expect(readFileSync(OPENAPI_FILE, 'utf8') === generated).toBe(true);
   });
 

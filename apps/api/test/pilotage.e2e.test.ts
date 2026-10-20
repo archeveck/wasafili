@@ -1,6 +1,6 @@
 import { type INestApplication } from '@nestjs/common';
-import { inspectionWorkflow } from '@tesserax/form-schema';
-import { QUEUE_NAME } from '@tesserax/jobs';
+import { inspectionWorkflow } from '@wasafili/form-schema';
+import { QUEUE_NAME } from '@wasafili/jobs';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

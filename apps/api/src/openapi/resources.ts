@@ -1,4 +1,4 @@
-import * as formSchema from '@tesserax/form-schema';
+import * as formSchema from '@wasafili/form-schema';
 import { z } from 'zod';
 
 /**
@@ -12,7 +12,7 @@ const uuid = z.uuid();
 const dateTime = z.iso.datetime({ offset: true });
 const nullable = <T extends z.ZodType>(schema: T) => schema.nullable();
 
-// Schémas des formulaires (`@tesserax/form-schema`), nommés pour ne figurer qu'une fois : un
+// Schémas des formulaires (`@wasafili/form-schema`), nommés pour ne figurer qu'une fois : un
 // composant par type de champ (`textField` → `TextField`), plus la définition et le workflow.
 for (const [name, schema] of Object.entries(formSchema)) {
   if (name.endsWith('Field') && schema instanceof z.ZodObject) {
@@ -318,7 +318,7 @@ export const webhook = z
   .register(resources, {
     id: 'Webhook',
     description:
-      'Webhook sortant signé (HMAC-SHA256, en-tête `X-Tesserax-Signature`). Le secret ' +
+      'Webhook sortant signé (HMAC-SHA256, en-tête `X-Wasafili-Signature`). Le secret ' +
       'complet n’est renvoyé qu’à la création et à la rotation.',
   });
 

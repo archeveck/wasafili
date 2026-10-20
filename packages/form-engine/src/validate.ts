@@ -5,7 +5,7 @@ import {
   type SubmissionData,
   type TableField,
   valueSchema,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { type FieldState, type FormState } from './engine.js';
 import { isEmpty } from './logic.js';
 import { type Model } from './model.js';

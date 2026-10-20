@@ -12,7 +12,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { structureDefinitionJsonSchema } from '@tesserax/form-schema';
+import { structureDefinitionJsonSchema } from '@wasafili/form-schema';
 import { z } from 'zod';
 import { Can, CurrentInstance } from '../auth/decorators';
 import { paginationSchema } from '../common/pagination';

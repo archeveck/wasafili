@@ -1,4 +1,4 @@
-import { type Field, rootValueFields, type StructureDefinition } from '@tesserax/form-schema';
+import { type Field, rootValueFields, type StructureDefinition } from '@wasafili/form-schema';
 
 /** Valeur lisible d'un champ pour l'export tableur (P2.5.4). */
 export function formatCell(

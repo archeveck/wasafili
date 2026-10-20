@@ -1,6 +1,6 @@
 /**
  * Régénère `openapi.json` depuis les routes de l'API (P7.1.2) :
- *   pnpm --filter @tesserax/api openapi
+ *   pnpm --filter @wasafili/api openapi
  * Le fichier est versionné ; un test unitaire échoue s'il n'est plus à jour.
  */
 import 'reflect-metadata';

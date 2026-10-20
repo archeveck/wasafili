@@ -1,4 +1,4 @@
-import { type Field, type JsonLogic } from '@tesserax/form-schema';
+import { type Field, type JsonLogic } from '@wasafili/form-schema';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

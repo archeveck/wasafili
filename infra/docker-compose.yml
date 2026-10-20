@@ -1,29 +1,29 @@
-# Stack Tesserax (P7.2.4).
+# Stack Wasafili (P7.2.4).
 #   Stack complète + démo :  docker compose up -d --build        (à la racine du dépôt)
-#                            → http://app.localhost:8080 (admin@tesserax.local / Tesserax2026!)
+#                            → http://app.localhost:8080 (admin@wasafili.local / Wasafili2026!)
 #   Infra seule (dev) :      pnpm infra:up
 #   Production (TLS) :       voir docs/exploitation.md (surcouche docker-compose.prod.yml)
 # Les valeurs par défaut conviennent au poste local ; surcharger via infra/.env
 # (voir .env.example à la racine) pour tout autre usage.
-name: tesserax
+name: wasafili
 
 x-app-env: &app-env
   NODE_ENV: production
   LOG_LEVEL: ${LOG_LEVEL:-info}
-  DATABASE_URL: postgresql://tesserax_app:${TESSERAX_APP_PASSWORD:-tesserax_app}@postgres:5432/tesserax
+  DATABASE_URL: postgresql://wasafili_app:${WASAFILI_APP_PASSWORD:-wasafili_app}@postgres:5432/wasafili
   REDIS_URL: redis://redis:6379
   JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-dev-only-change-me}
   # Traefik puis nginx (web) devant l'API : l'IP cliente est à deux sauts (limites par IP).
   TRUST_PROXY: 2
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
-  S3_BUCKET: ${S3_BUCKET:-tesserax}
-  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-tesserax}
-  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-tesserax-minio-secret}
+  S3_BUCKET: ${S3_BUCKET:-wasafili}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-wasafili}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-wasafili-minio-secret}
   GOTENBERG_URL: http://gotenberg:3000
   APP_URL: ${APP_URL:-http://app.localhost:8080}
   SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
-  MAIL_FROM: ${MAIL_FROM:-Tesserax <no-reply@tesserax.local>}
+  MAIL_FROM: ${MAIL_FROM:-Wasafili <no-reply@wasafili.local>}
   WEBHOOK_ALLOW_PRIVATE: ${WEBHOOK_ALLOW_PRIVATE:-true}
 
 services:
@@ -31,14 +31,14 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      TESSERAX_OWNER_PASSWORD: ${TESSERAX_OWNER_PASSWORD:-tesserax_owner}
-      TESSERAX_APP_PASSWORD: ${TESSERAX_APP_PASSWORD:-tesserax_app}
+      WASAFILI_OWNER_PASSWORD: ${WASAFILI_OWNER_PASSWORD:-wasafili_owner}
+      WASAFILI_APP_PASSWORD: ${WASAFILI_APP_PASSWORD:-wasafili_app}
     ports: ['127.0.0.1:${POSTGRES_PORT:-5440}:5432']
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres/01-roles.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d tesserax']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wasafili']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -59,8 +59,8 @@ services:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     command: ['server', '/data', '--console-address', ':9001']
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-tesserax}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-tesserax-minio-secret}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-wasafili}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-wasafili-minio-secret}
     ports:
       - '127.0.0.1:${MINIO_PORT:-9000}:9000'
       - '127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001'
@@ -76,9 +76,9 @@ services:
     depends_on:
       minio: { condition: service_healthy }
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-tesserax}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-tesserax-minio-secret}
-      S3_BUCKET: ${S3_BUCKET:-tesserax}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-wasafili}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-wasafili-minio-secret}
+      S3_BUCKET: ${S3_BUCKET:-wasafili}
     entrypoint: ['/bin/sh', '-c']
     command:
       - mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
@@ -108,18 +108,18 @@ services:
   # ---------- Applications ----------
 
   migrate:
-    image: tesserax/api:dev
+    image: wasafili/api:dev
     build: { context: .., dockerfile: apps/api/Dockerfile }
     command: ['sh', '-c', 'pnpm db:deploy && pnpm db:seed']
     environment:
       <<: *app-env
-      DATABASE_URL: postgresql://tesserax_owner:${TESSERAX_OWNER_PASSWORD:-tesserax_owner}@postgres:5432/tesserax
+      DATABASE_URL: postgresql://wasafili_owner:${WASAFILI_OWNER_PASSWORD:-wasafili_owner}@postgres:5432/wasafili
     depends_on:
       postgres: { condition: service_healthy }
     restart: 'no'
 
   api:
-    image: tesserax/api:dev
+    image: wasafili/api:dev
     build: { context: .., dockerfile: apps/api/Dockerfile }
     environment: *app-env
     depends_on:
@@ -182,11 +182,11 @@ services:
       PGHOST: postgres
       PGUSER: postgres
       PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      PGDATABASE: tesserax
+      PGDATABASE: wasafili
       S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: ${S3_BUCKET:-tesserax}
-      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-tesserax}
-      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-tesserax-minio-secret}
+      S3_BUCKET: ${S3_BUCKET:-wasafili}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-wasafili}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-wasafili-minio-secret}
       BACKUP_CRON: ${BACKUP_CRON:-30 2 * * *}
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
     volumes: ['${BACKUP_DIR:-./backups}:/backups']

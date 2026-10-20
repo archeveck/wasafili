@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { evaluate, type EvaluationContext, type FormEngine, truthy } from '@tesserax/form-engine';
-import { type JsonLogic } from '@tesserax/form-schema';
+import { evaluate, type EvaluationContext, type FormEngine, truthy } from '@wasafili/form-engine';
+import { type JsonLogic } from '@wasafili/form-schema';
 import {
   type Automation,
   type Instance,

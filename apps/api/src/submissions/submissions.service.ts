@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { checkTransition, type EvaluationContext, type FormEngine } from '@tesserax/form-engine';
+import { checkTransition, type EvaluationContext, type FormEngine } from '@wasafili/form-engine';
 import {
   COMPUTED_TYPES,
   initialState,
@@ -13,7 +13,7 @@ import {
   type StructureDefinition,
   type SubmissionData,
   walkFields,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import {
   StructureAccessService,
   type StructurePermission,

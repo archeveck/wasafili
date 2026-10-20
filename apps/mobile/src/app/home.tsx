@@ -1,5 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
-import { type MobileTile } from '@tesserax/sdk';
+import { type MobileTile } from '@wasafili/sdk';
 import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useCallback } from 'react';
@@ -101,7 +101,7 @@ export default function Home() {
             style={{ color: '#fff', fontSize: font.xl, fontWeight: '700', letterSpacing: -0.3 }}
             numberOfLines={1}
           >
-            {String(settings?.['name'] ?? 'Tesserax')}
+            {String(settings?.['name'] ?? 'Wasafili')}
           </Text>
         </View>
         <Pressable

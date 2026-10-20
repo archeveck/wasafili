@@ -2,7 +2,7 @@ import {
   inspectionEquipement,
   inspectionWorkflow,
   type StructureDefinition,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import { imageFileIds, reportData, sampleSubmission } from './report-data';
 

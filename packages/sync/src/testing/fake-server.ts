@@ -1,4 +1,4 @@
-import { type SubmissionData } from '@tesserax/form-schema';
+import { type SubmissionData } from '@wasafili/form-schema';
 import {
   type MutationPayload,
   type MutationResult,

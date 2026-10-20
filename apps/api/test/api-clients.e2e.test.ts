@@ -45,8 +45,8 @@ async function createKey(scopes: string[], name = 'n8n'): Promise<Created> {
 describe('clés API (P7.1.4)', () => {
   it('crée une clé dont le secret n’est montré qu’une fois et sert au grant client_credentials', async () => {
     const key = await createKey(['structure:read', 'list:read']);
-    expect(key.clientId).toMatch(/^tsx_[0-9a-f]{24}$/);
-    expect(key.clientSecret).toMatch(/^tsxsk_/);
+    expect(key.clientId).toMatch(/^wsf_[0-9a-f]{24}$/);
+    expect(key.clientSecret).toMatch(/^wsfsk_/);
     expect(key.scopes).toEqual(['list:read', 'structure:read']);
 
     const listed = await admin.get('/v1/acme/api-clients').expect(200);

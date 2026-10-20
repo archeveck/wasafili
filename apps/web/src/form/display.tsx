@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { type Field, type FileRef, type GeoPoint } from '@tesserax/form-schema';
-import { type AppClient } from '@tesserax/sdk';
+import { type Field, type FileRef, type GeoPoint } from '@wasafili/form-schema';
+import { type AppClient } from '@wasafili/sdk';
 import { formatDate, formatDateTime } from '@/lib/utils';
 
 /** Libellés des éléments de référentiel référencés (une requête pour toute la page). */

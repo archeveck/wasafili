@@ -1,4 +1,4 @@
-import { initialState, type StructureDefinition, type SubmissionData } from '@tesserax/form-schema';
+import { initialState, type StructureDefinition, type SubmissionData } from '@wasafili/form-schema';
 import { migrate, type SqlDatabase, type SqlValue } from './db.js';
 import {
   type MutationPayload,

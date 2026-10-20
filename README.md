@@ -1,4 +1,4 @@
-# Tesserax
+# Wasafili
 
 Plateforme no-code de collecte de données terrain : back-office web pour concevoir des
 formulaires (structures), workflows et rapports ; application mobile **100 % hors ligne** pour
@@ -29,7 +29,7 @@ localisées, sauvegardes) :
 
 ```bash
 cd infra && docker compose up -d --build
-# → http://app.localhost:8080  (admin@tesserax.local / Tesserax2026!)
+# → http://app.localhost:8080  (admin@wasafili.local / Wasafili2026!)
 ```
 
 Production (TLS Let's Encrypt, secrets obligatoires), sauvegardes, supervision, builds
@@ -49,7 +49,7 @@ Les ports se changent dans `.env` (voir [.env.example](.env.example)).
 ## Démo du back-office (Phase 2)
 
 Ouvrir http://localhost:5173 (ou http://app.localhost:8080 avec la stack conteneurisée) et se
-connecter avec `admin@tesserax.local` / `Tesserax2026!` :
+connecter avec `admin@wasafili.local` / `Wasafili2026!` :
 
 1. **Formulaires → Nouveau formulaire** : glisser des champs depuis la palette, régler leurs
    propriétés (validation, valeur par défaut, référentiel en cascade, formule de calcul,
@@ -68,11 +68,11 @@ Test de bout en bout : `pnpm test:e2e` (Playwright ; API locale et base de démo
 ## Application mobile (Phase 3)
 
 ```bash
-pnpm --filter "@tesserax/mobile^..." build   # paquets partagés
+pnpm --filter "@wasafili/mobile^..." build   # paquets partagés
 cd apps/mobile && npx expo start --lan        # puis ouvrir exp://127.0.0.1:8081 dans Expo Go
 ```
 
-Se connecter avec `technicien@tesserax.local` / `Tesserax2026!` (serveur par défaut :
+Se connecter avec `technicien@wasafili.local` / `Wasafili2026!` (serveur par défaut :
 `http://localhost:3000`, modifiable via « Serveur… » sur l'écran de connexion, ou
 `EXPO_PUBLIC_API_URL`). Une fois les formulaires téléchargés, tout fonctionne sans réseau :
 saisie, cascade des référentiels, photos compressées et annotées, signature, GPS, scan d'un QR
@@ -126,8 +126,8 @@ node infra/acceptance/rapport-par-email.mjs      # acceptation P5.5 : validation
 maestro test apps/mobile/e2e/rapport-pdf.yaml    # rapport PDF depuis le mobile
 ```
 
-Webhooks : chaque requête porte `X-Tesserax-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
-`<X-Tesserax-Timestamp>.<corps>`. En production, `WEBHOOK_ALLOW_PRIVATE=false` interdit les
+Webhooks : chaque requête porte `X-Wasafili-Signature: sha256=<hex>`, HMAC-SHA256 du secret sur
+`<X-Wasafili-Timestamp>.<corps>`. En production, `WEBHOOK_ALLOW_PRIVATE=false` interdit les
 adresses du réseau interne (sauf intégration locale assumée, ex. n8n).
 
 ## Pilotage (Phase 6)
@@ -146,7 +146,7 @@ adresses du réseau interne (sauf intégration locale assumée, ex. n8n).
 ```bash
 infra/maps/fetch-basemap.sh                      # fond de carte OSM auto-hébergé (≈ 100 Mo, facultatif)
 node infra/demo/fiches-terrain.mjs               # inspections localisées sur l'instance de démo
-pnpm --filter @tesserax/web test:e2e             # dont e2e/pilotage.spec.ts
+pnpm --filter @wasafili/web test:e2e             # dont e2e/pilotage.spec.ts
 maestro test apps/mobile/e2e/carte-fiches.yaml   # carte mobile
 ```
 
@@ -170,21 +170,21 @@ Sans fond de carte installé, les cartes web s'affichent sur un fond neutre. Var
   `expo prebuild` + Gradle / Xcode en CI.
 
 ```bash
-pnpm --filter @tesserax/api openapi            # régénère apps/api/openapi.json (versionné)
+pnpm --filter @wasafili/api openapi            # régénère apps/api/openapi.json (versionné)
 docker compose -f infra/docker-compose.yml exec backup backup.sh   # sauvegarde immédiate
 docker compose -f infra/docker-compose.yml exec backup verify.sh   # vérification de restauration
-pnpm --filter @tesserax/web test:e2e           # dont api-keys.spec.ts, account.spec.ts
+pnpm --filter @wasafili/web test:e2e           # dont api-keys.spec.ts, account.spec.ts
 ```
 
 ## Démo (Phase 0)
 
-Comptes de démonstration de l'instance `demo` (mot de passe `Tesserax2026!`) :
-`admin@tesserax.local`, `superviseur@tesserax.local`, `technicien@tesserax.local`.
+Comptes de démonstration de l'instance `demo` (mot de passe `Wasafili2026!`) :
+`admin@wasafili.local`, `superviseur@wasafili.local`, `technicien@wasafili.local`.
 
 ```bash
 # 1. Connexion (grant password)
 curl -s localhost:3000/v1/oauth/token -d grant_type=password \
-  -d username=admin@tesserax.local -d 'password=Tesserax2026!'
+  -d username=admin@wasafili.local -d 'password=Wasafili2026!'
 # → { access_token, token_type: "Bearer", expires_in: 900, refresh_token }
 
 TOKEN=...   # access_token

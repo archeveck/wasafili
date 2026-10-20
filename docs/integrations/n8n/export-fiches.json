@@ -1,5 +1,5 @@
 {
-  "name": "Tesserax — export horaire des fiches validées",
+  "name": "Wasafili — export horaire des fiches validées",
   "nodes": [
     {
       "parameters": {},
@@ -24,7 +24,7 @@
             {
               "id": "c1",
               "name": "baseUrl",
-              "value": "https://tesserax.exemple.ci",
+              "value": "https://wasafili.exemple.ci",
               "type": "string"
             },
             { "id": "c2", "name": "app", "value": "demo", "type": "string" },
@@ -84,7 +84,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [480, 300],
-      "credentials": { "oAuth2Api": { "id": "tesseraxApiKey", "name": "Tesserax (clé API)" } }
+      "credentials": { "oAuth2Api": { "id": "wasafiliApiKey", "name": "Wasafili (clé API)" } }
     },
     {
       "parameters": { "fieldToSplitOut": "data", "options": {} },

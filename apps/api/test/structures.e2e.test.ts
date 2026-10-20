@@ -1,5 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
-import { inspectionEquipement } from '@tesserax/form-schema';
+import { inspectionEquipement } from '@wasafili/form-schema';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { tenantTransaction } from '../src/prisma/tenant';
 import { api, createTenant, createTestApp, login, owner, resetDatabase } from './helpers';

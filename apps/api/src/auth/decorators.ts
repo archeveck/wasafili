@@ -2,9 +2,9 @@ import { createParamDecorator, type ExecutionContext, SetMetadata } from '@nestj
 import { type Request } from 'express';
 import { type Permission } from '../tenancy/permissions';
 
-export const IS_PUBLIC = 'tesserax:public';
-export const REQUIRED_PERMISSIONS = 'tesserax:permissions';
-export const ANY_PERMISSIONS = 'tesserax:any-permissions';
+export const IS_PUBLIC = 'wasafili:public';
+export const REQUIRED_PERMISSIONS = 'wasafili:permissions';
+export const ANY_PERMISSIONS = 'wasafili:any-permissions';
 
 /** Route accessible sans jeton. */
 export const Public = () => SetMetadata(IS_PUBLIC, true);

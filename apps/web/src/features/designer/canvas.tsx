@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { type Field } from '@tesserax/form-schema';
+import { type Field } from '@wasafili/form-schema';
 import { Calculator, Copy, Eye, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/display';
 import { cn } from '@/lib/utils';

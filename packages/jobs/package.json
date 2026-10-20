@@ -1,5 +1,5 @@
 {
-  "name": "@tesserax/jobs",
+  "name": "@wasafili/jobs",
   "version": "0.0.0",
   "private": true,
   "description": "Contrat des jobs BullMQ partagé par l'API (producteur) et le worker (consommateur)",

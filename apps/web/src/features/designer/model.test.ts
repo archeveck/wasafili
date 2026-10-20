@@ -1,5 +1,5 @@
-import { analyzeDefinition } from '@tesserax/form-engine';
-import { type Field, inspectionEquipement, type StructureDefinition } from '@tesserax/form-schema';
+import { analyzeDefinition } from '@wasafili/form-engine';
+import { type Field, inspectionEquipement, type StructureDefinition } from '@wasafili/form-schema';
 import { describe, expect, it } from 'vitest';
 import {
   canContain,

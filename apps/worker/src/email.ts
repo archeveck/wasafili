@@ -1,5 +1,5 @@
 import { GetObjectCommand, type S3Client } from '@aws-sdk/client-s3';
-import { type EmailJob } from '@tesserax/jobs';
+import { type EmailJob } from '@wasafili/jobs';
 import { type Pool } from 'pg';
 import { inInstance } from './db.js';
 

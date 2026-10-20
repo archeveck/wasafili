@@ -1,17 +1,17 @@
-import { type FieldState } from '@tesserax/form-engine';
+import { type FieldState } from '@wasafili/form-engine';
 import {
   errorsAt,
   type FieldServices,
   type FormController,
   validationMessage,
-} from '@tesserax/form-renderer';
+} from '@wasafili/form-renderer';
 import {
   type Field,
   type SimpleField,
   type StructureDefinition,
   type TableField,
   type TableRow,
-} from '@tesserax/form-schema';
+} from '@wasafili/form-schema';
 import { Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
