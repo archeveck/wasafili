@@ -1,0 +1,37 @@
+# Fond de carte hors ligne (P3.4.5, ADR 0012) : téléchargement depuis « Synchronisation », puis
+# point posé en touchant la carte d'un champ géolocalisation. Prérequis : appareil connecté
+# (saisie-fiche.yaml) à un serveur qui sert /tiles/basemap-mobile.pmtiles (back-office, après
+# infra/maps/fetch-basemap.sh). Laisse un brouillon (reinitialiser.yaml remet à zéro).
+appId: com.wasafili.app
+env:
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 90000
+- openLink: wasafili://sync
+- scrollUntilVisible:
+    element: Carte hors ligne
+- runFlow:
+    when:
+      visible: .*Télécharger le fond de carte.*
+    commands:
+      - tapOn: .*Télécharger le fond de carte.*
+- extendedWaitUntil:
+    visible: .*Fond de carte de la zone enregistré.*
+    timeout: 180000
+- takeScreenshot: carte-hors-ligne-telechargee
+- openLink: wasafili://home
+- tapOn: Inspection équipement
+- tapOn: Nouvelle fiche
+- scrollUntilVisible:
+    element: .*Touchez la carte pour placer.*
+    centerElement: true
+- tapOn: Carte de la position
+- waitForAnimationToEnd:
+    timeout: 5000
+# Le point posé remplit les coordonnées (latitude de la Côte d'Ivoire : 4 à 11).
+- assertVisible: '([4-9]|10)\.[0-9]+'
+- takeScreenshot: carte-hors-ligne-point

@@ -35,7 +35,9 @@ cd infra && docker compose up -d --build   # stack complète
   `npx expo install`. React est épinglé à la même version exacte dans tout le monorepo (un seul
   exemplaire, sinon « invalid hook call »). Données : `@wasafili/sync` (base SQLite locale, file
   d'envoi, moteur) ; jamais d'appel API direct pour lire ou écrire des fiches.
-  e2e : Maestro (`apps/mobile/e2e`, simulateur iOS + Expo Go : `pnpm start` = `expo start --go`).
+  Modules natifs (MapLibre) : pas d'Expo Go, client de développement (`npx expo run:ios` /
+  `run:android`, puis `pnpm start`). Cartes : `BaseMap` sur le fond hors ligne (`lib/basemap`,
+  ADR 0012). e2e : Maestro (`apps/mobile/e2e`, sur l'application installée).
   Builds : `eas.json` (profils, `APP_VARIANT`) ou `expo prebuild` + Gradle/Xcode (D2).
 - `packages/sync` — stockage local et moteur de synchronisation, indépendants de la plateforme
   (testés avec `node:sqlite`).

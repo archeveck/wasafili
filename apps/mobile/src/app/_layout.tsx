@@ -1,6 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { startBasemapPrefetch } from '@/lib/basemap';
 import { startSyncTriggers } from '@/lib/offline';
 import { listenToNotificationTaps, registerPush } from '@/lib/push';
 import { onSessionExpired } from '@/lib/session';
@@ -9,6 +10,7 @@ import { colors } from '@/lib/theme';
 export default function RootLayout() {
   useEffect(() => {
     startSyncTriggers();
+    startBasemapPrefetch();
     void registerPush();
     const stopTaps = listenToNotificationTaps();
     // Session expirée : reconnexion ; les données locales et la file d'envoi sont conservées.

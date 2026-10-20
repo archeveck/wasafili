@@ -37,10 +37,9 @@ des seules fiches qu'il peut lire.
    l'appareil sur ses fiches lisibles par l'appelant, ou du lieu d'une tâche terminée (avec
    `task:manage`). Une position saisie dans un champ décrit l'équipement, pas l'agent : elle
    n'est pas retenue. Pas de suivi GPS en continu (vie privée, batterie).
-5. **Mobile : `react-native-maps`** (spécification), Apple Maps / Google Maps, utilisable dans
-   Expo Go sans configuration. Données locales uniquement : la carte marche hors ligne, le fond
-   de carte dépend du cache du système. Clé Google Maps requise pour un build Android de
-   production (P7).
+5. **Mobile** : données locales uniquement. _Remplacé par l'ADR
+   [0012](0012-carte-mobile-hors-ligne.md)_ : MapLibre et fond PMTiles téléchargé sur
+   l'appareil, à la place de `react-native-maps` (fond du système, clé Google sur Android).
 
 ### Tableaux de bord
 
@@ -103,9 +102,9 @@ des seules fiches qu'il peut lire.
 ## Conséquences
 
 - Nouvelles dépendances : `maplibre-gl`, `pmtiles`, `@protomaps/basemaps` (web, chargées à la
-  demande), `react-native-maps` (mobile), `yazl` et `@aws-sdk/lib-storage` (worker).
+  demande), `yazl` et `@aws-sdk/lib-storage` (worker).
 - Données de démonstration : tableau de bord « Suivi des inspections » au seed ;
   `node infra/demo/fiches-terrain.mjs` saisit des inspections localisées par l'API.
-- Limites : pas de regroupement sur la carte mobile ; pas de rétention configurable du journal
-  d'audit (P7) ; les clés API n'ont pas encore d'écran de gestion (P7.1.4), seuls leurs usages
-  et refus sont journalisés ; un tableau de bord n'a qu'une série par graphique.
+- Limites : pas de rétention configurable du journal d'audit (P7) ; les clés API n'ont pas
+  encore d'écran de gestion (P7.1.4), seuls leurs usages et refus sont journalisés ; un tableau
+  de bord n'a qu'une série par graphique.

@@ -1,11 +1,11 @@
 # Parcours de la Phase 4 (P4.3, P4.4.5) : une tâche planifiée au back-office arrive sur
 # l'appareil, ouvre une fiche pré-remplie, et le bouton de workflow « Soumettre » l'envoie.
 # Prérequis : tâche « Contrôle ascenseur » assignée au technicien (voir taches-workflow.sh).
-appId: host.exp.Exponent
+appId: com.wasafili.app
 env:
   EMAIL: technicien@wasafili.local
   PASSWORD: Wasafili2026!
-  APP_URL: exp://127.0.0.1:8081
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
 ---
 - stopApp
 - openLink: ${APP_URL}

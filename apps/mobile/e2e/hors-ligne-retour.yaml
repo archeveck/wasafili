@@ -1,5 +1,5 @@
 # P3.8.1 — partie 2 : retour du serveur ; tout part, sans doublon.
-appId: host.exp.Exponent
+appId: com.wasafili.app
 ---
 - tapOn: .*État de la synchronisation.*
 - tapOn: Synchroniser maintenant

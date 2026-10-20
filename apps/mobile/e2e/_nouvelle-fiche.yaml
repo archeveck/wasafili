@@ -1,5 +1,5 @@
 # Sous-parcours : une inspection « Bon » sur le premier équipement, signée, envoyée.
-appId: host.exp.Exponent
+appId: com.wasafili.app
 ---
 - tapOn: Nouvelle fiche
 - tapOn:

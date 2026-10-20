@@ -200,7 +200,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 - [x] P3.4.2 Liste en cascade (référentiel local), relation vers fiche locale
 - [x] P3.4.3 Photo multi + compression configurable + annotation/dessin Skia, original conservé (D13)
 - [x] P3.4.4 Signature (Skia, D13)
-- [ ] P3.4.5 Géolocalisation : GPS et saisie manuelle faits, sans carte ni tuiles (D4) ✅ ; **reste** la carte et le préchargement PMTiles de la zone CI (D3), reportés avec la carte mobile (P6.1.3)
+- [x] P3.4.5 Géolocalisation : GPS, saisie manuelle et point posé sur la carte ; fond PMTiles de la zone CI préchargé en Wi-Fi ou téléchargé à la demande, lu sans réseau par MapLibre (D3, [ADR 0012](docs/adr/0012-carte-mobile-hors-ligne.md))
 - [x] P3.4.6 Scan code-barres/QR (expo-camera) : pré-remplir un champ / retrouver un équipement du référentiel
 - [x] P3.4.7 Tableau répétable
 - [x] P3.4.8 Conditions et calculs exécutés localement via `form-engine`
@@ -308,7 +308,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 - [x] P7.2.3 Traefik + TLS Let's Encrypt (`docker-compose.prod.yml`), variante d'accès privé Tailscale documentée (non testée sur un tailnet réel)
 - [x] P7.2.4 `docker compose up` (dans `infra/`) = stack complète + données de démo (critère d'acceptation)
 
-**P7.3 Mobile** (D2) ✅ : profils EAS `development` / `preview` / `production` (`APP_VARIANT`, clé Google Maps par variable) + chemin autonome `expo prebuild` + Gradle (APK construit localement) et Xcode en CI.
+**P7.3 Mobile** (D2) ✅ : profils EAS `development` / `preview` / `production` (`APP_VARIANT`) + chemin autonome `expo prebuild` + Gradle (APK construit localement) et Xcode en CI.
 
 **P7.4 Sécurité (OWASP ASVS niveau 1)**
 - [x] P7.4.1 Checklist ASVS L1 passée et tracée dans `docs/security/` (4 écarts partiels justifiés)
@@ -335,7 +335,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 2. Auth OAuth2 maison — P0.5
 3. Conditions & calculs (json-logic unique, formules compilées) — P1.2
 4. Stockage local mobile & protocole de sync — P3.2 ✅ ([0007](docs/adr/0007-stockage-local-synchronisation.md))
-5. Cartographie (MapLibre + PMTiles auto-hébergé, hors ligne) — P3.4.5 / P6.1
+5. Cartographie (MapLibre + PMTiles auto-hébergé, hors ligne) — P3.4.5 / P6.1 ✅ ([0010](docs/adr/0010-pilotage.md), [0012](docs/adr/0012-carte-mobile-hors-ligne.md))
 6. Annotation photo & signature (Skia) — P3.4.3 / P3.4.4
 7. Génération PDF (docxtemplater + Gotenberg) — P5.1 ✅ ([0009](docs/adr/0009-rapports-automatisations.md), avec automatisations et webhooks)
 8. Notifications (sync + Expo Push optionnel) — P4.5

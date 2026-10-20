@@ -1,13 +1,13 @@
 # Parcours de saisie d'une inspection (P3.8) : connexion, téléchargement, saisie, envoi.
 # Lancer : maestro test e2e/saisie-fiche.yaml (API locale démarrée, seed de démonstration).
-appId: host.exp.Exponent
+appId: com.wasafili.app
 env:
   EMAIL: technicien@wasafili.local
   PASSWORD: Wasafili2026!
-  APP_URL: exp://127.0.0.1:8081
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
 ---
-# Expo Go : (ré)ouverture du projet servi par Metro. Avec un build de l'application, utiliser
-# plutôt `launchApp` et l'appId com.wasafili.app.
+# Client de développement (`npx expo run:ios`) : (ré)ouverture du projet servi par Metro.
+# Avec un build autonome (preview, production), utiliser plutôt `launchApp`.
 - stopApp
 - openLink: ${APP_URL}
 - extendedWaitUntil:

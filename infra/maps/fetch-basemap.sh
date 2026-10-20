@@ -4,12 +4,18 @@
 #
 #   infra/maps/fetch-basemap.sh                 # Côte d'Ivoire, zoom 0–14
 #   BASEMAP_BBOX=2.2,6.2,3.9,12.5 BASEMAP_MAXZOOM=12 infra/maps/fetch-basemap.sh
+#   infra/maps/fetch-basemap.sh --mobile-only   # seulement l'extraction mobile, depuis le fichier local
+#
+# Deux fichiers : basemap.pmtiles (back-office) et basemap-mobile.pmtiles, extraction allégée
+# (zoom ≤ BASEMAP_MOBILE_MAXZOOM, 13 par défaut : ≈ 45 Mo) que l'application télécharge pour
+# l'usage hors ligne (P3.4.5) ; MapLibre agrandit les tuiles au-delà de ce zoom.
 #
 # Données © contributeurs OpenStreetMap (ODbL), attribution affichée sur la carte.
 set -eu
 
 BBOX="${BASEMAP_BBOX:--8.7,4.2,-2.4,10.8}"
 MAXZOOM="${BASEMAP_MAXZOOM:-14}"
+MOBILE_MAXZOOM="${BASEMAP_MOBILE_MAXZOOM:-13}"
 BUILD="${BASEMAP_BUILD:-$(date -u -v-1d +%Y%m%d 2>/dev/null || date -u -d yesterday +%Y%m%d)}"
 PMTILES_VERSION="1.31.2"
 
@@ -56,8 +62,15 @@ if [ -z "$PMTILES" ]; then
 fi
 
 OUT="$DIR/data/basemap.pmtiles"
-echo "Extraction du build ${BUILD} (zone ${BBOX}, zoom ≤ ${MAXZOOM}) vers ${OUT}…"
-"$PMTILES" extract "https://build.protomaps.com/$BUILD.pmtiles" "$OUT.part" \
-  --bbox="$BBOX" --maxzoom="$MAXZOOM"
-mv "$OUT.part" "$OUT"
-echo "Fond de carte prêt : $(du -h "$OUT" | cut -f1)"
+MOBILE="$DIR/data/basemap-mobile.pmtiles"
+if [ "${1:-}" != "--mobile-only" ]; then
+  echo "Extraction du build ${BUILD} (zone ${BBOX}, zoom ≤ ${MAXZOOM}) vers ${OUT}…"
+  "$PMTILES" extract "https://build.protomaps.com/$BUILD.pmtiles" "$OUT.part" \
+    --bbox="$BBOX" --maxzoom="$MAXZOOM"
+  mv "$OUT.part" "$OUT"
+  echo "Fond de carte prêt : $(du -h "$OUT" | cut -f1)"
+fi
+[ -f "$OUT" ] || { echo "Fond de carte absent : lancer d'abord sans --mobile-only" >&2; exit 1; }
+"$PMTILES" extract "$OUT" "$MOBILE.part" --maxzoom="$MOBILE_MAXZOOM"
+mv "$MOBILE.part" "$MOBILE"
+echo "Fond de carte mobile prêt : $(du -h "$MOBILE" | cut -f1)"

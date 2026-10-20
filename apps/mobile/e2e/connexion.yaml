@@ -1,8 +1,8 @@
 # Connexion (ASVS 2.1.12) : le mot de passe saisi peut être affiché puis masqué avant l'envoi.
 # Part d'un appareil déconnecté : maestro test e2e/reinitialiser.yaml e2e/connexion.yaml
-appId: host.exp.Exponent
+appId: com.wasafili.app
 env:
-  APP_URL: exp://127.0.0.1:8081
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
   EMAIL: technicien@wasafili.local
   PASSWORD: Wasafili2026!
 ---

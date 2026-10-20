@@ -1,7 +1,7 @@
 # Remet l'appareil à zéro (déconnexion = données locales effacées), avant un parcours complet.
-appId: host.exp.Exponent
+appId: com.wasafili.app
 env:
-  APP_URL: exp://127.0.0.1:8081
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
 ---
 - stopApp
 - openLink: ${APP_URL}

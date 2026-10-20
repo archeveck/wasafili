@@ -1,6 +1,6 @@
 #!/bin/sh
 # Scénario hors ligne de bout en bout sur simulateur (P3.8.1).
-# Prérequis : Metro (npx expo start --lan), app ouverte et connectée, base de démonstration.
+# Prérequis : client de développement installé, Metro (pnpm start), app ouverte et connectée, base de démonstration.
 # API_STOP et API_START : commandes qui coupent puis relancent l'API locale.
 set -eu
 cd "$(dirname "$0")"

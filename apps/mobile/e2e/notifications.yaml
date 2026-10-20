@@ -1,8 +1,8 @@
 # Centre de notifications (P4.5) : la validation d'une fiche au back-office arrive par la
 # synchronisation, sans push. Prérequis : taches-workflow.yaml puis validation de la fiche.
-appId: host.exp.Exponent
+appId: com.wasafili.app
 env:
-  APP_URL: exp://127.0.0.1:8081
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
 ---
 - stopApp
 - openLink: ${APP_URL}
@@ -10,8 +10,8 @@ env:
     visible: .*Tout est synchronisé.*
     timeout: 60000
 - assertVisible: 'Notifications, .* non lues'
-# Dans Expo Go, le bouton d'outils recouvre la cloche : ouverture par lien profond.
-- openLink: ${APP_URL}/--/notifications
+# Le bouton d’outils du client de développement recouvre la cloche : ouverture par lien profond.
+- openLink: wasafili://notifications
 - assertVisible: '.*Inspection équipement : Validé.*'
 - assertVisible: .*Nouvelle tâche.*
 - tapOn: Tout marquer comme lu

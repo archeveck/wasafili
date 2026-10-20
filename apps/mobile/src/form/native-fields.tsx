@@ -17,6 +17,7 @@ import { enqueueFile, storeBytes, storePhoto, storePickedFile } from '@/lib/file
 import { store } from '@/lib/offline';
 import { colors, font, radius, space } from '@/lib/theme';
 import { DrawingModal } from './drawing';
+import { PointMap } from './point-map';
 import { ScannerModal } from './scanner';
 
 export interface NativeFieldProps extends FieldProps {
@@ -464,7 +465,10 @@ function SignatureInput({ value, onChange, state, submissionId }: NativeFieldPro
   );
 }
 
-/** Position GPS (P3.4.5) : coordonnées et précision, sans carte ni réseau (D4). */
+/**
+ * Position (P3.4.5) : GPS, coordonnées saisies ou point posé sur la carte (fond hors ligne). La
+ * carte est un plus : sans fond téléchargé, GPS et saisie restent disponibles (D4).
+ */
 function GeolocationInput({
   field,
   value,
@@ -473,6 +477,14 @@ function GeolocationInput({
 }: NativeFieldProps & { field: FieldOfType<'geolocation'> }) {
   const point = value as GeoPoint | null;
   const [busy, setBusy] = useState(false);
+  // Les champs de coordonnées ne sont pas contrôlés : recréés quand la position vient
+  // d'ailleurs (GPS, carte), pas pendant la frappe.
+  const [revision, setRevision] = useState(0);
+  const manualAllowed = !state.readOnly && field.allowManual !== false;
+  const replace = (next: GeoPoint) => {
+    onChange(next);
+    setRevision((r) => r + 1);
+  };
   const locate = async () => {
     setBusy(true);
     try {
@@ -480,7 +492,7 @@ function GeolocationInput({
       if (!permission.granted)
         return Alert.alert('Autorisation refusée', 'La position est nécessaire pour ce champ.');
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      onChange({
+      replace({
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         ...(position.coords.accuracy != null ? { accuracy: position.coords.accuracy } : {}),
@@ -501,12 +513,28 @@ function GeolocationInput({
   };
   return (
     <View style={{ gap: space.sm }}>
-      <View style={{ flexDirection: 'row', gap: space.sm }}>
+      {(point || manualAllowed) && (
+        <PointMap
+          point={point}
+          onPick={
+            manualAllowed
+              ? ([lng, lat]) =>
+                  replace({
+                    lat: Number(lat.toFixed(6)),
+                    lng: Number(lng.toFixed(6)),
+                    source: 'map',
+                    capturedAt: new Date().toISOString(),
+                  })
+              : undefined
+          }
+        />
+      )}
+      <View key={revision} style={{ flexDirection: 'row', gap: space.sm }}>
         <Input
           style={{ flex: 1 }}
           placeholder="Latitude"
           keyboardType="numbers-and-punctuation"
-          editable={!state.readOnly && field.allowManual !== false}
+          editable={manualAllowed}
           defaultValue={point ? String(point.lat) : ''}
           onEndEditing={(e) => manual('lat', e.nativeEvent.text)}
           accessibilityLabel="Latitude"
@@ -515,7 +543,7 @@ function GeolocationInput({
           style={{ flex: 1 }}
           placeholder="Longitude"
           keyboardType="numbers-and-punctuation"
-          editable={!state.readOnly && field.allowManual !== false}
+          editable={manualAllowed}
           defaultValue={point ? String(point.lng) : ''}
           onEndEditing={(e) => manual('lng', e.nativeEvent.text)}
           accessibilityLabel="Longitude"

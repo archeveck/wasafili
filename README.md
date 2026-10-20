@@ -69,13 +69,15 @@ Test de bout en bout : `pnpm test:e2e` (Playwright ; API locale et base de démo
 
 ```bash
 pnpm --filter "@wasafili/mobile^..." build   # paquets partagés
-cd apps/mobile && npx expo start --lan        # puis ouvrir exp://127.0.0.1:8081 dans Expo Go
+cd apps/mobile && npx expo run:ios            # ou run:android : client de développement (pas d'Expo Go)
+pnpm --filter @wasafili/mobile start          # Metro pour ce client
 ```
 
 Se connecter avec `technicien@wasafili.local` / `Wasafili2026!` (serveur par défaut :
 `http://localhost:3000`, modifiable via « Serveur… » sur l'écran de connexion, ou
 `EXPO_PUBLIC_API_URL`). Une fois les formulaires téléchargés, tout fonctionne sans réseau :
-saisie, cascade des référentiels, photos compressées et annotées, signature, GPS, scan d'un QR
+saisie, cascade des référentiels, photos compressées et annotées, signature, GPS et point posé
+sur la carte (fond hors ligne préchargé en Wi-Fi, cf. ADR 0012), scan d'un QR
 code d'équipement (fiche pré-remplie), brouillons enregistrés automatiquement, recherche locale.
 La barre d'état indique la file d'envoi ; l'écran « Synchronisation » détaille les erreurs.
 
@@ -144,7 +146,7 @@ adresses du réseau interne (sauf intégration locale assumée, ex. n8n).
   téléchargeable 7 jours.
 
 ```bash
-infra/maps/fetch-basemap.sh                      # fond de carte OSM auto-hébergé (≈ 100 Mo, facultatif)
+infra/maps/fetch-basemap.sh                      # fond de carte OSM auto-hébergé (≈ 100 Mo + 46 Mo mobile, facultatif)
 node infra/demo/fiches-terrain.mjs               # inspections localisées sur l'instance de démo
 pnpm --filter @wasafili/web test:e2e             # dont e2e/pilotage.spec.ts
 maestro test apps/mobile/e2e/carte-fiches.yaml   # carte mobile

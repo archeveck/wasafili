@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button, Card, styles } from '@/components/ui';
+import { cancelBasemapDownload, deleteBasemap, downloadBasemap, useBasemap } from '@/lib/basemap';
 import { changed, synchronize, useOffline } from '@/lib/offline';
 import { client, setCurrentInstance } from '@/lib/session';
 import { colors, space } from '@/lib/theme';
@@ -129,6 +130,7 @@ export default function Sync() {
           />
         </>
       )}
+      <OfflineMap />
       <Button
         title="Se déconnecter"
         variant="ghost"
@@ -160,5 +162,73 @@ export default function Sync() {
         }}
       />
     </ScrollView>
+  );
+}
+
+const megabytes = (bytes: number) => `${Math.max(1, Math.round(bytes / 1_048_576))} Mo`;
+
+/** Fond de carte hors ligne (P3.4.5) : préchargé en Wi-Fi, téléchargeable à la demande. */
+function OfflineMap() {
+  const basemap = useBasemap();
+  return (
+    <Card style={{ gap: space.sm, marginTop: space.md }}>
+      <Text style={{ fontWeight: '600', color: colors.text }}>Carte hors ligne</Text>
+      {basemap.status === 'ready' ? (
+        <>
+          <Text style={styles.muted}>
+            Fond de carte de la zone enregistré ({megabytes(basemap.size)}
+            {basemap.downloadedAt
+              ? `, le ${new Date(basemap.downloadedAt).toLocaleDateString('fr-FR')}`
+              : ''}
+            ) : les cartes s’affichent sans réseau.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <Button
+              title="Mettre à jour"
+              variant="outline"
+              style={{ flex: 1 }}
+              onPress={() => void downloadBasemap()}
+            />
+            <Button
+              title="Supprimer"
+              variant="danger"
+              style={{ flex: 1 }}
+              onPress={() =>
+                Alert.alert(
+                  'Supprimer le fond de carte ?',
+                  'Les cartes afficheront un fond vide.',
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Supprimer', style: 'destructive', onPress: deleteBasemap },
+                  ],
+                )
+              }
+            />
+          </View>
+        </>
+      ) : basemap.status === 'downloading' ? (
+        <>
+          <Text
+            style={styles.muted}
+            accessibilityLiveRegion="polite"
+          >{`Téléchargement… ${Math.round(basemap.progress * 100)} %`}</Text>
+          <Button title="Annuler" variant="outline" onPress={cancelBasemapDownload} />
+        </>
+      ) : (
+        <>
+          <Text style={styles.muted}>
+            Pas de fond de carte sur l’appareil. Il se télécharge seul en Wi-Fi (quelques dizaines
+            de Mo) ; la saisie des positions n’en dépend pas.
+          </Text>
+          {basemap.error ? <Text style={styles.error}>{basemap.error}</Text> : null}
+          <Button
+            title="Télécharger le fond de carte"
+            variant="outline"
+            icon="map"
+            onPress={() => void downloadBasemap()}
+          />
+        </>
+      )}
+    </Card>
   );
 }
