@@ -329,7 +329,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 | Critère | Tâches |
 |---|---|
-| Formulaire « Inspection équipement » créé sans code en < 15 min | P2.3, P2.4, P4.2 (+ scénario chronométré dans la démo de Phase 4) |
+| Formulaire « Inspection équipement » créé sans code en < 15 min | P2.3, P2.4, P4.2 ; scénario chronométré `apps/web/e2e/quinze-minutes.spec.ts` ✅ : structure complète et workflow reconstruits à la souris, version publiée identique à la fixture, 12 min 36 s estimées par le modèle KLM (utilisateur averti, sans erreur ; un premier usage reste à chronométrer avec une personne) — la clé suit désormais le libellé |
 | 10 fiches avec photos en mode avion, sync sans doublon ni perte | P3.2, P3.5, P3.8.1 |
 | Validation → rapport PDF envoyé par e-mail | P4.1, P5.1–P5.3, P5.5 |
 | Isolation stricte entre instances | P0.6.4 (étendu à chaque nouvelle ressource) |
