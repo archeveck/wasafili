@@ -152,6 +152,17 @@ function transitionRefused(
   }
 }
 
+/** Révision résumée pour l'historique hors ligne (voir `recentRevisions`). */
+export interface RecentRevision {
+  revision: number;
+  action: string;
+  changes: FieldChange[];
+  authorId: string | null;
+  author: string | null;
+  automation: string | null;
+  createdAt: Date;
+}
+
 @Injectable()
 export class SubmissionsService {
   constructor(
@@ -794,6 +805,39 @@ export class SubmissionsService {
       total,
       pagination,
     );
+  }
+
+  /**
+   * Révisions les plus récentes de plusieurs fiches (historique hors ligne du mobile), avec le
+   * nom de l'auteur et de l'automatisation. L'appelant a déjà vérifié la lecture des fiches.
+   */
+  async recentRevisions(submissionIds: string[], limit: number) {
+    const history = new Map<string, { entries: RecentRevision[]; total: number }>();
+    if (submissionIds.length === 0) return history;
+    const ids = Prisma.join(submissionIds.map((id) => Prisma.sql`${id}::uuid`));
+    const rows = await this.prisma.transaction(
+      (tx) => tx.$queryRaw<(RecentRevision & { submissionId: string; total: bigint })[]>`
+        SELECT r.submission_id AS "submissionId", r.revision, r.action, r.changes,
+               r.author_id AS "authorId", r.created_at AS "createdAt", r.total,
+               NULLIF(concat_ws(' ', u.first_name, u.last_name), '') AS author,
+               a.name AS automation
+        FROM (
+          SELECT *, row_number() OVER w AS rank, count(*) OVER (PARTITION BY submission_id) AS total
+          FROM submission_revisions WHERE submission_id IN (${ids})
+          WINDOW w AS (PARTITION BY submission_id ORDER BY revision DESC)
+        ) r
+        LEFT JOIN users u ON u.id = r.author_id
+        LEFT JOIN automation_runs ar ON ar.id = r.automation_run_id
+        LEFT JOIN automations a ON a.id = ar.automation_id
+        WHERE r.rank <= ${limit}
+        ORDER BY r.submission_id, r.revision DESC`,
+    );
+    for (const { submissionId, total, ...entry } of rows) {
+      const current = history.get(submissionId) ?? { entries: [], total: Number(total) };
+      current.entries.push(entry);
+      history.set(submissionId, current);
+    }
+    return history;
   }
 
   /**

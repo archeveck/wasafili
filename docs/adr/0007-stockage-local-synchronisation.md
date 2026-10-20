@@ -30,6 +30,10 @@ mode avion, puis tout se synchronise **sans doublon ni perte**. La sync est mais
   ses seuls champs modifiés et sa `baseRevision` ; un champ également modifié depuis cette
   révision est un conflit : la dernière écriture reçue gagne, la valeur écrasée est conservée
   (`SubmissionConflict`) et visible dans le back-office, qui permet de la rétablir.
+- **Historique hors ligne** (spécification §1.4) : chaque fiche reçue porte ses 20 dernières
+  révisions (`history`, auteurs et automatisations nommés) et leur nombre (`historyTotal`).
+  Toute écriture crée une révision **et** modifie la fiche, qui revient donc au pull suivant :
+  ni ressource ni curseur de plus, et les droits de lecture sont ceux de la fiche.
 - API sans ETag : aucune réponse 304 servie depuis un cache sur la synchronisation.
 
 ### Client (`packages/sync`)
@@ -43,6 +47,10 @@ mode avion, puis tout se synchronise **sans doublon ni perte**. La sync est mais
 - Fiche locale = copie serveur (`server_data`, base des mutations) + vue locale (`local_data`).
   Au pull, les modifications encore en attente sont **réappliquées** par-dessus l'état serveur
   (rebasage) : elles ne sont jamais écrasées.
+- Historique dans `submission_history`, à part des fiches (les listes ne le chargent pas) ; un
+  résultat de push, qui n'en porte pas, garde celui du dernier pull. La migration qui l'a
+  introduit efface le curseur : une synchronisation complète, unique, récupère l'historique
+  des fiches déjà présentes (modifications en attente réappliquées).
 - File de mutations persistée. Une modification est fusionnée dans la précédente **seulement si
   celle-ci n'a jamais été tentée** : une mutation qui a pu atteindre le serveur n'est jamais
   modifiée, car son identifiant y est connu. Une page de pull et son curseur sont appliqués dans

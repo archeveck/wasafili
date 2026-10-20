@@ -121,6 +121,17 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX notifications_created ON notifications (created_at);
   `,
+  // 3 — Historique des fiches consultable hors ligne (dernières révisions reçues avec la fiche).
+  // Les fiches déjà présentes n'en ont pas : le curseur est effacé, la synchronisation suivante
+  // reprend tout (les modifications en attente sont réappliquées par-dessus).
+  `
+  CREATE TABLE submission_history (
+    submission_id TEXT PRIMARY KEY,
+    entries TEXT NOT NULL,
+    total INTEGER NOT NULL
+  );
+  DELETE FROM meta WHERE key = 'cursor';
+  `,
 ];
 
 export function migrate(db: SqlDatabase): void {

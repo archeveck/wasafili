@@ -135,6 +135,30 @@ describe('pull', () => {
     expect(deleted.submissions).toEqual([{ id, structureId: tenant.structure.id, deleted: true }]);
   });
 
+  it('joint à chaque fiche ses dernières révisions, auteurs nommés (historique hors ligne)', async () => {
+    const id = randomUUID();
+    await push(technicien, [create(id)]);
+    await superviseur
+      .patch(`/v1/acme/submissions/${id}`)
+      .send({ data: { etat: 'degrade', description_defaut: 'Fuite', photos: [{ fileId }] } })
+      .expect(200);
+    const [pulled] = (await pullAll(technicien)).submissions as unknown as {
+      historyTotal: number;
+      history: { revision: number; action: string; author: string | null; changes: unknown[] }[];
+    }[];
+    expect(pulled!.historyTotal).toBe(2);
+    expect(pulled!.history.map((h) => [h.revision, h.action])).toEqual([
+      [2, 'update'],
+      [1, 'create'],
+    ]);
+    expect(pulled!.history[0]).toMatchObject({
+      author: 'superviseur acme',
+      automation: null,
+      changes: expect.arrayContaining([{ field: 'etat', before: 'bon', after: 'degrade' }]),
+    });
+    expect(pulled!.history[1]!.author).toBe('technicien acme');
+  });
+
   it('ne transmet que les fiches lisibles : le technicien ne reçoit que les siennes', async () => {
     await push(superviseur, [create()]);
     await push(technicien, [create()]);

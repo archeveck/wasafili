@@ -8,6 +8,8 @@ import { TasksService, toTaskDto } from '../tasks/tasks.service';
 import { decodeCursor, encodeCursor, nextCursor, type ResourceCursor } from './cursor';
 
 export const PULL_PAGE_SIZE = 500;
+/** Révisions renvoyées par fiche : l'historique complet reste consultable au back-office. */
+export const HISTORY_LIMIT = 20;
 export const MAX_PUSH_MUTATIONS = 100;
 
 export type Mutation =
@@ -172,6 +174,12 @@ export class SyncService {
     ]);
     // Versions des fiches renvoyées : la saisie hors ligne d'une ancienne fiche en a besoin.
     for (const submission of submissions) versionIds.add(submission.structureVersionId);
+    // Historique : toute écriture crée une révision et modifie la fiche, qui revient donc ici
+    // avec ses dernières révisions (mêmes droits de lecture que la fiche).
+    const history = await this.submissions.recentRevisions(
+      submissions.filter((s) => !s.deletedAt).map((s) => s.id),
+      HISTORY_LIMIT,
+    );
     const versions = await this.prisma.db.structureVersion.findMany({
       where: { id: { in: [...versionIds] } },
       select: { id: true, structureId: true, version: true, definition: true },
@@ -211,7 +219,12 @@ export class SyncService {
       submissions: submissions.map((submission) =>
         submission.deletedAt
           ? { id: submission.id, structureId: submission.structureId, deleted: true }
-          : { ...this.submissions.toDto(submission), deleted: false },
+          : {
+              ...this.submissions.toDto(submission),
+              deleted: false,
+              history: history.get(submission.id)?.entries ?? [],
+              historyTotal: history.get(submission.id)?.total ?? 0,
+            },
       ),
       tasks: [
         ...tasks.map((task) => ({ ...toTaskDto(task), deleted: false })),

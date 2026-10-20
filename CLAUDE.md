@@ -98,6 +98,8 @@ cd infra && docker compose up -d --build   # stack complète
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger
   `touch_sync_txid`) ; une nouvelle ressource mobile s'ajoute au pull avec curseur `(sync_txid, id)`.
   Les mutations hors ligne passent par les mêmes services que l'API (droits, validation).
+  Une donnée liée à une fiche (historique) voyage avec la fiche au pull plutôt qu'en ressource
+  à part ; une colonne ou table locale nouvelle = migration ajoutée dans `packages/sync/src/db.ts`.
 - **Fiches** : le serveur fait foi pour les champs calculés et automatiques (il les retire de
   l'entrée et les recalcule). Une fiche reste liée à sa version de structure, et une version
   publiée est immuable (trigger). Chaque écriture crée une `SubmissionRevision` ; un

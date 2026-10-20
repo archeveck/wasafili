@@ -7,6 +7,7 @@ import {
   type PulledSubmission,
   type PulledTask,
   type PullResponse,
+  type RevisionDto,
   type TaskStatus,
   type UploadTask,
 } from './protocol.js';
@@ -235,6 +236,7 @@ export class LocalStore {
         'submissions_fts',
         'tasks',
         'notifications',
+        'submission_history',
       ]) {
         this.db.run(`DELETE FROM ${table}`);
       }
@@ -943,7 +945,25 @@ export class LocalStore {
         remote.updatedAt ?? this.now().toISOString(),
       ],
     );
+    // Absent d'un résultat de push : l'historique reçu au dernier pull reste valable.
+    if (remote.history) {
+      this.db.run(
+        'INSERT OR REPLACE INTO submission_history (submission_id, entries, total) VALUES (?, ?, ?)',
+        [remote.id, JSON.stringify(remote.history), remote.historyTotal ?? remote.history.length],
+      );
+    }
     this.rebase(remote.id, serverData);
+  }
+
+  /** Historique d'une fiche reçu du serveur (révisions les plus récentes d'abord). */
+  history(id: string): { entries: RevisionDto[]; total: number } | undefined {
+    const row = this.db.get<{ entries: string; total: number }>(
+      'SELECT entries, total FROM submission_history WHERE submission_id = ?',
+      [id],
+    );
+    return row
+      ? { entries: JSON.parse(row.entries) as RevisionDto[], total: row.total }
+      : undefined;
   }
 
   /** Données locales = serveur + champs des mutations non encore appliquées. */
@@ -999,6 +1019,7 @@ export class LocalStore {
   private deleteLocal(id: string): void {
     this.db.run('DELETE FROM submissions WHERE id = ?', [id]);
     this.db.run('DELETE FROM submissions_fts WHERE id = ?', [id]);
+    this.db.run('DELETE FROM submission_history WHERE submission_id = ?', [id]);
   }
 
   /** Index plein texte : valeurs textuelles et libellés des éléments de référentiel. */

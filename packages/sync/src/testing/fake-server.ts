@@ -6,6 +6,7 @@ import {
   type PulledTask,
   type PulledSubmission,
   type PullResponse,
+  type RevisionDto,
   type SyncTransport,
   TransientError,
   type UploadTask,
@@ -37,6 +38,8 @@ export class FakeServer implements SyncTransport {
     valider: { from: ['soumis'], to: 'valide' },
   };
   pushCalls = 0;
+  /** Historique renvoyé avec chaque fiche (révisions faites au back-office). */
+  readonly history = new Map<string, RevisionDto[]>();
   private seq = 0;
 
   private offline() {
@@ -99,7 +102,10 @@ export class FakeServer implements SyncTransport {
               },
             ]
           : [],
-      submissions: changed.map(({ seq: _seq, ...s }) => s),
+      submissions: changed.map(({ seq: _seq, ...s }) => {
+        const history = this.history.get(s.id);
+        return history ? { ...s, history, historyTotal: history.length } : s;
+      }),
       tasks: [...this.tasks.values()]
         .filter((t) => t.seq > since)
         .map(({ seq: _seq, ...t }) => t as PulledTask),
@@ -152,6 +158,22 @@ export class FakeServer implements SyncTransport {
   /** Modification faite par quelqu'un d'autre (back-office). */
   editRemotely(id: string, data: SubmissionData) {
     const current = this.submissions.get(id)!;
+    this.history.set(id, [
+      {
+        revision: current.revision! + 1,
+        action: 'update',
+        author: 'Bureau',
+        authorId: 'u-bureau',
+        automation: null,
+        changes: Object.entries(data).map(([field, after]) => ({
+          field,
+          before: current.data?.[field] ?? null,
+          after,
+        })),
+        createdAt: '2026-10-18T10:00:00.000Z',
+      },
+      ...(this.history.get(id) ?? []),
+    ]);
     this.submissions.set(id, {
       ...current,
       data: { ...current.data, ...data },

@@ -42,6 +42,7 @@ export default function RootLayout() {
         <Stack.Screen name="form/[structureId]" options={{ title: 'Saisie' }} />
         <Stack.Screen name="submissions" options={{ title: 'Mes fiches' }} />
         <Stack.Screen name="sync" options={{ title: 'Synchronisation' }} />
+        <Stack.Screen name="history/[id]" options={{ title: 'Historique' }} />
         <Stack.Screen name="scan" options={{ title: 'Scanner un équipement' }} />
         <Stack.Screen name="tasks" options={{ title: 'Mes tâches' }} />
         <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />

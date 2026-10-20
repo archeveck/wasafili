@@ -214,6 +214,8 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 
 **P3.7 Conflits dans le back-office** ✅ : liste des conflits par fiche, résolution manuelle.
 
+**P3.9 Historique des fiches sur mobile** ✅ (spécification §1.4) : dernières révisions jointes au pull, consultables hors ligne (auteurs, états, champ par champ ; [ADR 0007](docs/adr/0007-stockage-local-synchronisation.md)) ; rendu des valeurs partagé web/mobile (`displayValue`, `@wasafili/form-renderer`).
+
 **P3.8 Tests de bout en bout**
 - [x] P3.8.1 Mode avion → 10 fiches avec photos → retour réseau → aucune perte/doublon : moteur réel contre l'API (`offline-sync.e2e.test.ts`) ; dans l'app sur simulateur iOS avec Maestro (`e2e/hors-ligne.sh`, coupure simulée par l'arrêt du serveur, sans photo faute de caméra)
 - [x] P3.8.2 Coupure en plein upload, arrêt de l'app pendant la sync (tests du moteur et de bout en bout, côté protocole)

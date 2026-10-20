@@ -2,6 +2,19 @@ import { type StructureDefinition, type SubmissionData } from '@wasafili/form-sc
 
 /** Contrat du protocole `/v1/{app}/sync` (ADR 0007), côté client. */
 
+/** Révision d'une fiche (historique consultable hors ligne) ; `$state` : changement d'état. */
+export interface RevisionDto {
+  revision: number;
+  action: 'create' | 'update' | 'transition' | 'delete';
+  /** Nom de l'auteur ; `null` : intégration (clé API) ou compte supprimé. */
+  author: string | null;
+  authorId: string | null;
+  /** Automatisation à l'origine de l'écriture. */
+  automation: string | null;
+  changes: { field: string; before: unknown; after: unknown }[];
+  createdAt: string;
+}
+
 export interface PulledSubmission {
   id: string;
   structureId: string;
@@ -14,6 +27,10 @@ export interface PulledSubmission {
   location?: { lat: number; lng: number; accuracy: number | null } | null;
   createdAt?: string;
   updatedAt?: string;
+  /** Révisions les plus récentes (au plus `HISTORY_LIMIT`), de la plus récente à la plus ancienne. */
+  history?: RevisionDto[];
+  /** Nombre total de révisions sur le serveur. */
+  historyTotal?: number;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';

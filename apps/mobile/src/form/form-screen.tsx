@@ -406,6 +406,14 @@ function Editor({
         </View>
         {existing?.error ? <Text style={styles.error}>{existing.error}</Text> : null}
         {existing && <ReportButton submission={existing} />}
+        {existing && existing.revision !== null && (
+          <Button
+            title="Historique"
+            variant="outline"
+            icon="clock"
+            onPress={() => router.push({ pathname: '/history/[id]', params: { id: existing.id } })}
+          />
+        )}
         {definition.fields.map((field) => (
           <Block key={field.id} field={field} form={form} submissionId={id} />
         ))}

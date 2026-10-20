@@ -39,6 +39,15 @@ describe('base locale', () => {
     );
   });
 
+  it('la migration de l’historique relance une synchronisation complète', () => {
+    const db = openNodeDatabase();
+    migrate(db);
+    db.run(`INSERT INTO meta (key, value) VALUES ('cursor', '"c1"')`);
+    db.exec('DROP TABLE submission_history; PRAGMA user_version = 2');
+    migrate(db);
+    expect(db.get(`SELECT value FROM meta WHERE key = 'cursor'`)).toBeUndefined();
+  });
+
   it('dispose hors ligne des formulaires et des référentiels en cascade', () => {
     expect(store.structures().map((s) => s.name)).toEqual(['Inspection']);
     expect(store.currentVersion(STRUCTURE)?.definition).toEqual({ schemaVersion: 1, fields: [] });
@@ -215,6 +224,41 @@ describe('modifications et fusion', () => {
     await engine.sync();
     expect(server.submissions.get(id)?.data).toMatchObject({ titre: 'terrain', note: 'du bureau' });
     expect(store.submission(id)?.status).toBe('synced');
+  });
+
+  it('garde l’historique reçu avec la fiche, hors ligne et après un envoi', async () => {
+    const id = createSubmission({ titre: 'A' });
+    await engine.sync();
+    server.editRemotely(id, { titre: 'B' });
+    await engine.sync();
+    const expected = {
+      total: 1,
+      entries: [
+        {
+          revision: 2,
+          author: 'Bureau',
+          changes: [{ field: 'titre', before: 'A', after: 'B' }],
+        },
+      ],
+    };
+    expect(store.history(id)).toMatchObject(expected);
+    server.online = false;
+    expect(store.history(id)).toMatchObject(expected);
+    server.online = true;
+    // Le résultat du push ne porte pas d'historique : celui du dernier pull reste.
+    store.edit(id, { ...store.submission(id)!.data, titre: 'C' });
+    await engine.sync();
+    expect(store.history(id)).toMatchObject(expected);
+  });
+
+  it('efface l’historique avec la fiche supprimée sur le serveur', async () => {
+    const id = createSubmission();
+    await engine.sync();
+    server.editRemotely(id, { titre: 'B' });
+    await engine.sync();
+    server.deleteRemotely(id);
+    await engine.sync();
+    expect(store.history(id)).toBeUndefined();
   });
 
   it('supprime localement une fiche supprimée sur le serveur', async () => {

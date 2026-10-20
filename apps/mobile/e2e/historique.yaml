@@ -1,0 +1,24 @@
+# Historique d'une fiche (spécification §1.4), lu dans la base locale : dernières révisions
+# reçues avec la fiche, consultables hors ligne. Prérequis : une fiche envoyée
+# (ex. saisie-fiche.yaml) et synchronisée.
+appId: com.wasafili.app
+env:
+  APP_URL: wasafili://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081
+---
+- stopApp
+- openLink: ${APP_URL}
+- extendedWaitUntil:
+    visible: .*Tout est synchronisé.*
+    timeout: 60000
+- openLink: wasafili://submissions
+- tapOn:
+    text: .*Plateau — Tour Alpha.*
+    index: 0
+- scrollUntilVisible:
+    element: Historique
+    direction: UP
+- tapOn: Historique
+- extendedWaitUntil:
+    visible: .*Création · révision 1.*
+    timeout: 10000
+- takeScreenshot: historique
