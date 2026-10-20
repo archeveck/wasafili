@@ -32,6 +32,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TasksService } from '../tasks/tasks.service';
 import { diffData, type FieldChange, jsonEqual } from './diff';
 import { exportColumns, formatCell, referencedIds } from './export';
+import { listHtml } from './export-pdf';
+import { GotenbergClient } from '../reports/gotenberg';
 import { filterableFields, filterSql, type Filter, orderSql } from './query';
 
 export interface Location {
@@ -79,6 +81,10 @@ type SubmissionWithVersion = Submission & { version: { version: number } };
 
 const NOT_FOUND = { error: 'not_found', message: 'Fiche introuvable' };
 const MAX_EXPORT_ROWS = 50_000;
+/** Au-delà, un PDF n'est plus lisible (et sa génération devient longue) : tableur conseillé. */
+const MAX_PDF_ROWS = 2_000;
+
+export type ExportFormat = SpreadsheetFormat | 'pdf';
 /** Points renvoyés au plus par la carte (P6.1.1) ; au-delà, affiner les filtres. */
 export const MAX_MAP_POINTS = 10_000;
 
@@ -173,6 +179,7 @@ export class SubmissionsService {
     private readonly tasks: TasksService,
     private readonly notifications: NotificationsService,
     private readonly events: EventsService,
+    private readonly gotenberg: GotenbergClient,
   ) {}
 
   async list(structureId: string, actor: Actor, input: ListSubmissionsInput) {
@@ -262,14 +269,25 @@ export class SubmissionsService {
     };
   }
 
-  /** Export tableur des fiches visibles, avec les mêmes filtres que la liste (P2.5.4). */
+  /**
+   * Export des fiches visibles, avec les mêmes filtres et le même tri que la liste : tableur
+   * (P2.5.4, valeurs brutes et dates ISO) ou PDF (spécification §1.3, mise en page lisible :
+   * dates dans le fuseau de l'instance, libellés d'état, noms des auteurs).
+   */
   async export(
+    instance: Pick<Instance, 'name' | 'timeZone'>,
     structureId: string,
     actor: Actor,
     input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
-    format: SpreadsheetFormat,
+    format: ExportFormat,
   ) {
-    const { rows, definition } = await this.exportSelection(structureId, actor, input);
+    const pdf = format === 'pdf';
+    const { rows, definition } = await this.exportSelection(
+      structureId,
+      actor,
+      input,
+      pdf ? MAX_PDF_ROWS : MAX_EXPORT_ROWS,
+    );
     const fields = definition ? exportColumns(definition) : [];
     const data = rows.map((row) => row.data as Record<string, unknown>);
     const refs = referencedIds(fields, data);
@@ -282,13 +300,46 @@ export class SubmissionsService {
         where: {
           id: { in: [...refs.users, ...rows.flatMap((r) => (r.authorId ? [r.authorId] : []))] },
         },
-        select: { id: true, email: true },
+        select: { id: true, email: true, firstName: true, lastName: true },
       }),
     ]);
     const labels = {
       items: new Map(items.map((item) => [item.id, item.label])),
-      users: new Map(users.map((user) => [user.id, user.email])),
+      users: new Map(
+        users.map((user) => [user.id, pdf ? `${user.firstName} ${user.lastName}` : user.email]),
+      ),
     };
+    const author = (row: (typeof rows)[number]) =>
+      row.authorId ? (labels.users.get(row.authorId) ?? '') : '';
+    const cells = (index: number) =>
+      fields.map((field) => formatCell(field, data[index]![field.key], labels));
+
+    if (pdf) {
+      const dateTime = new Intl.DateTimeFormat('fr-FR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+        timeZone: instance.timeZone,
+      });
+      const states = new Map((definition?.workflow?.states ?? []).map((s) => [s.key, s.label]));
+      const structure = await this.prisma.db.structure.findUniqueOrThrow({
+        where: { id: structureId },
+        select: { name: true },
+      });
+      return this.gotenberg.htmlToPdf(
+        listHtml({
+          title: structure.name,
+          subtitle: `${instance.name} · ${rows.length} fiche(s) · exporté le ${dateTime.format(new Date())}`,
+          headers: ['Créée le', 'État', 'Auteur', ...fields.map((f) => f.label)],
+          rows: rows.map((row, index) => [
+            dateTime.format(row.createdAt),
+            row.state ? (states.get(row.state) ?? row.state) : '',
+            author(row),
+            ...cells(index),
+          ]),
+        }),
+      );
+    }
+
     const headers = [
       'ID',
       'Créée le',
@@ -298,14 +349,14 @@ export class SubmissionsService {
       ...fields.map((f) => f.label),
     ];
     const table = rows.map((row, index) => {
-      const values = data[index]!;
+      const values = cells(index);
       return Object.fromEntries([
         ['ID', row.id],
         ['Créée le', row.createdAt.toISOString()],
         ['Modifiée le', row.updatedAt.toISOString()],
         ['État', row.state ?? ''],
-        ['Auteur', row.authorId ? (labels.users.get(row.authorId) ?? '') : ''],
-        ...fields.map((field) => [field.label, formatCell(field, values[field.key], labels)]),
+        ['Auteur', author(row)],
+        ...fields.map((field, i) => [field.label, values[i]]),
       ]);
     });
     return writeSpreadsheet(format, { headers: [...new Set(headers)], rows: table });
@@ -319,6 +370,7 @@ export class SubmissionsService {
     structureId: string,
     actor: Actor,
     input: Omit<ListSubmissionsInput, 'page' | 'per_page'>,
+    max = MAX_EXPORT_ROWS,
   ) {
     const rights = await this.access.effective(structureId, actor);
     this.require(rights, 'export');
@@ -326,12 +378,12 @@ export class SubmissionsService {
     const ids = await this.prisma.transaction(
       (tx) => tx.$queryRaw<{ id: string }[]>`
         SELECT s.id FROM submissions s WHERE ${where}
-        ORDER BY ${order}, s.id LIMIT ${MAX_EXPORT_ROWS + 1}`,
+        ORDER BY ${order}, s.id LIMIT ${max + 1}`,
     );
-    if (ids.length > MAX_EXPORT_ROWS) {
+    if (ids.length > max) {
       throw new UnprocessableEntityException({
         error: 'export_too_large',
-        message: `Export limité à ${MAX_EXPORT_ROWS} fiches : affinez les filtres`,
+        message: `Export limité à ${max} fiches : affinez les filtres`,
       });
     }
     const loaded = await this.load(ids.map(({ id }) => id));

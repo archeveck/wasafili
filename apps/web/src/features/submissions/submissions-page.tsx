@@ -9,7 +9,16 @@ import {
 } from '@tanstack/react-table';
 import { type Field, rootValueFields } from '@wasafili/form-schema';
 import { type Filter, type FilterOperator, type Submission } from '@wasafili/sdk';
-import { ArrowDown, ArrowUp, Download, Filter as FilterIcon, Images, Plus, X } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Download,
+  FileText,
+  Filter as FilterIcon,
+  Images,
+  Plus,
+  X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -256,7 +265,7 @@ export function SubmissionsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const exportAs = async (format: 'csv' | 'xlsx') => {
+  const exportAs = async (format: 'csv' | 'xlsx' | 'pdf') => {
     try {
       download(
         await api.submissions.export(structureId, format, {
@@ -286,6 +295,9 @@ export function SubmissionsPage() {
             </Button>
             <Button variant="outline" onClick={() => exportAs('xlsx')}>
               <Download /> Excel
+            </Button>
+            <Button variant="outline" onClick={() => exportAs('pdf')}>
+              <FileText /> PDF
             </Button>
             {fields.some((f) => f.type === 'photo' || f.type === 'table') && (
               <Button variant="outline" onClick={() => setPhotoExport(true)}>

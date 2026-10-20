@@ -34,7 +34,9 @@ boucler.
    version de la fiche), l'aperçu et le mobile attendent le PDF, et le travail lourd reste de
    toute façon hors du processus (LibreOffice dans le conteneur Gotenberg). Le PDF est mis en
    cache dans le stockage par **modèle, fichier du modèle et révision de la fiche** : une fiche
-   inchangée n'est jamais reconvertie.
+   inchangée n'est jamais reconvertie. Le même client sert l'**export PDF d'une liste de
+   fiches** (Chromium de Gotenberg) : page HTML autonome produite par l'API, chaque valeur
+   échappée, politique de sécurité sans script ni ressource externe, 2 000 fiches au plus.
 5. **Aperçu sans fiche** : une fiche d'exemple est générée depuis la structure (valeurs
    types, image grise), pour mettre au point un modèle avant toute saisie.
 

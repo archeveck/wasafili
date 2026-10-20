@@ -164,7 +164,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 - [x] P2.5.1 Tableau TanStack Table : colonnes dynamiques par structure, filtres, tri, pagination serveur
 - [x] P2.5.2 Détail d'une fiche (rendu lecture) + historique (onglet basé sur P1.4.5)
 - [x] P2.5.3 Édition d'une fiche
-- [x] P2.5.4 Export CSV/XLSX — synchrone, plafonné à 50 000 fiches ; bascule sur le worker si besoin mesuré
+- [x] P2.5.4 Export CSV/XLSX — synchrone, plafonné à 50 000 fiches ; bascule sur le worker si besoin mesuré. Export PDF de la liste (spécification §1.3) : même route (`format=pdf`), mêmes filtres et droits, tableau HTML échappé converti par Gotenberg (Chromium), 2 000 fiches au plus
 
 **P2.6 Utilisateurs, groupes, rôles, droits**
 - [x] P2.6.1 CRUD utilisateurs/groupes, invitation (mot de passe provisoire ; e-mail d'invitation en P5.2)

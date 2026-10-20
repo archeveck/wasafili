@@ -62,12 +62,13 @@ const deleteSchema = z.object({ client_mutation_id: mutationId.optional() });
 const resolveSchema = z.object({ resolution: z.enum(['kept', 'restored']) });
 
 const exportSchema = selectionSchema.extend({
-  format: z.enum(['csv', 'xlsx']).default('xlsx'),
+  format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx'),
 });
 
 const MIME = {
   csv: 'text/csv; charset=utf-8',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pdf: 'application/pdf',
 } as const;
 
 /**
@@ -122,11 +123,15 @@ export class SubmissionsController {
     return this.submissions.map(structureId, actor, { ...params, filters: parseFilters(query) });
   }
 
-  /** Export CSV/XLSX avec les mêmes filtres que la liste. */
+  /**
+   * Export CSV, XLSX ou PDF avec les mêmes filtres et le même tri que la liste. Le PDF (tableau
+   * mis en page, 2 000 fiches au plus) suit le fuseau de l'instance.
+   */
   @Get('structures/:structureId/submissions/export')
   @Audit('submission.export', { type: 'structure', param: 'structureId', query: true })
   @OpenApi({ produces: Object.values(MIME), parameters: [SUBMISSION_FILTERS] })
   async export(
+    @CurrentInstance() instance: Instance,
     @Param('structureId', ParseUUIDPipe) structureId: string,
     @CurrentActor() actor: Actor,
     @Query(new ZodValidationPipe(exportSchema)) params: z.infer<typeof exportSchema>,
@@ -134,6 +139,7 @@ export class SubmissionsController {
     @Res() res: Response,
   ) {
     const content = await this.submissions.export(
+      instance,
       structureId,
       actor,
       { ...params, filters: parseFilters(query) },

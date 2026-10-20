@@ -179,6 +179,45 @@ describe('rapports', () => {
     await technicien.post(`/v1/acme/reports/${report.body.id}/render`).send({}).expect(403);
   });
 
+  it('exporte la liste des fiches en PDF (spécification §1.3), mêmes droits que le tableur', async () => {
+    const items = await demoItems(tenant.instance.id);
+    const signature = await upload(technicien, solidPng(40, 20, [0, 0, 0]), 's.png', 'image/png');
+    for (const etat of ['bon', 'hors_service']) {
+      await technicien
+        .post(`/v1/acme/structures/${structureId}/submissions`)
+        .send({
+          data: {
+            site: items['S-PLT'],
+            batiment: items['B-PLT-A'],
+            equipement: items['EQ-0001'],
+            date_inspection: '2026-10-20',
+            etat,
+            ...(etat === 'bon'
+              ? {}
+              : { description_defaut: '<b>Fuite</b> & joint', photos: [{ fileId: signature }] }),
+            signature: { fileId: signature },
+          },
+        })
+        .expect(201);
+    }
+    const res = await admin
+      .get(`/v1/acme/structures/${structureId}/submissions/export?format=pdf&filter[etat]=bon`)
+      .buffer(true)
+      .parse((response, done) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => done(null, Buffer.concat(chunks)));
+      })
+      .expect(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toContain('fiches.pdf');
+    expect((res.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+    // Droit `export` requis, comme pour le tableur.
+    await technicien
+      .get(`/v1/acme/structures/${structureId}/submissions/export?format=pdf`)
+      .expect(403);
+  });
+
   it('ne génère pas le rapport d’une fiche invisible pour l’appelant', async () => {
     const fileId = await upload(admin, demoReportDocx(), 'inspection.docx', DOCX);
     const report = await admin

@@ -8836,7 +8836,8 @@
         "tags": [
           "Fiches"
         ],
-        "summary": "Export CSV/XLSX avec les mêmes filtres que la liste",
+        "summary": "Export CSV, XLSX ou PDF avec les mêmes filtres et le même tri que la liste",
+        "description": "Export CSV, XLSX ou PDF avec les mêmes filtres et le même tri que la liste. Le PDF (tableau mis en page, 2 000 fiches au plus) suit le fuseau de l'instance.",
         "parameters": [
           {
             "name": "app",
@@ -8904,7 +8905,8 @@
               "type": "string",
               "enum": [
                 "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ]
             }
           },
@@ -8955,6 +8957,12 @@
                 }
               },
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
                 "schema": {
                   "type": "string",
                   "format": "binary"

@@ -280,7 +280,8 @@ export function createClient(options: ClientOptions) {
             p(`/structures/${structureId}/submissions`),
             submissionQuery(query),
           ),
-        export: (structureId: string, format: 'csv' | 'xlsx', query?: SubmissionQuery) =>
+        /** Export tableur ou PDF (2 000 fiches au plus) avec les filtres de la liste. */
+        export: (structureId: string, format: 'csv' | 'xlsx' | 'pdf', query?: SubmissionQuery) =>
           request<Blob>('GET', p(`/structures/${structureId}/submissions/export`), {
             query: { ...submissionQuery(query), format },
             raw: true,
