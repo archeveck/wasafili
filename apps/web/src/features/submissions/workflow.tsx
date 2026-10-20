@@ -6,14 +6,13 @@ import {
   type WorkflowTransition,
   walkFields,
 } from '@wasafili/form-schema';
+import { stateLabel } from '@wasafili/form-renderer';
 import { type StateCount } from '@wasafili/sdk';
 import { Badge } from '@/components/ui/display';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function stateLabel(workflow: Workflow | undefined, state: string | null) {
-  return workflow?.states.find((s) => s.key === state)?.label ?? state ?? '—';
-}
+export { stateLabel };
 
 export function StateBadge({
   workflow,

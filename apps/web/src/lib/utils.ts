@@ -5,23 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Date et heure dans le fuseau de l'instance (D14). */
-export function formatDateTime(value: string | Date, timeZone = 'Africa/Abidjan') {
-  return new Intl.DateTimeFormat('fr-FR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone,
-  }).format(new Date(value));
-}
-
-export function formatDate(value: string, timeZone = 'Africa/Abidjan') {
-  // Une date calendaire (AAAA-MM-JJ) n'a pas de fuseau : l'afficher telle quelle.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [y, m, d] = value.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeZone }).format(new Date(value));
-}
+/** Dates dans le fuseau de l'instance (D14) : mêmes formats que sur le mobile. */
+export { formatDate, formatDateTime } from '@wasafili/form-renderer';
 
 /** Téléchargement d'un Blob reçu de l'API. */
 export function download(blob: Blob, filename: string) {

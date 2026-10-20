@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { type Field, type FileRef, type GeoPoint } from '@wasafili/form-schema';
+import { type Field } from '@wasafili/form-schema';
 import { type AppClient } from '@wasafili/sdk';
-import { formatDate, formatDateTime } from '@/lib/utils';
 
 /** Libellés des éléments de référentiel référencés (une requête pour toute la page). */
 export function useItemLabels(api: AppClient, short: string, ids: string[]) {
@@ -33,59 +32,5 @@ export function listItemIds(fields: Field[], rows: Record<string, unknown>[]) {
   );
 }
 
-/** Valeur lisible d'un champ (tableau de fiches, historique). */
-export function displayValue(
-  field: Field | undefined,
-  value: unknown,
-  labels: Map<string, string>,
-  timeZone: string,
-  users: Map<string, string> = new Map(),
-): string {
-  if (value === null || value === undefined || value === '') return '—';
-  if (!field) return typeof value === 'object' ? JSON.stringify(value) : String(value);
-  switch (field.type) {
-    case 'select':
-      return field.options.find((o) => o.value === value)?.label ?? String(value);
-    case 'multiselect':
-      return (value as string[])
-        .map((v) => field.options.find((o) => o.value === v)?.label ?? v)
-        .join(', ');
-    case 'list':
-      return labels.get(String(value)) ?? '…';
-    case 'boolean':
-      return value ? 'Oui' : 'Non';
-    case 'date':
-      return formatDate(String(value), timeZone);
-    case 'datetime':
-    case 'timestamp':
-      return formatDateTime(String(value), timeZone);
-    case 'number':
-      return `${new Intl.NumberFormat('fr-FR').format(value as number)}${field.unit ? ` ${field.unit}` : ''}`;
-    case 'calculated':
-      if (field.resultType === 'number')
-        return new Intl.NumberFormat('fr-FR').format(value as number);
-      if (field.resultType === 'boolean') return value ? 'Oui' : 'Non';
-      if (field.resultType === 'date') return formatDate(String(value), timeZone);
-      return String(value);
-    case 'photo':
-    case 'file':
-      return `${(value as FileRef[]).length} fichier(s)`;
-    case 'signature':
-      return 'Signée';
-    case 'geolocation': {
-      const point = value as GeoPoint;
-      return `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`;
-    }
-    case 'table':
-      return `${(value as unknown[]).length} ligne(s)`;
-    case 'rating':
-      return '★'.repeat(value as number);
-    case 'author':
-    case 'user':
-      return (Array.isArray(value) ? value : [value])
-        .map((id) => users.get(String(id)) ?? 'Utilisateur')
-        .join(', ');
-    default:
-      return Array.isArray(value) ? value.join(', ') : String(value);
-  }
-}
+/** Valeur lisible d'un champ : partagée avec le mobile. */
+export { displayValue } from '@wasafili/form-renderer';
