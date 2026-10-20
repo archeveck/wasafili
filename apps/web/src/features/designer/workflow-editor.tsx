@@ -29,6 +29,7 @@ import { Checklist } from '@/components/ui/checklist';
 import { Badge, Card } from '@/components/ui/display';
 import { FormRow, Input, Select, Textarea } from '@/components/ui/form-controls';
 import { useApp } from '@/lib/use-app';
+import { followLabel } from './model';
 import {
   addState,
   addTransition,
@@ -120,7 +121,12 @@ function StatePanel({
         <Input
           id="state-label"
           value={state.label}
-          onChange={(e) => onChange(updateState(definition, state.key, { label: e.target.value }))}
+          onChange={(e) => {
+            const label = e.target.value;
+            const keys = new Set(workflow.states.map((s) => s.key));
+            const key = locked ? state.key : followLabel(state.key, state.label, label, keys);
+            onChange(updateState(definition, state.key, { label, key }), key);
+          }}
         />
       </FormRow>
       <FormRow
@@ -239,11 +245,14 @@ function StatePanel({
 function TransitionPanel({
   definition,
   transition,
+  locked,
   onChange,
   onRemove,
 }: {
   definition: StructureDefinition;
   transition: WorkflowTransition;
+  /** Transition de la version publiée : sa clé ne suit plus le libellé. */
+  locked: boolean;
   onChange: (next: StructureDefinition) => void;
   onRemove: () => void;
 }) {
@@ -277,7 +286,14 @@ function TransitionPanel({
         <Input
           id="transition-label"
           value={transition.label}
-          onChange={(e) => patch({ label: e.target.value })}
+          onChange={(e) => {
+            const label = e.target.value;
+            const keys = new Set(workflow.transitions.map((t) => t.key));
+            const key = locked
+              ? transition.key
+              : followLabel(transition.key, transition.label, label, keys);
+            patch({ label, key });
+          }}
         />
       </FormRow>
       <FormRow label="Clé" htmlFor="transition-key">
@@ -366,11 +382,14 @@ function TransitionPanel({
 export function WorkflowEditor({
   definition,
   lockedStates,
+  lockedTransitions,
   onChange,
 }: {
   definition: StructureDefinition;
   /** États de la version publiée : des fiches peuvent y être, clé et suppression bloquées. */
   lockedStates: Set<string>;
+  /** Transitions de la version publiée (historique des fiches). */
+  lockedTransitions: Set<string>;
   onChange: (next: StructureDefinition) => void;
 }) {
   const workflow = definition.workflow;
@@ -512,7 +531,8 @@ export function WorkflowEditor({
       <aside className="overflow-y-auto border-l border-border bg-surface p-4">
         {selectedState ? (
           <StatePanel
-            key={selectedState.key}
+            // Par position : la clé suit le libellé pendant la frappe, le panneau garde le focus.
+            key={workflow.states.indexOf(selectedState)}
             definition={definition}
             state={selectedState}
             locked={lockedStates.has(selectedState.key)}
@@ -527,6 +547,7 @@ export function WorkflowEditor({
           <TransitionPanel
             definition={definition}
             transition={selectedTransition}
+            locked={lockedTransitions.has(selectedTransition.key)}
             onChange={(next) => {
               onChange(next);
               // La sélection suit une transition renommée (même position dans la liste).

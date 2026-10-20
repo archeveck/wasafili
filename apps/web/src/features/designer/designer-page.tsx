@@ -159,6 +159,8 @@ export function DesignerPage() {
   const [definition, setDefinition] = useState<StructureDefinition>();
   const [dirty, setDirty] = useState(false);
   const [selected, setSelected] = useState<string>();
+  /** Champs du dernier ajout (et colonnes d'un tableau) : leur clé suit encore le libellé. */
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
   const [dragging, setDragging] = useState<string>();
   const [showDiff, setShowDiff] = useState(false);
   const [tab, setTab] = useState('properties');
@@ -194,6 +196,10 @@ export function DesignerPage() {
   );
   const lockedStates = useMemo(
     () => new Set((current.data?.definition.workflow?.states ?? []).map((s) => s.key)),
+    [current.data],
+  );
+  const lockedTransitions = useMemo(
+    () => new Set((current.data?.definition.workflow?.transitions ?? []).map((t) => t.key)),
     [current.data],
   );
 
@@ -239,6 +245,7 @@ export function DesignerPage() {
     if (next === definition) return;
     change(next);
     setSelected(field.id);
+    setFresh(new Set([...walkFields([field])].map((entry) => entry.field.id)));
     setTab('properties');
   };
 
@@ -352,7 +359,12 @@ export function DesignerPage() {
 
       {view === 'workflow' ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <WorkflowEditor definition={definition} lockedStates={lockedStates} onChange={change} />
+          <WorkflowEditor
+            definition={definition}
+            lockedStates={lockedStates}
+            lockedTransitions={lockedTransitions}
+            onChange={change}
+          />
           {issues.some((i) => !i.field) && (
             <div className="border-t border-danger/40 bg-surface px-4 py-2" role="alert">
               {issues
@@ -390,6 +402,8 @@ export function DesignerPage() {
                   selected={selected}
                   onSelect={(id) => {
                     setSelected(id);
+                    // Un champ quitté puis repris garde sa clé : formules et conditions la citent.
+                    if (!fresh.has(id)) setFresh(new Set());
                     setTab('properties');
                   }}
                   onRemove={(id) => {
@@ -430,6 +444,7 @@ export function DesignerPage() {
                       definition={definition}
                       fieldId={selected}
                       lockedKeys={lockedKeys}
+                      followKey={fresh.has(selected)}
                       issues={issues}
                       onChange={(patch) =>
                         change(updateField(definition, selected, patch as Partial<Field>))

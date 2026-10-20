@@ -170,7 +170,8 @@ export function addTransition(
 ): { definition: StructureDefinition; key: string } {
   const workflow = definition.workflow!;
   const target = workflow.states.find((s) => s.key === to)!;
-  const key = uniqueKey(`vers_${to}`, new Set(workflow.transitions.map((t) => t.key)));
+  // Clé tirée du libellé, qu'elle suit ensuite (`followLabel`).
+  const key = uniqueKey(target.label, new Set(workflow.transitions.map((t) => t.key)));
   const transition: WorkflowTransition = { key, label: target.label, from: [from], to };
   return {
     definition: withWorkflow(definition, {

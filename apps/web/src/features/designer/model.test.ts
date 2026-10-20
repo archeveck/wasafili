@@ -7,6 +7,7 @@ import {
   createField,
   diffDefinitions,
   findField,
+  followLabel,
   insertField,
   logicToCondition,
   moveField,
@@ -40,6 +41,21 @@ describe('création de champs', () => {
     definition = insertField(definition, a, ROOT);
     const b = createField('text', definition, newId);
     expect([a.key, b.key]).toEqual(['texte_court', 'texte_court_2']);
+  });
+
+  it('fait suivre le libellé à une clé jamais retouchée', () => {
+    const taken = new Set(['texte_court', 'texte_court_2', 'etat']);
+    // Frappe lettre à lettre : la clé suit, y compris un suffixe d'unicité.
+    expect(followLabel('texte_court_2', 'Texte court', 'É', taken)).toBe('e');
+    expect(followLabel('e', 'É', 'État', new Set([...taken, 'e']))).toBe('etat_2');
+    expect(followLabel('etat_2', 'État', 'État général', new Set([...taken, 'etat_2']))).toBe(
+      'etat_general',
+    );
+    // Clé saisie à la main : elle ne bouge plus.
+    expect(followLabel('etat', 'État général', 'État', taken)).toBe('etat');
+    // Colonne d'un nouveau tableau : clé tirée de son libellé, donc suivie elle aussi.
+    const table = createField('table', empty(), newId) as Field & { fields: Field[] };
+    expect(table.fields[0]).toMatchObject({ key: 'colonne_1', label: 'Colonne 1' });
   });
 });
 

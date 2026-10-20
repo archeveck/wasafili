@@ -49,7 +49,7 @@ describe('workflow-model', () => {
     expect(second.key).toBe('a_valider_2');
     const linked = addTransition(second.definition, 'brouillon', 'a_valider');
     expect(linked.definition.workflow!.transitions).toEqual([
-      { key: 'vers_a_valider', label: 'À valider', from: ['brouillon'], to: 'a_valider' },
+      { key: 'a_valider', label: 'À valider', from: ['brouillon'], to: 'a_valider' },
     ]);
     expect(valid(linked.definition)).toBe(true);
     // Sans workflow, le premier état crée le workflow par défaut.

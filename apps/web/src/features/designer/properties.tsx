@@ -16,7 +16,7 @@ import { Checkbox, FormRow, Input, Select, Switch, Textarea } from '@/components
 import { useApp } from '@/lib/use-app';
 import { slugify } from '@/lib/utils';
 import { type ConditionTarget, ConditionEditor } from './condition-editor';
-import { findField, typeLabel } from './model';
+import { allKeys, findField, followLabel, typeLabel } from './model';
 
 type AnyField = Field & Record<string, unknown>;
 
@@ -26,6 +26,8 @@ interface PropertiesProps {
   onChange: (patch: Record<string, unknown>) => void;
   /** Clés présentes dans la version publiée : non modifiables (les fiches les utilisent). */
   lockedKeys: Set<string>;
+  /** Champ tout juste ajouté : sa clé suit le libellé (`followLabel`) tant qu'on ne la retouche pas. */
+  followKey: boolean;
   issues: DefinitionIssue[];
 }
 
@@ -812,6 +814,7 @@ export function PropertiesPanel({
   fieldId,
   onChange,
   lockedKeys,
+  followKey,
   issues,
 }: PropertiesProps) {
   const found = findField(definition, fieldId);
@@ -831,7 +834,16 @@ export function PropertiesPanel({
           <Input
             id="prop-label"
             value={field.label}
-            onChange={(e) => onChange({ label: e.target.value })}
+            onChange={(e) =>
+              onChange({
+                label: e.target.value,
+                ...(locked || !followKey
+                  ? {}
+                  : {
+                      key: followLabel(field.key, field.label, e.target.value, allKeys(definition)),
+                    }),
+              })
+            }
           />
         </FormRow>
       </div>

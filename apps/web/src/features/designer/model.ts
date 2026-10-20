@@ -64,6 +64,15 @@ export function uniqueKey(base: string, taken: Set<string>, ignore?: string): st
   return key;
 }
 
+/**
+ * Clé après un changement de libellé : tant qu'elle est celle que le libellé donnait (jamais
+ * retouchée à la main), elle le suit ; sinon elle reste. `taken` contient la clé elle-même.
+ * L'appelant n'y recourt pas pour une clé publiée, figée.
+ */
+export function followLabel(key: string, label: string, next: string, taken: Set<string>) {
+  return key === uniqueKey(label, taken, key) ? uniqueKey(next, taken, key) : key;
+}
+
 /** Nouveau champ avec des réglages par défaut valides. */
 export function createField(
   type: FieldType,
@@ -104,7 +113,7 @@ export function createField(
         fields: [
           {
             id: newId(),
-            key: uniqueKey(`${label} colonne`, allKeys(definition)),
+            key: uniqueKey('Colonne 1', allKeys(definition)),
             label: 'Colonne 1',
             type: 'text',
           },
