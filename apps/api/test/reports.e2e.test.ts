@@ -218,6 +218,94 @@ describe('rapports', () => {
       .expect(403);
   });
 
+  it('modèle HTML : mêmes balises, PDF avec photo, cache par version du modèle', async () => {
+    const items = await demoItems(tenant.instance.id);
+    const photo = await upload(technicien, solidPng(80, 40, [200, 30, 30]), 'p.png', 'image/png');
+    const fiche = await technicien
+      .post(`/v1/acme/structures/${structureId}/submissions`)
+      .send({
+        data: {
+          site: items['S-PLT'],
+          batiment: items['B-PLT-A'],
+          equipement: items['EQ-0001'],
+          date_inspection: '2026-10-20',
+          etat: 'degrade',
+          description_defaut: '<b>Fuite</b>',
+          photos: [{ fileId: photo }],
+          pieces: [{ _id: 'l1', reference: 'CAB-12', quantite: 2, prix_unitaire: 1500 }],
+          signature: { fileId: photo },
+        },
+      })
+      .expect(201);
+    const html =
+      '<h1>{{equipement}}</h1><p>{{description_defaut}}</p>' +
+      '<table>{{#pieces}}<tr><td>{{reference}}</td><td>{{quantite}}</td></tr>{{/pieces}}</table>' +
+      '{{@photos:4}}';
+    const created = await admin
+      .post(`/v1/acme/structures/${structureId}/reports`)
+      .send({ name: 'Fiche HTML', html, filename: 'Fiche {{equipement}}' })
+      .expect(201);
+    expect(created.body).toMatchObject({ format: 'html', fileId: null, html, issues: [] });
+    expect(created.body.tags).toContainEqual({
+      name: 'reference',
+      kind: 'value',
+      parent: 'pieces',
+    });
+    await admin.get(`/v1/acme/reports/${created.body.id}/template`).expect(409);
+
+    const render = () =>
+      technicien
+        .post(`/v1/acme/reports/${created.body.id}/render`)
+        .send({ submissionId: fiche.body.id })
+        .expect(201);
+    const first = await render();
+    expect(first.body).toMatchObject({ cached: false });
+    expect(first.body.filename).toMatch(/^Fiche .+\.pdf$/);
+    expect((await pdfOf(first.body.url)).subarray(0, 5).toString()).toBe('%PDF-');
+    expect((await render()).body.cached).toBe(true);
+
+    // Modèle modifié : nouvelle version du PDF.
+    await admin
+      .patch(`/v1/acme/reports/${created.body.id}`)
+      .send({ html: `${html}<p>{{_etat}}</p>` })
+      .expect(200);
+    expect((await render()).body.cached).toBe(false);
+    // Aperçu sur une fiche d'exemple.
+    await admin.post(`/v1/acme/reports/${created.body.id}/render`).send({}).expect(201);
+  });
+
+  it('modèle HTML : refuse scripts et ressources externes, explique les erreurs', async () => {
+    const refused = await admin
+      .post(`/v1/acme/structures/${structureId}/reports`)
+      .send({
+        name: 'Dangereux',
+        html: '<script>fetch("http://x")</script><img src="https://exemple.ci/logo.png">{{#pieces}}',
+      })
+      .expect(422);
+    expect(refused.body.error).toBe('invalid_template');
+    expect(refused.body.details.map((d: { message: string }) => d.message)).toEqual([
+      'Les scripts (« <script> ») ne sont pas autorisés',
+      expect.stringContaining('Ressource externe interdite'),
+      "La boucle « {{#pieces}} » n'est pas fermée",
+    ]);
+    // Un modèle est soit un fichier DOCX, soit du HTML.
+    await admin
+      .post(`/v1/acme/structures/${structureId}/reports`)
+      .send({ name: 'Les deux', html: '<p>x</p>', fileId: randomUUID() })
+      .expect(400);
+    // Un modèle Word peut devenir un modèle HTML.
+    const fileId = await upload(admin, buildDocx(paragraph('{{equipement}}')), 'm.docx', DOCX);
+    const word = await admin
+      .post(`/v1/acme/structures/${structureId}/reports`)
+      .send({ name: 'Word', fileId })
+      .expect(201);
+    const switched = await admin
+      .patch(`/v1/acme/reports/${word.body.id}`)
+      .send({ html: '<p>{{equipement}}</p>' })
+      .expect(200);
+    expect(switched.body).toMatchObject({ format: 'html', fileId: null, fileName: null });
+  });
+
   it('ne génère pas le rapport d’une fiche invisible pour l’appelant', async () => {
     const fileId = await upload(admin, demoReportDocx(), 'inspection.docx', DOCX);
     const report = await admin

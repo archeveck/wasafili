@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { type ReportTemplate } from '@wasafili/sdk';
-import { AlertTriangle, Copy, Download, Eye, FileUp, Plus, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Code,
+  Copy,
+  Download,
+  Eye,
+  FileUp,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { type FormEvent, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +27,7 @@ import { Dialog } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
 import { useApp } from '@/lib/use-app';
 import { formatDateTime, pendingTab } from '@/lib/utils';
+import { HtmlTemplateDialog, STARTER_HTML } from './html-template-dialog';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -54,10 +65,11 @@ function TagHelp({ structureId }: { structureId: string }) {
       <div>
         <p className="font-medium">Balises disponibles</p>
         <p className="text-xs text-muted">
-          Rédigez le modèle dans Word ou LibreOffice. Valeur : <code>{'{{champ}}'}</code>. Tableau
-          répété : <code>{'{{#tableau}}…{{/tableau}}'}</code> dans une ligne. Image (photo,
-          signature) : <code>{'{{@champ}}'}</code> seule dans son paragraphe, largeur en cm possible
-          : <code>{'{{@photos:8}}'}</code>.
+          Rédigez le modèle dans Word, LibreOffice ou en HTML. Valeur : <code>{'{{champ}}'}</code>.
+          Tableau répété : <code>{'{{#tableau}}…{{/tableau}}'}</code> (dans une ligne de tableau
+          Word, ou autour d’un <code>{'<tr>'}</code>). Image (photo, signature) :{' '}
+          <code>{'{{@champ}}'}</code>, seule dans son paragraphe en Word, largeur en cm possible :{' '}
+          <code>{'{{@photos:8}}'}</code>.
         </p>
       </div>
       <ul className="max-h-80 space-y-0.5 overflow-y-auto">
@@ -76,7 +88,22 @@ function TemplateCard({ template }: { template: ReportTemplate }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
   const invalidate = () => queryClient.invalidateQueries({ queryKey: [short, 'reports'] });
+  const edit = useMutation({
+    mutationFn: (values: { name: string; filename: string; html: string }) =>
+      api.reports.update(template.id, {
+        name: values.name,
+        filename: values.filename || null,
+        html: values.html,
+      }),
+    onSuccess: async () => {
+      toast.success('Modèle enregistré');
+      setEditing(false);
+      await invalidate();
+    },
+    onError: toast.error,
+  });
 
   const preview = useMutation({
     mutationFn: (_tab: ReturnType<typeof pendingTab>) => api.reports.render(template.id),
@@ -125,7 +152,8 @@ function TemplateCard({ template }: { template: ReportTemplate }) {
         <div className="min-w-0 flex-1">
           <p className="font-medium">{template.name}</p>
           <p className="text-xs text-muted">
-            {template.fileName} · modifié le {formatDateTime(template.updatedAt, timeZone)}
+            {template.format === 'html' ? 'Modèle HTML' : template.fileName} · modifié le{' '}
+            {formatDateTime(template.updatedAt, timeZone)}
             {template.filename && <> · PDF : « {template.filename} »</>}
           </p>
         </div>
@@ -137,12 +165,20 @@ function TemplateCard({ template }: { template: ReportTemplate }) {
         >
           <Eye /> {preview.isPending ? 'Génération…' : 'Aperçu PDF'}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => download.mutate(pendingTab())}>
-          <Download /> DOCX
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => input.current?.click()}>
-          <FileUp /> Remplacer
-        </Button>
+        {template.format === 'html' ? (
+          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+            <Pencil /> Modifier
+          </Button>
+        ) : (
+          <>
+            <Button variant="ghost" size="sm" onClick={() => download.mutate(pendingTab())}>
+              <Download /> DOCX
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => input.current?.click()}>
+              <FileUp /> Remplacer
+            </Button>
+          </>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -174,6 +210,20 @@ function TemplateCard({ template }: { template: ReportTemplate }) {
           <Badge color="#D98A1B">{template.issues.length} balise(s) à vérifier</Badge>
         )}
       </div>
+      {template.format === 'html' && editing && (
+        <HtmlTemplateDialog
+          open
+          onOpenChange={setEditing}
+          title={`Modifier « ${template.name} »`}
+          initial={{
+            name: template.name,
+            filename: template.filename ?? '',
+            html: template.html ?? '',
+          }}
+          pending={edit.isPending}
+          onSubmit={(values) => edit.mutate(values)}
+        />
+      )}
       {template.issues.length > 0 && (
         <ul className="space-y-1 rounded-md bg-warning/10 p-3 text-sm">
           {template.issues.map((issue) => (
@@ -190,13 +240,14 @@ function TemplateCard({ template }: { template: ReportTemplate }) {
   );
 }
 
-/** Modèles de rapports d'un formulaire (P5.1) : DOCX à balises, aperçu PDF. */
+/** Modèles de rapports d'un formulaire (P5.1) : DOCX ou HTML à balises, aperçu PDF. */
 export function ReportsPage() {
   const { structureId } = useParams({ strict: false }) as { structureId: string };
   const { api, short, can } = useApp();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
+  const [creatingHtml, setCreatingHtml] = useState(false);
   const structure = useQuery({
     queryKey: [short, 'structure', structureId],
     queryFn: () => api.structures.get(structureId),
@@ -229,6 +280,20 @@ export function ReportsPage() {
     },
     onError: toast.error,
   });
+  const createHtml = useMutation({
+    mutationFn: (values: { name: string; filename: string; html: string }) =>
+      api.reports.create(structureId, {
+        name: values.name,
+        html: values.html,
+        ...(values.filename ? { filename: values.filename } : {}),
+      }),
+    onSuccess: async () => {
+      toast.success('Modèle enregistré');
+      setCreatingHtml(false);
+      await queryClient.invalidateQueries({ queryKey: [short, 'reports'] });
+    },
+    onError: toast.error,
+  });
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -251,9 +316,14 @@ export function ReportsPage() {
         }
         actions={
           manage && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus /> Nouveau modèle
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setCreatingHtml(true)}>
+                <Code /> Modèle HTML
+              </Button>
+              <Button onClick={() => setCreating(true)}>
+                <Plus /> Nouveau modèle Word
+              </Button>
+            </>
           )
         }
       />
@@ -263,7 +333,8 @@ export function ReportsPage() {
           {reports.isPending && <Loading />}
           {reports.data?.data.length === 0 && (
             <EmptyState title="Aucun modèle de rapport">
-              Déposez un document Word (.docx) contenant des balises <code>{'{{champ}}'}</code>.
+              Déposez un document Word (.docx) ou écrivez un modèle HTML contenant des balises{' '}
+              <code>{'{{champ}}'}</code>.
             </EmptyState>
           )}
           {reports.data?.data.map((template) => (
@@ -272,7 +343,17 @@ export function ReportsPage() {
         </div>
         {manage && <TagHelp structureId={structureId} />}
       </div>
-      <Dialog open={creating} onOpenChange={setCreating} title="Nouveau modèle de rapport">
+      {creatingHtml && (
+        <HtmlTemplateDialog
+          open
+          onOpenChange={setCreatingHtml}
+          title="Nouveau modèle HTML"
+          initial={{ name: 'Rapport', filename: '', html: STARTER_HTML }}
+          pending={createHtml.isPending}
+          onSubmit={(values) => createHtml.mutate(values)}
+        />
+      )}
+      <Dialog open={creating} onOpenChange={setCreating} title="Nouveau modèle Word">
         <form onSubmit={submit} className="space-y-4">
           <FormRow label="Nom" htmlFor="report-name" required>
             <Input id="report-name" name="name" required maxLength={200} defaultValue="Rapport" />

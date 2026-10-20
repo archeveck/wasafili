@@ -29,6 +29,7 @@ import {
   type RenderedReport,
   type ReportTags,
   type ReportTemplate,
+  type ReportTemplateInput,
   type Webhook,
   type WebhookDelivery,
   type WebhookEvent,
@@ -400,14 +401,13 @@ export function createClient(options: ClientOptions) {
         get: (id: string) => get<ReportTemplate>(p(`/reports/${id}`)),
         tags: (structureId: string) =>
           get<ReportTags>(p(`/structures/${structureId}/reports/tags`)),
-        create: (
-          structureId: string,
-          body: { name: string; fileId: string; filename?: string | null },
-        ) => post<ReportTemplate>(p(`/structures/${structureId}/reports`), body),
-        update: (id: string, body: { name?: string; fileId?: string; filename?: string | null }) =>
+        /** Modèle DOCX (`fileId` d'un fichier déposé) ou HTML (`html`), pas les deux. */
+        create: (structureId: string, body: ReportTemplateInput) =>
+          post<ReportTemplate>(p(`/structures/${structureId}/reports`), body),
+        update: (id: string, body: Partial<ReportTemplateInput>) =>
           patch<ReportTemplate>(p(`/reports/${id}`), body),
         remove: (id: string) => del(p(`/reports/${id}`)),
-        /** URL signée du modèle DOCX. */
+        /** URL signée du modèle DOCX (un modèle HTML porte son contenu dans `html`). */
         template: (id: string) => get<{ url: string }>(p(`/reports/${id}/template`)),
         /** PDF d'une fiche, ou aperçu sur une fiche d'exemple sans `submissionId`. */
         render: (id: string, submissionId?: string) =>

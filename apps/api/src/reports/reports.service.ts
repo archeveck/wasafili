@@ -22,6 +22,8 @@ import {
   type TemplateTag,
 } from './docx';
 import { GotenbergClient } from './gotenberg';
+import { inspectHtmlTemplate, renderHtmlTemplate } from './html';
+import { sha256 } from '../auth/crypto';
 import {
   availableTags,
   checkTags,
@@ -36,9 +38,11 @@ const NOT_FOUND = { error: 'not_found', message: 'Modèle de rapport introuvable
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_TEMPLATE_BYTES = 10 * 1024 * 1024;
 
+/** Modèle DOCX (`fileId`, fichier déposé) ou HTML (`html`) : exactement l'un des deux. */
 export interface ReportInput {
   name: string;
-  fileId: string;
+  fileId?: string;
+  html?: string;
   filename?: string | null;
 }
 
@@ -48,6 +52,11 @@ export interface RenderedReport {
   /** Clé du PDF dans le stockage (pièce jointe d'un e-mail). */
   key: string;
   cached: boolean;
+}
+
+/** Version du contenu dans la clé de cache : fichier DOCX, ou empreinte du HTML. */
+function sourceKey(template: ReportTemplate): string {
+  return template.fileId ?? `html-${sha256(template.html ?? '').slice(0, 16)}`;
 }
 
 function safeFilename(name: string): string {
@@ -103,13 +112,15 @@ export class ReportsService {
 
   async create(instance: Instance, structureId: string, actor: Actor, input: ReportInput) {
     await this.structures.get(structureId);
-    const tags = await this.analyze(input.fileId);
+    const tags =
+      input.html !== undefined ? this.analyzeHtml(input.html) : await this.analyze(input.fileId!);
     const created = await this.prisma.db.reportTemplate.create({
       data: {
         instanceId: instance.id,
         structureId,
         name: input.name,
-        fileId: input.fileId,
+        fileId: input.html !== undefined ? null : input.fileId!,
+        html: input.html ?? null,
         filename: input.filename ?? null,
         tags: tags as unknown as Prisma.InputJsonValue,
         createdById: actor.userId,
@@ -120,13 +131,20 @@ export class ReportsService {
 
   async update(id: string, input: Partial<ReportInput>) {
     await this.find(id);
-    const tags = input.fileId ? await this.analyze(input.fileId) : undefined;
+    // Nouveau contenu : HTML ou fichier DOCX, qui remplace l'autre format le cas échéant.
+    const tags =
+      input.html !== undefined
+        ? this.analyzeHtml(input.html)
+        : input.fileId
+          ? await this.analyze(input.fileId)
+          : undefined;
     await this.prisma.db.reportTemplate.update({
       where: { id },
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.filename !== undefined ? { filename: input.filename } : {}),
-        ...(input.fileId ? { fileId: input.fileId } : {}),
+        ...(input.html !== undefined ? { html: input.html, fileId: null } : {}),
+        ...(input.fileId && input.html === undefined ? { fileId: input.fileId, html: null } : {}),
         ...(tags ? { tags: tags as unknown as Prisma.InputJsonValue } : {}),
       },
     });
@@ -154,6 +172,12 @@ export class ReportsService {
 
   async templateUrl(id: string) {
     const template = await this.find(id);
+    if (!template.fileId) {
+      throw new ConflictException({
+        error: 'html_template',
+        message: 'Modèle HTML : son contenu figure dans le modèle (champ html)',
+      });
+    }
     const file = await this.prisma.db.file.findUniqueOrThrow({ where: { id: template.fileId } });
     return { url: await this.storage.downloadUrl(file.key, file.name) };
   }
@@ -205,7 +229,7 @@ export class ReportsService {
       updatedAt: submission.updatedAt,
       data: submission.data as SubmissionData,
     };
-    const key = `${instance.id}/reports/${template.id}/${template.fileId}/${submission.id}-r${submission.revision}.pdf`;
+    const key = `${instance.id}/reports/${template.id}/${sourceKey(template)}/${submission.id}-r${submission.revision}.pdf`;
     return this.produce(instance, template, definition, info, key);
   }
 
@@ -242,7 +266,7 @@ export class ReportsService {
         message: "La structure n'a pas de version publiée",
       });
     }
-    const key = `${instance.id}/reports/${template.id}/${template.fileId}/exemple.pdf`;
+    const key = `${instance.id}/reports/${template.id}/${sourceKey(template)}/exemple.pdf`;
     return this.produce(instance, template, definition, sampleSubmission(definition), key, true);
   }
 
@@ -269,18 +293,27 @@ export class ReportsService {
       return { url: await this.storage.downloadUrl(key, filename), filename, key, cached: true };
     }
 
-    const file = await this.prisma.db.file.findUniqueOrThrow({ where: { id: template.fileId } });
-    const docx = await this.storage.get(file.key);
     const tags = template.tags as unknown as TemplateTag[];
     const images = await this.images(imageFileIds(data, tags));
-    let merged: Buffer;
+    let pdf: Buffer;
     try {
-      merged = renderTemplate(docx, data, images);
+      if (template.html !== null) {
+        pdf = await this.gotenberg.htmlToPdf(renderHtmlTemplate(template.html, data, images), {
+          landscape: false,
+        });
+      } else {
+        const file = await this.prisma.db.file.findUniqueOrThrow({
+          where: { id: template.fileId! },
+        });
+        pdf = await this.gotenberg.convert(
+          renderTemplate(await this.storage.get(file.key), data, images),
+        );
+      }
     } catch (error) {
       if (error instanceof TemplateSyntaxError) throw this.invalidTemplate(error);
       throw error;
     }
-    await this.storage.put(key, await this.gotenberg.convert(merged), 'application/pdf');
+    await this.storage.put(key, pdf, 'application/pdf');
     return { url: await this.storage.downloadUrl(key, filename), filename, key, cached: false };
   }
 
@@ -338,6 +371,16 @@ export class ReportsService {
     return images;
   }
 
+  /** Vérifie un modèle HTML (syntaxe, contenus interdits) et en extrait les balises. */
+  private analyzeHtml(html: string): TemplateTag[] {
+    try {
+      return inspectHtmlTemplate(html);
+    } catch (error) {
+      if (error instanceof TemplateSyntaxError) throw this.invalidTemplate(error);
+      throw error;
+    }
+  }
+
   /** Vérifie le fichier téléversé (DOCX, taille) et en extrait les balises. */
   private async analyze(fileId: string): Promise<TemplateTag[]> {
     const file = await this.prisma.db.file.findUnique({ where: { id: fileId } });
@@ -390,7 +433,7 @@ export class ReportsService {
   }
 
   private toDto(
-    template: ReportTemplate & { file?: { name: string; size: number } },
+    template: ReportTemplate & { file?: { name: string; size: number } | null },
     definition: StructureDefinition | undefined,
   ) {
     const tags = template.tags as unknown as TemplateTag[];
@@ -398,8 +441,10 @@ export class ReportsService {
       id: template.id,
       structureId: template.structureId,
       name: template.name,
+      format: template.html !== null ? ('html' as const) : ('docx' as const),
       fileId: template.fileId,
       fileName: template.file?.name ?? null,
+      html: template.html,
       filename: template.filename,
       tags,
       // Recalculées à chaque lecture : la structure a pu évoluer depuis l'envoi du modèle.

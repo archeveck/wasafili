@@ -6393,6 +6393,11 @@
                     "type": "string",
                     "format": "uuid"
                   },
+                  "html": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000000
+                  },
                   "filename": {
                     "anyOf": [
                       {
@@ -8380,8 +8385,8 @@
         "tags": [
           "Rapports"
         ],
-        "summary": "Crée un modèle de rapport à partir d'un fichier DOCX déjà déposé",
-        "description": "Permission requise : `report:manage`.",
+        "summary": "Crée un modèle de rapport",
+        "description": "Crée un modèle de rapport : fichier DOCX déjà déposé, ou HTML (stocké tel quel).\n\nPermission requise : `report:manage`.",
         "parameters": [
           {
             "name": "app",
@@ -8418,6 +8423,11 @@
                     "type": "string",
                     "format": "uuid"
                   },
+                  "html": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000000
+                  },
                   "filename": {
                     "anyOf": [
                       {
@@ -8431,8 +8441,7 @@
                   }
                 },
                 "required": [
-                  "name",
-                  "fileId"
+                  "name"
                 ]
               }
             }
@@ -8480,7 +8489,7 @@
         "tags": [
           "Rapports"
         ],
-        "summary": "Balises utilisables dans un modèle DOCX pour ce formulaire",
+        "summary": "Balises utilisables dans un modèle (DOCX ou HTML) pour ce formulaire",
         "description": "Permission requise : `report:manage`.",
         "parameters": [
           {
@@ -14320,11 +14329,31 @@
           "name": {
             "type": "string"
           },
-          "fileId": {
+          "format": {
             "type": "string",
-            "format": "uuid"
+            "enum": [
+              "docx",
+              "html"
+            ]
+          },
+          "fileId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fileName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "html": {
             "type": [
               "string",
               "null"
@@ -14393,8 +14422,10 @@
           "id",
           "structureId",
           "name",
+          "format",
           "fileId",
           "fileName",
+          "html",
           "filename",
           "tags",
           "issues",

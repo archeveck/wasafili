@@ -570,8 +570,11 @@ model ReportTemplate {
   instanceId  String   @map("instance_id") @db.Uuid
   structureId String   @map("structure_id") @db.Uuid
   name        String
-  /// Document DOCX, téléversé par le flux des fichiers (D10).
-  fileId      String   @map("file_id") @db.Uuid
+  /// Document DOCX, téléversé par le flux des fichiers (D10) ; absent pour un modèle HTML.
+  fileId      String?  @map("file_id") @db.Uuid
+  /// Modèle HTML (ADR 0009), stocké en base : le stockage refuse les contenus actifs.
+  /// Exactement l'un de `fileId` et `html` (contrainte `report_templates_source`).
+  html        String?
   /// Balises détectées à l'enregistrement : `[{ name, kind, parent? }]`.
   tags        Json     @default("[]")
   /// Nom du PDF, balises admises (ex. `Inspection {{equipement}}`) ; absent = nom du modèle.
@@ -582,7 +585,7 @@ model ReportTemplate {
 
   instance  Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   structure Structure @relation(fields: [structureId, instanceId], references: [id, instanceId], onDelete: Cascade)
-  file      File      @relation(fields: [fileId, instanceId], references: [id, instanceId], onDelete: NoAction)
+  file      File?     @relation(fields: [fileId, instanceId], references: [id, instanceId], onDelete: NoAction)
 
   @@unique([id, instanceId])
   @@index([instanceId, structureId])

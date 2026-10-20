@@ -85,8 +85,14 @@ services:
         && mc mb --ignore-existing "local/$$S3_BUCKET"
     restart: 'no'
 
+  # Conversions PDF. Chromium (modèles HTML, export des listes) sans JavaScript ni réseau :
+  # seuls le document déposé (/tmp) et les images intégrées (data:) sont lus (ADR 0009).
   gotenberg:
     image: gotenberg/gotenberg:8
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --chromium-allow-list=^(file:///tmp/|data:).*
     ports: ['127.0.0.1:${GOTENBERG_PORT:-3001}:3000']
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3000/health']

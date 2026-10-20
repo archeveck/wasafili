@@ -28,15 +28,17 @@ export class GotenbergClient {
   }
 
   /**
-   * Page HTML autonome (aucune ressource externe) en PDF A4 paysage. Le HTML est produit par
-   * l'API, chaque valeur saisie échappée.
+   * Page HTML autonome (aucune ressource externe) en PDF A4, paysage par défaut : liste de
+   * fiches produite par l'API, ou modèle de rapport HTML fusionné, chaque valeur échappée.
    */
-  async htmlToPdf(html: string): Promise<Buffer> {
+  async htmlToPdf(html: string, { landscape = true } = {}): Promise<Buffer> {
     const form = new FormData();
     form.append('files', new Blob([html], { type: 'text/html' }), 'index.html');
     form.append('paperWidth', '8.27');
     form.append('paperHeight', '11.7');
-    form.append('landscape', 'true');
+    form.append('landscape', String(landscape));
+    // Un modèle peut fixer sa page (`@page { size: … }`) ; à défaut, A4.
+    form.append('preferCssPageSize', 'true');
     for (const side of ['marginTop', 'marginBottom', 'marginLeft', 'marginRight']) {
       form.append(side, '0.4');
     }

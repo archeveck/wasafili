@@ -77,7 +77,8 @@ cd infra && docker compose up -d --build   # stack complète
   `EventsService.record` dans sa transaction (exécutions + livraisons, outbox) puis `dispatch`.
   Les automatisations s'exécutent dans l'API (file `wasafili-automations`), via les services
   métier et `SYSTEM_ACTOR` ; le worker ne fait que les relais (SMTP, webhooks, push). Jamais de
-  XML ni HTML brut issu d'une saisie dans un document généré (rapport, export PDF).
+  XML ni HTML brut issu d'une saisie dans un document généré (rapport, export PDF) ; un modèle
+  HTML ne charge rien (contrôlé à l'enregistrement, Gotenberg sans JavaScript ni réseau).
   Acceptation : `infra/acceptance/rapport-par-email.mjs`.
 - **Pilotage (ADR 0010)** : carte, widgets et export ZIP partent de `SubmissionsService.query()`
   (jamais un filtre ou un droit recodé). Toute action d'administration, de droits ou d'export

@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { type Actor, Can, CurrentActor, CurrentInstance } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { type Instance } from '../generated/prisma/client';
+import { HTML_TEMPLATE_MAX_LENGTH } from './html';
 import { ReportsService } from './reports.service';
 import { Audit } from '../audit/audit.interceptor';
 import { OpenApi } from '../openapi/openapi.decorator';
@@ -20,14 +21,25 @@ import * as resources from '../openapi/resources';
 
 const fields = {
   name: z.string().trim().min(1).max(200),
+  /** Modèle DOCX : fichier déjà déposé. */
   fileId: z.uuid(),
+  /** Modèle HTML, mêmes balises que le DOCX ; ni script ni ressource externe. */
+  html: z.string().min(1).max(HTML_TEMPLATE_MAX_LENGTH),
   filename: z.string().trim().max(200).nullable().optional(),
 };
-const createSchema = z.object(fields);
+const oneSource = (input: { fileId?: unknown; html?: unknown }) =>
+  input.fileId === undefined || input.html === undefined;
+const createSchema = z
+  .object({ ...fields, fileId: fields.fileId.optional(), html: fields.html.optional() })
+  .refine((input) => oneSource(input) && (input.fileId ?? input.html) !== undefined, {
+    message: 'Un modèle est soit un fichier DOCX (fileId), soit du HTML (html)',
+    path: ['fileId'],
+  });
 const updateSchema = z
   .object(fields)
   .partial()
-  .refine((input) => Object.keys(input).length > 0, { message: 'Aucune modification' });
+  .refine((input) => Object.keys(input).length > 0, { message: 'Aucune modification' })
+  .refine(oneSource, { message: 'fileId ou html, pas les deux', path: ['html'] });
 const renderSchema = z.object({ submissionId: z.uuid().optional() });
 
 /** Modèles de rapports (P5.1) et génération PDF. */
@@ -43,14 +55,14 @@ export class ReportsController {
     return this.reports.list(structureId);
   }
 
-  /** Balises utilisables dans un modèle DOCX pour ce formulaire. */
+  /** Balises utilisables dans un modèle (DOCX ou HTML) pour ce formulaire. */
   @Get('structures/:structureId/reports/tags')
   @Can('report:manage')
   tags(@Param('structureId', ParseUUIDPipe) structureId: string) {
     return this.reports.tags(structureId);
   }
 
-  /** Crée un modèle de rapport à partir d'un fichier DOCX déjà déposé. */
+  /** Crée un modèle de rapport : fichier DOCX déjà déposé, ou HTML (stocké tel quel). */
   @Post('structures/:structureId/reports')
   @Audit('report.create')
   @Can('report:manage')

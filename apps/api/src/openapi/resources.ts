@@ -269,8 +269,10 @@ export const reportTemplate = z
     id: uuid,
     structureId: uuid,
     name: z.string(),
-    fileId: uuid,
+    format: z.enum(['docx', 'html']),
+    fileId: nullable(uuid),
     fileName: nullable(z.string()),
+    html: nullable(z.string()),
     filename: nullable(z.string()),
     tags: z.array(
       z.object({
@@ -283,7 +285,10 @@ export const reportTemplate = z
     createdAt: dateTime,
     updatedAt: dateTime,
   })
-  .register(resources, { id: 'ReportTemplate', description: 'Modèle de rapport DOCX.' });
+  .register(resources, {
+    id: 'ReportTemplate',
+    description: 'Modèle de rapport : document DOCX déposé, ou HTML.',
+  });
 
 export const renderedReport = z
   .object({ url: z.url(), filename: z.string(), cached: z.boolean() })

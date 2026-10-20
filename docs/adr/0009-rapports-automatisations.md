@@ -39,6 +39,15 @@ boucler.
    échappée, politique de sécurité sans script ni ressource externe, 2 000 fiches au plus.
 5. **Aperçu sans fiche** : une fiche d'exemple est générée depuis la structure (valeurs
    types, image grise), pour mettre au point un modèle avant toute saisie.
+   5 bis. **Modèles HTML** (spécification « DOCX/HTML ») : mêmes balises et mêmes données que le
+   DOCX, moteur maison (`reports/html.ts`). Stockés en base (`report_templates.html`, exactement
+   un de `file_id` et `html`) : le stockage refuse les contenus actifs (P7.4.2). Contrôlés à
+   l'enregistrement — ni script, ni cadre, ni attribut d'événement, ni ressource externe (images
+   `data:` seulement) —, refus expliqués balise par balise. Chaque valeur est échappée, les
+   images de la fiche intégrées en `data:`, une politique de sécurité injectée ; Chromium de
+   Gotenberg tourne **sans JavaScript ni réseau** (`--chromium-disable-javascript`,
+   `--chromium-allow-list=^(file:///tmp/|data:)`). Page A4 portrait, ou `@page` du modèle.
+   Cache : la clé porte l'empreinte du HTML (modèle modifié = nouveau PDF).
 
 ### E-mails (D5)
 
@@ -94,7 +103,9 @@ boucler.
 - **Dépendances ajoutées** : `docxtemplater` et `pizzip` (fusion), `image-size` (dimensions des
   images) côté API ; `nodemailer` et `undici` (agent HTTP filtré) côté worker.
 - **Images** : JPEG et PNG uniquement, dans le corps du document (pas dans les en-têtes ou
-  pieds de page). Une image absente ou illisible est remplacée par une mention.
+  pieds de page). Une image absente ou illisible est remplacée par une mention. Modèles HTML :
+  JPEG, PNG, WebP et GIF ; un logo s'intègre en `data:`. Pas de condition (`{{^…}}`) ni de
+  section sur un champ simple, comme en DOCX.
 - **Cache** : un libellé de référentiel ou un nom d'utilisateur modifié après coup n'invalide
   pas un PDF déjà généré pour la même révision.
 - **Planifié** : un déclencheur cron ne porte pas de fiche ; les actions qui en exigent une

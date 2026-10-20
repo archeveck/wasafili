@@ -252,8 +252,11 @@ export interface ReportTemplate {
   id: string;
   structureId: string;
   name: string;
-  fileId: string;
+  /** Document Word déposé (`fileId`) ou HTML (`html`). */
+  format: 'docx' | 'html';
+  fileId: string | null;
   fileName: string | null;
+  html: string | null;
   /** Nom du PDF (balises admises) ; absent = nom du modèle. */
   filename: string | null;
   tags: ReportTag[];
@@ -262,6 +265,11 @@ export interface ReportTemplate {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Contenu d'un modèle de rapport, à la création ou en modification. */
+export type ReportTemplateInput = { name: string; filename?: string | null } & (
+  { fileId: string; html?: never } | { html: string; fileId?: never }
+);
 
 export interface ReportTags {
   fields: { tag: string; label: string; table?: string }[];

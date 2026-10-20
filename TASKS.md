@@ -258,6 +258,7 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 - [x] P5.1.3 Conversion PDF via Gotenberg, cache par révision de fiche — appelée par l'API et non par un job du worker (ADR 0009)
 - [x] P5.1.4 Aperçu dans le back-office avec une fiche exemple (générée depuis la structure) ou une fiche réelle
 - [x] P5.1.5 Génération/visualisation PDF depuis le mobile (en ligne, navigateur intégré)
+- [x] P5.1.6 Modèles HTML (mêmes balises, stockés en base, contrôlés : ni script ni ressource externe), Chromium de Gotenberg sans JavaScript ni réseau ([ADR 0009](docs/adr/0009-rapports-automatisations.md))
 
 **P5.2 E-mails** (D5) ✅ : envoi SMTP par le worker (nodemailer, Mailpit en dev), sujets et corps à balises, pièce jointe PDF, journal d'envoi avec renvoi manuel.
 
