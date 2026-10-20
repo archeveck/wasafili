@@ -14,7 +14,7 @@
   "tags": [
     {
       "name": "Authentification",
-      "description": "Jetons OAuth2 : `client_credentials` pour les intégrations."
+      "description": "Jetons OAuth2 (`client_credentials` pour les intégrations) et mot de passe oublié."
     },
     {
       "name": "Appelant et instances",
@@ -634,6 +634,102 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/password-reset": {
+      "post": {
+        "operationId": "passwordReset.request",
+        "tags": [
+          "Authentification"
+        ],
+        "summary": "Demande un lien de réinitialisation du mot de passe, envoyé par e-mail (valable 30 minutes)",
+        "description": "Demande un lien de réinitialisation du mot de passe, envoyé par e-mail (valable 30 minutes). La réponse est la même que le compte existe ou non.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 320
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Succès.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/password-reset/confirm": {
+      "post": {
+        "operationId": "passwordReset.confirm",
+        "tags": [
+          "Authentification"
+        ],
+        "summary": "Choisit un nouveau mot de passe avec le jeton du lien reçu (usage unique)",
+        "description": "Choisit un nouveau mot de passe avec le jeton du lien reçu (usage unique). Toutes les sessions du compte sont fermées.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Effectué."
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"

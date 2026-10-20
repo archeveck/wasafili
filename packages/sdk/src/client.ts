@@ -230,8 +230,9 @@ export function createClient(options: ClientOptions) {
     }
     if (!response.ok) throw await parseError(response);
     if (init.raw) return (await response.blob()) as T;
-    if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    // 204, ou 202 d'une demande traitée en arrière-plan : pas de corps.
+    const text = await response.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 
   const get = <T>(path: string, query?: Query) => request<T>('GET', path, { query });
@@ -627,6 +628,17 @@ export function createClient(options: ClientOptions) {
           body: { token: refreshToken },
         }).catch(() => undefined);
       }
+    },
+    /** Mot de passe oublié : un lien est envoyé par e-mail si le compte existe (réponse identique sinon). */
+    async requestPasswordReset(email: string): Promise<void> {
+      await request('POST', '/password-reset', { anonymous: true, body: { email } });
+    },
+    /** Nouveau mot de passe avec le jeton du lien reçu ; il faut ensuite se connecter. */
+    async confirmPasswordReset(token: string, password: string): Promise<void> {
+      await request('POST', '/password-reset/confirm', {
+        anonymous: true,
+        body: { token, password },
+      });
     },
     isAuthenticated: () => options.tokens.get() !== null,
     me: () => get<Me>('/me'),

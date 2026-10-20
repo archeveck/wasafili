@@ -8,6 +8,7 @@ export const en: MessageTree = {
     email: 'Email address',
     password: 'Password',
     invalidCredentials: 'Invalid credentials',
+    forgotPassword: 'Forgot your password?',
     selectInstance: 'Choose a workspace',
   },
   validation: {
@@ -40,6 +41,8 @@ export const en: MessageTree = {
         client_token: 'API key token',
         client_token_failed: 'API key refused',
         password_change: 'Password changed',
+        password_reset_request: 'Password reset requested',
+        password_reset: 'Password reset by e-mail',
       },
       apikey: {
         create: 'API key created',

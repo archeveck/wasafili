@@ -30,8 +30,14 @@ const HTTP_METHODS: Partial<Record<RequestMethod, string>> = {
 const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete'];
 
 /** Sections publiques de la documentation, dans l'ordre de lecture d'un intégrateur. */
+const AUTHENTICATION: [string, string] = [
+  'Authentification',
+  'Jetons OAuth2 (`client_credentials` pour les intégrations) et mot de passe oublié.',
+];
+
 const TAGS: Record<string, [name: string, description: string]> = {
-  OAuth: ['Authentification', 'Jetons OAuth2 : `client_credentials` pour les intégrations.'],
+  OAuth: AUTHENTICATION,
+  PasswordReset: AUTHENTICATION,
   Me: ['Appelant et instances', 'Identité de l’appelant et instances accessibles.'],
   Structures: ['Formulaires', 'Formulaires versionnés ; une version publiée est immuable.'],
   Submissions: [

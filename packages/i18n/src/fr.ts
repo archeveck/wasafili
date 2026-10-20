@@ -6,6 +6,7 @@ export const fr = {
     email: 'Adresse e-mail',
     password: 'Mot de passe',
     invalidCredentials: 'Identifiants invalides',
+    forgotPassword: 'Mot de passe oublié ?',
     selectInstance: 'Choisir un espace',
   },
   validation: {
@@ -38,6 +39,8 @@ export const fr = {
         client_token: 'Jeton de clé API',
         client_token_failed: 'Clé API refusée',
         password_change: 'Mot de passe changé',
+        password_reset_request: 'Réinitialisation du mot de passe demandée',
+        password_reset: 'Mot de passe réinitialisé par e-mail',
       },
       apikey: {
         create: 'Clé API créée',

@@ -35,6 +35,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ title: 'Mot de passe oublié' }} />
         <Stack.Screen name="instances" options={{ title: 'Espace de travail' }} />
         <Stack.Screen name="home" options={{ headerShown: false }} />
         <Stack.Screen name="structure/[id]" options={{ title: 'Fiches' }} />

@@ -16,8 +16,12 @@ import { ENV, type Env } from '../config/env';
 /** Tentatives par type de job (défaut : 5, backoff exponentiel depuis 2 s). */
 const RETRIES: Partial<Record<JobName, { attempts: number; delay: number }>> = {
   email: { attempts: EMAIL_ATTEMPTS, delay: EMAIL_BACKOFF_MS },
+  'account-email': { attempts: EMAIL_ATTEMPTS, delay: EMAIL_BACKOFF_MS },
   webhook: { attempts: WEBHOOK_ATTEMPTS, delay: WEBHOOK_BACKOFF_MS },
 };
+
+/** Jobs porteurs d'un secret (lien d'accès au compte) : rien n'en reste dans Redis après coup. */
+const EPHEMERAL: ReadonlySet<JobName> = new Set(['account-email']);
 
 /** Publication de jobs vers le worker. */
 export class JobQueue {
@@ -29,8 +33,8 @@ export class JobQueue {
       ...(jobId ? { jobId } : {}),
       attempts: retries.attempts,
       backoff: { type: 'exponential', delay: retries.delay },
-      removeOnComplete: 1_000,
-      removeOnFail: 5_000,
+      removeOnComplete: EPHEMERAL.has(name) ? true : 1_000,
+      removeOnFail: EPHEMERAL.has(name) ? true : 5_000,
     });
   }
 

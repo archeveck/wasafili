@@ -90,6 +90,9 @@ cd infra && docker compose up -d --build   # stack complète
   Fichiers : types actifs refusés, signature vérifiée (`files/content-types.ts`). Pile Docker :
   `cd infra && docker compose up` (pas de compose à la racine : le `.env` de dev s'y
   appliquerait) ; production : `docker-compose.prod.yml`, procédure `docs/exploitation.md`.
+- **E-mails de compte (ADR 0013)** : un message qui porte un accès au compte (lien de
+  réinitialisation) part par le job `account-email`, jamais par le journal d'envoi d'une instance
+  (lu par ses administrateurs) ; il n'en reste rien dans Redis après l'envoi.
 - **Migrations Prisma** : `migrate dev --create-only`, retirer les `DROP INDEX "*_sync"` générés
   (index `xid8` écrits à la main), puis `pnpm db:deploy`.
 - **Synchronisation (ADR 0007)** : toute table synchronisée porte `sync_txid` (trigger

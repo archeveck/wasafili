@@ -72,14 +72,15 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships   Membership[]
-  groupMembers  GroupMember[]
-  refreshTokens RefreshToken[]
-  submissions   Submission[]
-  revisions     SubmissionRevision[]
-  assignedTasks Task[]               @relation("TaskAssignee")
-  notifications Notification[]
-  pushTokens    PushToken[]
+  memberships         Membership[]
+  groupMembers        GroupMember[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  submissions         Submission[]
+  revisions           SubmissionRevision[]
+  assignedTasks       Task[]               @relation("TaskAssignee")
+  notifications       Notification[]
+  pushTokens          PushToken[]
 
   @@map("users")
 }
@@ -192,6 +193,24 @@ model RefreshToken {
 
   @@index([familyId])
   @@map("refresh_tokens")
+}
+
+/// Jeton de réinitialisation du mot de passe en libre-service (ASVS 2.5, ADR 0013) : à usage
+/// unique, de courte durée. Comme les comptes, il n'appartient à aucune instance.
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// SHA-256 du jeton envoyé par e-mail (le jeton lui-même n'est jamais stocké).
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  /// Renseigné à l'utilisation, ou quand une demande plus récente le remplace.
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("password_reset_tokens")
 }
 
 // ---------------------------------------------------------------------------

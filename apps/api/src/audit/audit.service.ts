@@ -11,6 +11,8 @@ export const AUDIT_ACTIONS = [
   'auth.client_token',
   'auth.client_token_failed',
   'auth.password_change',
+  'auth.password_reset_request',
+  'auth.password_reset',
   'apikey.create',
   'apikey.update',
   'apikey.secret',

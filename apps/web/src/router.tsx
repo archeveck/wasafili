@@ -7,7 +7,9 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { AppsPage } from '@/features/auth/apps';
+import { ForgotPasswordPage } from '@/features/auth/forgot-password';
 import { LoginPage } from '@/features/auth/login';
+import { ResetPasswordPage } from '@/features/auth/reset-password';
 import { AccessPage } from '@/features/admin/access-page';
 import { ApiKeysPage } from '@/features/admin/api-keys-page';
 import { AuditPage } from '@/features/admin/audit-page';
@@ -37,8 +39,23 @@ const loginRoute = createRoute({
   path: '/login',
   validateSearch: (search: Record<string, unknown>) => ({
     ...(typeof search['redirect'] === 'string' ? { redirect: search['redirect'] } : {}),
+    // Retour après un nouveau mot de passe : message de confirmation.
+    ...(search['reset'] === '1' || search['reset'] === 1 ? { reset: '1' as const } : {}),
   }),
   component: LoginPage,
+});
+
+/** Mot de passe oublié (ADR 0013) : routes sans session. */
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/mot-de-passe/oublie',
+  component: ForgotPasswordPage,
+});
+/** Cible du lien envoyé par e-mail (`RESET_PAGE_PATH` de l'API). */
+const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/mot-de-passe/nouveau',
+  component: ResetPasswordPage,
 });
 
 /** Routes authentifiées : sans session, retour à la connexion. */
@@ -183,6 +200,8 @@ const auditRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
   authRoute.addChildren([
     appsRoute,
     appRoute.addChildren([

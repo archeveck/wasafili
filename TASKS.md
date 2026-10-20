@@ -311,9 +311,10 @@ Chaque choix est retenu parce qu'il sert un critère d'acceptation ou une contra
 **P7.3 Mobile** (D2) ✅ : profils EAS `development` / `preview` / `production` (`APP_VARIANT`) + chemin autonome `expo prebuild` + Gradle (APK construit localement) et Xcode en CI.
 
 **P7.4 Sécurité (OWASP ASVS niveau 1)**
-- [x] P7.4.1 Checklist ASVS L1 passée et tracée dans `docs/security/` (4 écarts partiels justifiés)
+- [x] P7.4.1 Checklist ASVS L1 passée et tracée dans `docs/security/` (3 écarts partiels justifiés ; 2.5 levé)
 - [x] P7.4.2 En-têtes de sécurité, CORS strict, validation des uploads (types actifs refusés, signature, taille), URLs signées courtes ; politique de mot de passe, changement et réinitialisation
 - [x] P7.4.3 Audit des dépendances en CI, recherche de secrets (gitleaks), Dependabot
+- [x] P7.4.4 Mot de passe oublié en libre-service : lien par e-mail (jeton haché, 30 min, usage unique), web et mobile, avis après changement ([ADR 0013](docs/adr/0013-mot-de-passe-oublie.md))
 
 - Fini quand : `cd infra && docker compose up` démarre la stack avec la démo et les 10 parcours Playwright y passent (aussi en HTTPS derrière la surcouche de production) ; sauvegarde, vérification et restauration testées ; workflows n8n exécutés ; tests d'intégration (contrat OpenAPI compris) verts.
 

@@ -168,6 +168,26 @@ describe('client', () => {
     expect(JSON.parse(fetch.mock.calls[0]![1]!.body as string)).toEqual({ token: 'r1' });
   });
 
+  it('mot de passe oublié : appels anonymes, réponses sans corps', async () => {
+    const store = memoryStore(null);
+    const fetch = vi.fn(
+      async (url: string, _init?: RequestInit) =>
+        new Response(null, { status: url.endsWith('/confirm') ? 204 : 202 }),
+    );
+    const client = createClient({ baseUrl: '', tokens: store, fetch: fetch as never });
+    await expect(client.requestPasswordReset('awa@acme.ci')).resolves.toBeUndefined();
+    await client.confirmPasswordReset('jeton', 'Nouveau#motdepasse1');
+    const [first, second] = fetch.mock.calls;
+    expect(first![0]).toBe('/v1/password-reset');
+    expect(JSON.parse(first![1]!.body as string)).toEqual({ email: 'awa@acme.ci' });
+    expect(second![0]).toBe('/v1/password-reset/confirm');
+    expect(JSON.parse(second![1]!.body as string)).toEqual({
+      token: 'jeton',
+      password: 'Nouveau#motdepasse1',
+    });
+    expect(new Headers(first![1]!.headers).has('authorization')).toBe(false);
+  });
+
   it('carte, audit et export de photos : paramètres au format de l API', async () => {
     const calls: { url: string; body?: unknown }[] = [];
     const fetch = vi.fn(async (url: string, init?: RequestInit) => {

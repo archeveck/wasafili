@@ -134,6 +134,14 @@ export default function Login() {
           disabled={!email || !password}
           onPress={() => void submit()}
         />
+        <Button
+          title={t('auth.forgotPassword')}
+          variant="ghost"
+          onPress={() => {
+            if (server !== serverUrl()) setServerUrl(server);
+            router.push({ pathname: '/forgot-password', params: { email: email.trim() } });
+          }}
+        />
         <View style={{ marginTop: space.xl }}>
           {showServer ? (
             <Field label="Adresse du serveur">

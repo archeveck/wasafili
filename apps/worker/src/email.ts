@@ -1,5 +1,5 @@
 import { GetObjectCommand, type S3Client } from '@aws-sdk/client-s3';
-import { type EmailJob } from '@wasafili/jobs';
+import { type AccountEmailJob, type EmailJob } from '@wasafili/jobs';
 import { type Pool } from 'pg';
 import { inInstance } from './db.js';
 
@@ -97,4 +97,23 @@ export async function processEmail(job: EmailJob, deps: EmailDeps): Promise<'sen
     });
     throw error;
   }
+}
+
+/**
+ * Job `account-email` (ADR 0013) : e-mail de compte, hors de toute instance et sans journal
+ * d'envoi (il porte un lien d'accès au compte). Les retentatives sont celles de BullMQ.
+ */
+export async function processAccountEmail(
+  job: AccountEmailJob,
+  deps: Pick<EmailDeps, 'mailer' | 'from'>,
+): Promise<void> {
+  if (!deps.mailer) throw new Error('SMTP non configuré (SMTP_URL)');
+  await deps.mailer.sendMail({
+    from: deps.from,
+    to: [job.to],
+    subject: job.subject,
+    text: job.text,
+    html: job.html,
+    attachments: [],
+  });
 }

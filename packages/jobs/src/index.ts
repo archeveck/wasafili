@@ -35,6 +35,18 @@ export interface EmailJob {
   emailId: string;
 }
 
+/**
+ * E-mail de compte (réinitialisation du mot de passe, ADR 0013), hors de toute instance : il ne
+ * passe pas par le journal d'envoi, que les administrateurs d'instance consultent, puisqu'il
+ * porte un lien d'accès au compte. Le job est retiré de la file dès qu'il se termine.
+ */
+export interface AccountEmailJob {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
 /** Livraison signée d'un événement à un webhook (P5.4). */
 export interface WebhookJob {
   instanceId: string;
@@ -54,6 +66,7 @@ export interface JobPayloads {
   thumbnail: ThumbnailJob;
   push: PushJob;
   email: EmailJob;
+  'account-email': AccountEmailJob;
   webhook: WebhookJob;
   'photos-zip': PhotoExportJob;
   'photo-exports-cleanup': PhotoExportCleanupJob;

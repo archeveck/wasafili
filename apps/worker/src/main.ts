@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import pg from 'pg';
 import { pino } from 'pino';
 import { loadEnv } from './env.js';
-import { processEmail } from './email.js';
+import { processAccountEmail, processEmail } from './email.js';
 import { startOpsServer, workerMetrics } from './ops.js';
 import { cleanupPhotoExports, processPhotoExport } from './photo-export.js';
 import { processPush } from './push.js';
@@ -53,6 +53,7 @@ const handlers: Handlers = {
       final: isFinal(job),
     });
   },
+  'account-email': (payload) => processAccountEmail(payload, { mailer, from: env.MAIL_FROM }),
   webhook: async (payload, job) => {
     await processWebhook(payload, {
       db,
