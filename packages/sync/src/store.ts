@@ -760,6 +760,7 @@ export class LocalStore {
   /** Applique une page de pull et avance le curseur, atomiquement. */
   applyPull(page: PullResponse): void {
     this.tx(() => {
+      if (page.reset) this.dropServerCopies();
       this.setMeta('settings', page.settings);
       this.db.run('DELETE FROM structures');
       for (const s of page.structures) {
@@ -953,6 +954,20 @@ export class LocalStore {
       );
     }
     this.rebase(remote.id, serverData);
+  }
+
+  /**
+   * Avant une synchronisation complète (droits changés) : retire ce qui ne vient que du serveur
+   * et sera renvoyé s'il reste lisible. Restent les brouillons, les fiches dont un envoi est en
+   * attente ou refusé (l'utilisateur garde la main), et les tâches dont une fiche est en cours.
+   */
+  private dropServerCopies(): void {
+    const copies = `SELECT id FROM submissions WHERE status = 'synced'`;
+    this.db.run(`DELETE FROM submissions_fts WHERE id IN (${copies})`);
+    this.db.run(`DELETE FROM submission_history WHERE submission_id IN (${copies})`);
+    this.db.run(`DELETE FROM submissions WHERE status = 'synced'`);
+    this.db.run('DELETE FROM tasks WHERE local_submission_id IS NULL');
+    this.db.run('DELETE FROM list_items');
   }
 
   /** Historique d'une fiche reçu du serveur (révisions les plus récentes d'abord). */

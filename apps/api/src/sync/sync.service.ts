@@ -1,11 +1,18 @@
 import { HttpException, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { StructureAccessService } from '../access/structure-access.service';
 import { type Actor } from '../auth/decorators';
 import { type Instance, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubmissionsService } from '../submissions/submissions.service';
 import { TasksService, toTaskDto } from '../tasks/tasks.service';
-import { decodeCursor, encodeCursor, nextCursor, type ResourceCursor } from './cursor';
+import {
+  decodeCursor,
+  encodeCursor,
+  INITIAL_CURSOR,
+  nextCursor,
+  type ResourceCursor,
+} from './cursor';
 
 export const PULL_PAGE_SIZE = 500;
 /** Révisions renvoyées par fiche : l'historique complet reste consultable au back-office. */
@@ -69,7 +76,7 @@ export class SyncService {
     rawCursor: string | undefined,
     limit = PULL_PAGE_SIZE,
   ) {
-    const cursor = decodeCursor(rawCursor);
+    const previous = decodeCursor(rawCursor);
     const [snapshot] = await this.prisma.transaction(
       (tx) =>
         tx.$queryRaw<
@@ -102,6 +109,33 @@ export class SyncService {
       const condition = await this.submissions.readCondition(structure.id, actor);
       if (condition) readable.push(condition);
     }
+    const canReadLists =
+      actor.permissions.has('list:read') || actor.permissions.has('instance:manage');
+    const groups = actor.userId
+      ? (
+          await this.prisma.db.groupMember.findMany({
+            where: { userId: actor.userId },
+            select: { groupId: true },
+          })
+        )
+          .map((g) => g.groupId)
+          .sort()
+      : [];
+    // Empreinte de ce que l'appelant peut lire : fiches (conditions de lecture, filtres de
+    // visibilité compris), référentiels, tâches de ses groupes. Si elle change, des données déjà
+    // sur l'appareil ont pu devenir illisibles : synchronisation complète, copies effacées.
+    const rights = createHash('sha256')
+      .update(
+        JSON.stringify({
+          readable: readable.map((condition) => [condition.sql, condition.values]),
+          lists: canReadLists,
+          groups,
+        }),
+      )
+      .digest('base64url');
+    const reset = previous.rights !== rights;
+    const cursor = reset ? INITIAL_CURSOR : previous;
+
     const changedStructures = await this.prisma.transaction(
       (tx) => tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM structures WHERE sync_txid >= ${cursor.structures}::xid8`,
@@ -113,8 +147,6 @@ export class SyncService {
         .map((s) => s.currentVersionId!),
     );
 
-    const canReadLists =
-      actor.permissions.has('list:read') || actor.permissions.has('instance:manage');
     const items = canReadLists
       ? await this.page('list_items', cursor.items, xmin, limit, Prisma.sql`TRUE`)
       : { ids: [], cursor: { floor: xmin }, hasMore: false };
@@ -193,7 +225,9 @@ export class SyncService {
         submissions: submissionPage.cursor,
         tasks: taskPage.cursor,
         notifications: notificationPage.cursor,
+        rights,
       }),
+      reset,
       hasMore:
         items.hasMore || submissionPage.hasMore || taskPage.hasMore || notificationPage.hasMore,
       settings: {

@@ -34,6 +34,12 @@ mode avion, puis tout se synchronise **sans doublon ni perte**. La sync est mais
   révisions (`history`, auteurs et automatisations nommés) et leur nombre (`historyTotal`).
   Toute écriture crée une révision **et** modifie la fiche, qui revient donc au pull suivant :
   ni ressource ni curseur de plus, et les droits de lecture sont ceux de la fiche.
+- **Perte de droits** : le curseur porte une empreinte (SHA-256) de ce que l'appelant peut
+  lire — conditions de lecture par formulaire (règles, filtres de visibilité, attributs),
+  référentiels, groupes (tâches). Si elle diffère, le pull repart de zéro avec `reset: true` :
+  rôle changé, règle restreinte, groupe quitté ou attribut modifié retirent les données de
+  l'appareil dès la synchronisation suivante, sans liste de suppressions à calculer. Un curseur
+  sans empreinte (antérieur) provoque une synchronisation complète, une seule fois.
 - API sans ETag : aucune réponse 304 servie depuis un cache sur la synchronisation.
 
 ### Client (`packages/sync`)
@@ -51,6 +57,10 @@ mode avion, puis tout se synchronise **sans doublon ni perte**. La sync est mais
   résultat de push, qui n'en porte pas, garde celui du dernier pull. La migration qui l'a
   introduit efface le curseur : une synchronisation complète, unique, récupère l'historique
   des fiches déjà présentes (modifications en attente réappliquées).
+- Page `reset` : dans la même transaction, le client efface ses copies serveur (fiches
+  synchronisées et leur historique, tâches sans fiche en cours, éléments de référentiel) puis
+  applique la page. Restent les brouillons et les fiches dont un envoi est en attente ou refusé :
+  l'utilisateur garde la main, le serveur tranchera (refus expliqué s'il n'a plus le droit).
 - File de mutations persistée. Une modification est fusionnée dans la précédente **seulement si
   celle-ci n'a jamais été tentée** : une mutation qui a pu atteindre le serveur n'est jamais
   modifiée, car son identifiant y est connu. Une page de pull et son curseur sont appliqués dans
@@ -78,5 +88,6 @@ mode avion, puis tout se synchronise **sans doublon ni perte**. La sync est mais
 
 - Sur simulateur iOS, Maestro ne peut pas activer le mode avion : la coupure est simulée en
   arrêtant le serveur, ce qui emprunte le même chemin d'erreur réseau côté application.
-- Une perte de droits n'est pas propagée aux fiches déjà sur l'appareil. Elles y restent jusqu'à
-  une resynchronisation complète (déconnexion).
+- Une perte de droits n'est appliquée qu'à la synchronisation suivante (appareil resté hors
+  ligne : les données y restent jusque-là). Une fiche dont l'envoi est refusé puis abandonné
+  redevient une copie serveur, effacée au prochain changement de droits seulement.

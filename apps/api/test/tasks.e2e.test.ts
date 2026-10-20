@@ -128,6 +128,23 @@ describe('tâches', () => {
     expect(groupPull.notifications[0]).toMatchObject({ type: 'task_assigned' });
   });
 
+  it('retirée du groupe, l’ancienne membre ne garde pas ses tâches (synchronisation complète)', async () => {
+    const group = (await admin.post('/v1/acme/groups').send({ name: 'Équipe C' }).expect(201)).body;
+    await admin
+      .put(`/v1/acme/groups/${group.id}/members`)
+      .send({ userIds: [technicienId] })
+      .expect(200);
+    const task = (await createTask({ assigneeGroupId: group.id }).expect(201)).body;
+    const first = await pull(technicien);
+    expect(first.tasks).toMatchObject([{ id: task.id, deleted: false }]);
+
+    // Retrait du groupe sans toucher à la tâche : les droits changent, le pull repart de zéro.
+    await admin.put(`/v1/acme/groups/${group.id}/members`).send({ userIds: [] }).expect(200);
+    const second = await pull(technicien, first.cursor);
+    expect(second.reset).toBe(true);
+    expect(second.tasks).toEqual([{ id: task.id, deleted: true }]);
+  });
+
   it('se clôt par la fiche créée depuis la tâche, hors ligne compris', async () => {
     const task = (await createTask({ assigneeUserId: technicienId }).expect(201)).body;
     const other = (await createTask({ assigneeUserId: superviseurId }).expect(201)).body;

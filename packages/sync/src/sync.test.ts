@@ -280,6 +280,46 @@ describe('modifications et fusion', () => {
   });
 });
 
+describe('perte de droits', () => {
+  it('retire les fiches devenues illisibles, garde brouillons et envois en attente', async () => {
+    const kept = createSubmission({ titre: 'Toujours lisible' });
+    const lost = createSubmission({ titre: 'Plus lisible' });
+    const pendingLost = createSubmission({ titre: 'En attente' });
+    await engine.sync();
+    server.editRemotely(lost, { titre: 'Bureau' });
+    await engine.sync();
+    expect(store.history(lost)).toBeDefined();
+
+    const draft = store.saveDraft({ structureId: STRUCTURE, data: { titre: 'Brouillon' } });
+    server.online = false;
+    store.edit(pendingLost, { titre: 'Modifiée hors ligne' });
+    server.online = true;
+    server.revokeAccess([lost, pendingLost]);
+    store.applyPull(await server.pull(store.cursor));
+
+    expect(store.submission(kept)?.status).toBe('synced');
+    expect(store.submission(lost)).toBeUndefined();
+    expect(store.history(lost)).toBeUndefined();
+    expect(store.submissions({ q: 'Bureau' })).toEqual([]);
+    expect(store.submission(draft)?.status).toBe('draft');
+    expect(store.submission(pendingLost)).toMatchObject({
+      status: 'pending',
+      data: { titre: 'Modifiée hors ligne' },
+    });
+    // Référentiels renvoyés en entier par la synchronisation complète.
+    expect(store.listItems(LIST, { parentId: null }).map((i) => i.label)).toEqual(['Plateau']);
+  });
+
+  it('sans changement de droits, rien n est effacé', async () => {
+    const id = createSubmission();
+    await engine.sync();
+    const page = await server.pull(store.cursor);
+    expect(page.reset).toBeUndefined();
+    store.applyPull(page);
+    expect(store.submission(id)?.status).toBe('synced');
+  });
+});
+
 describe('refus du serveur', () => {
   it('signale la fiche en erreur sans bloquer les autres, puis permet de réessayer ou d abandonner', async () => {
     const bad = createSubmission({ invalide: true });

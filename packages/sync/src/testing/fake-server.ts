@@ -40,6 +40,9 @@ export class FakeServer implements SyncTransport {
   pushCalls = 0;
   /** Historique renvoyé avec chaque fiche (révisions faites au back-office). */
   readonly history = new Map<string, RevisionDto[]>();
+  /** Fiches devenues illisibles pour l'utilisateur (droits retirés). */
+  readonly hidden = new Set<string>();
+  private resetNext = false;
   private seq = 0;
 
   private offline() {
@@ -48,11 +51,16 @@ export class FakeServer implements SyncTransport {
 
   async pull(cursor: string | undefined): Promise<PullResponse> {
     this.offline();
-    const since = cursor ? Number(cursor) : 0;
-    const changed = [...this.submissions.values()].filter((s) => s.seq > since);
+    const reset = this.resetNext;
+    this.resetNext = false;
+    const since = cursor && !reset ? Number(cursor) : 0;
+    const changed = [...this.submissions.values()].filter(
+      (s) => s.seq > since && !this.hidden.has(s.id),
+    );
     return {
       cursor: String(this.seq),
       hasMore: false,
+      ...(reset ? { reset } : {}),
       settings: { name: 'Démo' },
       structures: [
         {
@@ -133,6 +141,12 @@ export class FakeServer implements SyncTransport {
       throw new TransientError('Coupure pendant l envoi');
     }
     this.files.add(task.fileId);
+  }
+
+  /** Droits restreints au back-office : ces fiches ne sont plus lisibles, resynchronisation complète. */
+  revokeAccess(ids: string[]) {
+    ids.forEach((id) => this.hidden.add(id));
+    this.resetNext = true;
   }
 
   /** Tâche planifiée (ou réassignée ailleurs avec `deleted`) depuis le back-office. */

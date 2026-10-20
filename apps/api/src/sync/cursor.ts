@@ -22,6 +22,11 @@ const cursorSchema = z.object({
   // Ressources ajoutées en Phase 4 : un curseur plus ancien les reprend depuis le début.
   tasks: resourceCursor.default({ floor: '0' }),
   notifications: resourceCursor.default({ floor: '0' }),
+  /**
+   * Empreinte des droits de lecture au moment du curseur. Différente (ou absente) : les droits
+   * ont pu se restreindre, le pull repart de zéro et le client efface ses copies serveur.
+   */
+  rights: z.string().optional(),
 });
 
 export type ResourceCursor = z.infer<typeof resourceCursor>;

@@ -71,6 +71,11 @@ export type PulledTask = (TaskDto & { deleted: false }) | { id: string; deleted:
 export interface PullResponse {
   cursor: string;
   hasMore: boolean;
+  /**
+   * Première page d'une synchronisation complète, après un changement des droits de lecture :
+   * le client efface d'abord ses copies serveur, dont certaines peuvent être devenues illisibles.
+   */
+  reset?: boolean;
   settings: Record<string, unknown>;
   structures: {
     id: string;

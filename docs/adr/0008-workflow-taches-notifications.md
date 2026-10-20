@@ -68,8 +68,8 @@ concernent. Ce qui se passe hors ligne doit rester cohérent avec ce que le serv
 
 ## Conséquences et limites connues
 
-- **Changements de groupe** : un utilisateur retiré d'un groupe garde les tâches du groupe sur
-  son appareil jusqu'à la prochaine modification de ces tâches.
+- **Changements de groupe** : un utilisateur retiré d'un groupe perd les tâches du groupe à la
+  synchronisation suivante (empreinte des droits, ADR [0007](0007-stockage-local-synchronisation.md)).
 - **État « lu » des notifications** : il reste sur l'appareil mobile et n'est pas renvoyé au
   serveur. La cloche du back-office a son propre état « lu », côté serveur.
 - **Push** : il faut un `projectId` EAS, donc un build de l'application. Expo Go sur Android

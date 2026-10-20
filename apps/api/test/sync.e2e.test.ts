@@ -32,6 +32,7 @@ const data = (etat = 'bon') => ({
 type Pull = {
   cursor: string;
   hasMore: boolean;
+  reset: boolean;
   structures: { id: string; currentVersionId: string; rights: string[] }[];
   versions: { id: string; definition: unknown }[];
   lists: unknown[];
@@ -157,6 +158,34 @@ describe('pull', () => {
       changes: expect.arrayContaining([{ field: 'etat', before: 'bon', after: 'degrade' }]),
     });
     expect(pulled!.history[1]!.author).toBe('technicien acme');
+  });
+
+  it('droits restreints : synchronisation complète (reset), fiches retirées absentes', async () => {
+    const id = randomUUID();
+    await push(technicien, [create(id)]);
+    const first = await pullAll(technicien);
+    expect(first.pages[0]!.reset).toBe(true);
+    expect(first.submissions.map((s) => s.id)).toEqual([id]);
+    const idle = await pullAll(technicien, first.cursor);
+    expect(idle.pages[0]!.reset).toBe(false);
+
+    // Le technicien ne peut plus que créer : ses fiches ne sont plus lisibles.
+    const admin = api(app, (await login(app, 'admin@acme.test')).access_token);
+    const access = `/v1/acme/structures/${tenant.structure.id}/access`;
+    await admin
+      .put(access)
+      .send({ rules: [{ roleId: tenant.roles.get('technicien'), permissions: ['create'] }] })
+      .expect(200);
+    const restricted = await pullAll(technicien, idle.cursor);
+    expect(restricted.pages[0]!.reset).toBe(true);
+    expect(restricted.submissions).toEqual([]);
+    expect(restricted.listItems).toHaveLength(11); // référentiels renvoyés en entier
+
+    // Droits rétablis : nouvelle synchronisation complète, la fiche revient.
+    await admin.put(access).send({ rules: [] }).expect(200);
+    const restored = await pullAll(technicien, restricted.cursor);
+    expect(restored.pages[0]!.reset).toBe(true);
+    expect(restored.submissions.map((s) => s.id)).toEqual([id]);
   });
 
   it('ne transmet que les fiches lisibles : le technicien ne reçoit que les siennes', async () => {
