@@ -22,6 +22,7 @@
     "db:seed": "pnpm --filter @wasafili/api db:seed",
     "prepare": "husky",
     "db:deploy": "pnpm --filter @wasafili/api db:deploy",
+    "db:bootstrap": "pnpm --filter @wasafili/api db:bootstrap",
     "test:e2e": "pnpm --filter @wasafili/web test:e2e"
   },
   "devDependencies": {

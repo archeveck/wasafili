@@ -89,7 +89,10 @@ services:
   worker:
     environment: *prod-env
     restart: unless-stopped
+  # Migrations seules : pas de comptes de démonstration. Première instance : `db:bootstrap`
+  # (docs/exploitation.md).
   migrate:
+    command: ['pnpm', 'db:deploy']
     environment:
       <<: *prod-env
       DATABASE_URL: postgresql://wasafili_owner:${WASAFILI_OWNER_PASSWORD:?requis}@postgres:5432/wasafili
