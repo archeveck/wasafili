@@ -39,9 +39,11 @@ Toute la plateforme tourne en conteneurs Docker sur une seule machine :
 Serveur hébergé dans des locaux (box Internet, adresse IP qui change) ou sans nom de
 domaine : voir [§ 1.10](#110-variante--serveur-à-adresse-ip-dynamique-ddns-no-ip).
 
-**`TLS handshake timeout` alors que `curl` passe** (Docker, `fetch-basemap.sh`) : certains
-réseaux perdent le premier message TLS des programmes Go récents, allongé par l'échange de
-clés post-quantique. `fetch-basemap.sh` le désactive déjà ; pour Docker, à la fois pour le
+**`TLS handshake timeout` alors que `curl` passe** (Docker, `fetch-basemap.sh`, ou erreur de
+requête vers `registry.npmjs.org` pendant le build) : certains réseaux perdent le premier
+message TLS des programmes Go et Node récents, allongé par l'échange de clés post-quantique.
+Pour Node (build des images, puis SMTP, webhooks et push de l'API et du worker), ajouter
+`TLS_CLASSIC_KEY_EXCHANGE=1` dans `infra/.env` (`infra/tls/openssl-classique.cnf`). `fetch-basemap.sh` le désactive déjà ; pour Docker, à la fois pour le
 client (`docker compose` obtient lui-même les jetons de Docker Hub) et pour le démon :
 
 ```bash
@@ -87,6 +89,7 @@ MAIL_FROM=Wasafili <no-reply@exemple.ci>
 
 # Facultatif
 METRICS_TOKEN=$(openssl rand -hex 32)
+# TLS_CLASSIC_KEY_EXCHANGE=1   # si « TLS handshake timeout » (voir § 1.1)
 BACKUP_DIR=/srv/wasafili-sauvegardes
 EOF
 ```

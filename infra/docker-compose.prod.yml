@@ -28,6 +28,7 @@ x-prod-env: &prod-env
   # Garde SSRF des webhooks : pas d'adresse privée en production.
   WEBHOOK_ALLOW_PRIVATE: 'false'
   METRICS_TOKEN: ${METRICS_TOKEN:-}
+  OPENSSL_CONF: ${TLS_CLASSIC_KEY_EXCHANGE:+/etc/ssl/openssl-classique.cnf}
 
 services:
   traefik:

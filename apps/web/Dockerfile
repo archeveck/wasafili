@@ -1,5 +1,8 @@
 # Contexte de build : racine du monorepo.
 FROM node:24-alpine AS build
+# Échange de clés TLS classique si TLS_CLASSIC_KEY_EXCHANGE=1 (infra/tls/openssl-classique.cnf).
+COPY infra/tls/openssl-classique.cnf /etc/ssl/
+ARG OPENSSL_CONF
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /repo

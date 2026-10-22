@@ -7,6 +7,11 @@
 # (voir .env.example à la racine) pour tout autre usage.
 name: wasafili
 
+# Échange de clés TLS classique (infra/tls/openssl-classique.cnf) si TLS_CLASSIC_KEY_EXCHANGE=1 :
+# réseaux qui perdent le ClientHello post-quantique (docs/deploiement.md § 1.1).
+x-tls-build-args: &tls-build-args
+  OPENSSL_CONF: ${TLS_CLASSIC_KEY_EXCHANGE:+/etc/ssl/openssl-classique.cnf}
+
 x-app-env: &app-env
   NODE_ENV: production
   LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -25,6 +30,7 @@ x-app-env: &app-env
   SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
   MAIL_FROM: ${MAIL_FROM:-Wasafili <no-reply@wasafili.local>}
   WEBHOOK_ALLOW_PRIVATE: ${WEBHOOK_ALLOW_PRIVATE:-true}
+  OPENSSL_CONF: ${TLS_CLASSIC_KEY_EXCHANGE:+/etc/ssl/openssl-classique.cnf}
 
 services:
   postgres:
@@ -115,7 +121,7 @@ services:
 
   migrate:
     image: wasafili/api:dev
-    build: { context: .., dockerfile: apps/api/Dockerfile }
+    build: { context: .., dockerfile: apps/api/Dockerfile, args: *tls-build-args }
     command: ['sh', '-c', 'pnpm db:deploy && pnpm db:seed']
     environment:
       <<: *app-env
@@ -126,7 +132,7 @@ services:
 
   api:
     image: wasafili/api:dev
-    build: { context: .., dockerfile: apps/api/Dockerfile }
+    build: { context: .., dockerfile: apps/api/Dockerfile, args: *tls-build-args }
     environment: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }
@@ -142,7 +148,7 @@ services:
       - traefik.http.services.api.loadbalancer.server.port=3000
 
   worker:
-    build: { context: .., dockerfile: apps/worker/Dockerfile }
+    build: { context: .., dockerfile: apps/worker/Dockerfile, args: *tls-build-args }
     environment: *app-env
     depends_on:
       redis: { condition: service_healthy }
@@ -154,7 +160,7 @@ services:
       retries: 20
 
   web:
-    build: { context: .., dockerfile: apps/web/Dockerfile }
+    build: { context: .., dockerfile: apps/web/Dockerfile, args: *tls-build-args }
     environment:
       # Origine du stockage autorisée par la CSP (photos et dépôts par URL signée).
       S3_PUBLIC_ORIGIN: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}

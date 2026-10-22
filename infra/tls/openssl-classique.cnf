@@ -1,0 +1,16 @@
+# Échange de clés TLS classique pour Node (OpenSSL 3.5) : sans X25519MLKEM768, le ClientHello
+# passe de ≈ 1 600 à ≈ 370 octets et tient dans un seul paquet. Pour les réseaux qui perdent la
+# version longue (TLS handshake timeout alors que curl passe). Activé seulement si
+# TLS_CLASSIC_KEY_EXCHANGE=1 dans infra/.env (OPENSSL_CONF posé par docker compose, au build et
+# à l'exécution) ; docs/deploiement.md § 1.1.
+nodejs_conf = openssl_init
+openssl_conf = openssl_init
+
+[openssl_init]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+Groups = X25519:P-256:P-384
