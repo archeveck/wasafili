@@ -105,6 +105,21 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml conf
 Un mot de passe du relais SMTP contenant `@`, `:` ou `/` s'écrit encodé dans `SMTP_URL`
 (`%40`, `%3A`, `%2F`).
 
+Les mots de passe PostgreSQL ne sont lus qu'à la création de la base (premier démarrage). Après
+une modification dans `infra/.env` (erreur `P1000: Authentication failed` de `migrate`), les
+reporter dans la base, sans toucher aux données :
+
+```bash
+val() { grep "^$1=" infra/.env | cut -d= -f2-; }
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml exec -T postgres \
+  psql -q -v ON_ERROR_STOP=1 -U postgres -d postgres -v owner="$(val WASAFILI_OWNER_PASSWORD)" \
+  -v app="$(val WASAFILI_APP_PASSWORD)" -v su="$(val POSTGRES_PASSWORD)" <<'SQL'
+ALTER ROLE wasafili_owner PASSWORD :'owner';
+ALTER ROLE wasafili_app PASSWORD :'app';
+ALTER ROLE postgres PASSWORD :'su';
+SQL
+```
+
 Conserver une copie de ce fichier dans un coffre-fort de mots de passe : sans lui, les
 sauvegardes de la base restent lisibles, mais les jetons et accès doivent être recréés.
 
