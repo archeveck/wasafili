@@ -65,8 +65,24 @@ OUT="$DIR/data/basemap.pmtiles"
 MOBILE="$DIR/data/basemap-mobile.pmtiles"
 if [ "${1:-}" != "--mobile-only" ]; then
   echo "Extraction du build ${BUILD} (zone ${BBOX}, zoom ≤ ${MAXZOOM}) vers ${OUT}…"
-  "$PMTILES" extract "https://build.protomaps.com/$BUILD.pmtiles" "$OUT.part" \
-    --bbox="$BBOX" --maxzoom="$MAXZOOM"
+  # Des centaines de requêtes par plage d'octets : une coupure réseau (délai TLS, connexion
+  # réinitialisée) fait échouer toute l'extraction, d'où quelques nouvelles tentatives.
+  # tlsmlkem=0 : sans l'échange de clés post-quantique (défaut de Go ≥ 1.24), le ClientHello
+  # tient dans un seul paquet ; certains réseaux perdent la version longue (TLS handshake
+  # timeout alors que curl passe). Sans enjeu ici : données publiques, TLS classique conservé.
+  ATTEMPT=1
+  until GODEBUG="${GODEBUG:+$GODEBUG,}tlsmlkem=0" "$PMTILES" extract "https://build.protomaps.com/$BUILD.pmtiles" "$OUT.part" \
+    --bbox="$BBOX" --maxzoom="$MAXZOOM"; do
+    rm -f "$OUT.part"
+    if [ "$ATTEMPT" -ge 4 ]; then
+      echo "Extraction impossible après $ATTEMPT tentatives : vérifier l'accès HTTPS à build.protomaps.com" >&2
+      echo "(curl -I https://build.protomaps.com/$BUILD.pmtiles) ou produire le fichier ailleurs (docs/deploiement.md §1.4)." >&2
+      exit 1
+    fi
+    echo "Échec de la tentative $ATTEMPT, nouvel essai dans $((ATTEMPT * 15)) s…" >&2
+    sleep $((ATTEMPT * 15))
+    ATTEMPT=$((ATTEMPT + 1))
+  done
   mv "$OUT.part" "$OUT"
   echo "Fond de carte prêt : $(du -h "$OUT" | cut -f1)"
 fi
