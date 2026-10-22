@@ -39,6 +39,19 @@ Toute la plateforme tourne en conteneurs Docker sur une seule machine :
 Serveur hébergé dans des locaux (box Internet, adresse IP qui change) ou sans nom de
 domaine : voir [§ 1.10](#110-variante--serveur-à-adresse-ip-dynamique-ddns-no-ip).
 
+**`TLS handshake timeout` alors que `curl` passe** (Docker, `fetch-basemap.sh`) : certains
+réseaux perdent le premier message TLS des programmes Go récents, allongé par l'échange de
+clés post-quantique. `fetch-basemap.sh` le désactive déjà ; pour Docker, à la fois pour le
+client (`docker compose` obtient lui-même les jetons de Docker Hub) et pour le démon :
+
+```bash
+echo 'GODEBUG=tlsmlkem=0' | sudo tee -a /etc/environment   # sessions suivantes
+export GODEBUG=tlsmlkem=0                                   # session en cours
+sudo mkdir -p /etc/systemd/system/docker.service.d
+printf '[Service]\nEnvironment="GODEBUG=tlsmlkem=0"\n' | sudo tee /etc/systemd/system/docker.service.d/tls.conf
+sudo systemctl daemon-reload && sudo systemctl restart docker
+```
+
 ### 1.2 Récupérer le code
 
 ```bash
