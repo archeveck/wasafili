@@ -71,7 +71,7 @@ secrets sont en hexadécimal : deux mots de passe entrent dans une URL PostgreSQ
 ou `=` (sortie de `openssl rand -base64`) la rendraient invalide.
 
 ```bash
-umask 077
+( umask 077   # .env lisible par root seul, sans changer les droits des fichiers suivants
 cat > infra/.env <<EOF
 APP_DOMAIN=wasafili.exemple.ci
 FILES_DOMAIN=fichiers.wasafili.exemple.ci
@@ -92,6 +92,7 @@ METRICS_TOKEN=$(openssl rand -hex 32)
 # TLS_CLASSIC_KEY_EXCHANGE=1   # si « TLS handshake timeout » (voir § 1.1)
 BACKUP_DIR=/srv/wasafili-sauvegardes
 EOF
+)
 ```
 
 Puis remplacer dans `infra/.env` les domaines, l'e-mail ACME et le relais SMTP (`nano
