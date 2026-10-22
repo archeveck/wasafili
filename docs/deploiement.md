@@ -26,6 +26,25 @@ Toute la plateforme tourne en conteneurs Docker sur une seule machine :
 | `gotenberg`         | conversion des rapports en PDF                                      |
 | `backup`            | sauvegarde quotidienne vérifiée par restauration                    |
 
+**Version automatisée** : `infra/deploy/deployer.sh` enchaîne les § 1.2 à 1.7 (prérequis,
+code, `infra/.env` créé avec ses secrets au premier passage, fond de carte, sauvegarde avant
+mise à jour, rôles PostgreSQL, démarrage, première instance, vérification) et sert aussi aux
+mises à jour (§ 1.9). Il pose les questions nécessaires, ou les lit dans l'environnement sans
+terminal (en-tête du script). Les prérequis réseau (§ 1.1 : DNS, ports, SMTP) restent à faire
+soi-même.
+
+```bash
+# serveur vierge : clone dans /srv/wasafili, puis déploiement
+curl -fsSL https://raw.githubusercontent.com/archeveck/wasafili/main/infra/deploy/deployer.sh | sudo bash
+# ensuite, depuis le dépôt
+sudo /srv/wasafili/infra/deploy/deployer.sh --ref v1.1.0
+```
+
+Pour repartir d'un état propre, `infra/deploy/nettoyer.sh` retire conteneurs, réseaux, images
+construites et cache, sans toucher aux données. `--donnees` supprime aussi la base, Redis et les
+fichiers (après une sauvegarde dans `BACKUP_DIR`), `--certificats` les certificats Let's Encrypt
+et `--secrets` le fichier `infra/.env`. Confirmation demandée, ou `--oui`.
+
 ### 1.1 Prérequis
 
 - Un serveur Linux avec Docker Engine et le plugin Compose (`docker compose version`).
@@ -540,6 +559,7 @@ Pour chaque agent de terrain :
 
 | Étape                          | Commande / lieu                                                                             |
 | ------------------------------ | ------------------------------------------------------------------------------------------- |
+| Tout le serveur (automatisé)   | `sudo infra/deploy/deployer.sh` (nettoyage : `infra/deploy/nettoyer.sh`)                    |
 | Configurer                     | `infra/.env`                                                                                |
 | Fond de carte                  | `infra/maps/fetch-basemap.sh`                                                               |
 | Démarrer / mettre à jour       | `docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d --build` |
