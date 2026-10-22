@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Sauvegardes (P7.2.1) : pg_dump de la base et miroir du stockage MinIO, planifiés par crond.
 FROM pgsty/mc:RELEASE.2026-09-16T00-00-00Z AS mc
 

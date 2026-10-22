@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Image de l'API, utilisée aussi par le service `migrate` (migrations, seed ou amorçage).
 # Contexte de build : racine du monorepo.
 FROM node:24-alpine

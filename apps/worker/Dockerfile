@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Contexte de build : racine du monorepo.
 FROM node:24-alpine AS build
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
