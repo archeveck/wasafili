@@ -1,6 +1,6 @@
 # Image de l'API, utilisée aussi par le service `migrate` (migrations, seed ou amorçage).
 # Contexte de build : racine du monorepo.
-FROM node:24-alpine
+FROM node:25-alpine
 # Échange de clés TLS classique si TLS_CLASSIC_KEY_EXCHANGE=1 (infra/tls/openssl-classique.cnf).
 COPY infra/tls/openssl-classique.cnf /etc/ssl/
 ARG OPENSSL_CONF
