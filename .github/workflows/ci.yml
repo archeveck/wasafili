@@ -181,7 +181,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter "@wasafili/mobile^..." build
       - run: pnpm --filter @wasafili/mobile exec expo prebuild --platform android --no-install
